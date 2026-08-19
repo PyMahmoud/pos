@@ -11,10 +11,12 @@
         Checkout, Customers, Inventory, Dashboard) once the theme is settled.
     -->
     <Grid>
-        <TextBlock Text="PosSystem — skeleton running"
+        <TextBlock x:Name="StatusText"
+                   Text="PosSystem — skeleton running"
                    Style="{StaticResource HeadlineMedium}"
                    Foreground="{StaticResource OnSurfaceBrush}"
                    HorizontalAlignment="Center"
-                   VerticalAlignment="Center" />
+                   VerticalAlignment="Center"
+                   TextAlignment="Center" />
     </Grid>
 </Window>

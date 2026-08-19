@@ -44,8 +44,8 @@ PosSystem.App/              <- WPF shell, currently just a blank window
 
 ## Next steps (in order)
 
-1. **Verify Core against real data** — write a throwaway test call (e.g. in `MainWindow`'s constructor) to `new PosSystem.Core.Data.Customers().ReadCustomers_Range(...)` against `rovaShop.db` to confirm the data layer actually reads existing records end to end.
+1. ~~**Verify Core against real data**~~ — done. `MainWindow.xaml.cs` now has a `RunCoreDataSmokeTest()` call that reads the `goods` table through `PosSystem.Core.Data.Goods.ReadAllGoodsRPic()` and prints the row count + first item to the window on launch. It targets `goods` (281 rows) rather than `customers` — **`customers`, `bills`, and `sells` are all empty (0 rows) in this seed `rovaShop.db`**, so a `customers` test would "pass" without proving anything. Delete `RunCoreDataSmokeTest()` and its call once a real screen exists.
 2. **Design the real color palette** — replace the placeholder hex values in `Themes/Colors.xaml` with your actual brand seed color. If going for genuine Material You, generate a full tonal palette from one seed color rather than picking values by eye.
 3. **Build the app shell/navigation** — a left sidebar (Checkout, Customers, Inventory, Dashboard) is the natural Material-style layout for a POS. This replaces the old app's custom-drawn menu rectangle entirely.
 4. **Build Checkout first** — highest-traffic screen, and the one that most needs to look and feel modern since it's what the client's staff sees all day.
-5. **Build Customers/Debt screen second** — this is the feature the skincare client specifically asked for, and the data model already supports it.
+5. **Build Customers/Debt screen second** — this is the feature the skincare client specifically asked for, and the data model already supports it. Note: the `customers` table in this seed db is empty, so it'll need real client data (or seeded test rows) to build/test against — the schema is ready but there's no sample data to develop with yet.
