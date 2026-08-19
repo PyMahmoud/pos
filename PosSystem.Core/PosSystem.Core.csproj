@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{A1B2C3D4-0001-4E5F-9A2B-000000000001}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>PosSystem.Core</RootNamespace>
+    <AssemblyName>PosSystem.Core</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.SQLite">
+      <HintPath>..\packages\System.Data.SQLite.Core.1.0.110.0\lib\net45\System.Data.SQLite.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Models -->
+    <Compile Include="Models\Bills.cs" />
+    <Compile Include="Models\Categories.cs" />
+    <Compile Include="Models\Counter.cs" />
+    <Compile Include="Models\Customers.cs" />
+    <Compile Include="Models\Expenses.cs" />
+    <Compile Include="Models\Goods.cs" />
+    <Compile Include="Models\GoodsR.cs" />
+    <Compile Include="Models\Info.cs" />
+    <Compile Include="Models\PendingSell.cs" />
+    <Compile Include="Models\Purchase.cs" />
+    <Compile Include="Models\Returned.cs" />
+    <Compile Include="Models\Sells.cs" />
+    <Compile Include="Models\SellsOffline.cs" />
+    <!-- Data access -->
+    <Compile Include="Data\Bills.cs" />
+    <Compile Include="Data\Categories.cs" />
+    <Compile Include="Data\Customers.cs" />
+    <Compile Include="Data\Expense.cs" />
+    <Compile Include="Data\Goods.cs" />
+    <Compile Include="Data\Info.cs" />
+    <Compile Include="Data\PendingSell.cs" />
+    <Compile Include="Data\Purchase.cs" />
+    <Compile Include="Data\Returned.cs" />
+    <Compile Include="Data\Sells.cs" />
+    <Compile Include="Data\SellsOffline.cs" />
+    <Compile Include="Data\Server.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

@@ -1,0 +1,20 @@
+<Window x:Class="PosSystem.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PosSystem" Height="768" Width="1024"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource SurfaceBrush}">
+
+    <!--
+        Empty shell on purpose. Build real navigation (a NavigationView /
+        sidebar shell is the natural fit for Material-style POS screens:
+        Checkout, Customers, Inventory, Dashboard) once the theme is settled.
+    -->
+    <Grid>
+        <TextBlock Text="PosSystem — skeleton running"
+                   Style="{StaticResource HeadlineMedium}"
+                   Foreground="{StaticResource OnSurfaceBrush}"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center" />
+    </Grid>
+</Window>
