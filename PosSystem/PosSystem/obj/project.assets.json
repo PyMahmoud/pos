@@ -1082,11 +1082,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\PosSystem.csproj",
+      "projectUniqueName": "C:\\Users\\Mahmod\\pos\\PosSystem\\PosSystem\\PosSystem.csproj",
       "projectName": "PosSystem",
-      "projectPath": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\PosSystem.csproj",
+      "projectPath": "C:\\Users\\Mahmod\\pos\\PosSystem\\PosSystem\\PosSystem.csproj",
       "packagesPath": "C:\\Users\\Mahmod\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\obj\\",
+      "outputPath": "C:\\Users\\Mahmod\\pos\\PosSystem\\PosSystem\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

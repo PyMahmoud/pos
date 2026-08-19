@@ -1,66 +1,18 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\",
+  "WorkspaceRootPath": "C:\\Users\\Mahmod\\pos\\PosSystem\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\models\\models.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\models\\models.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{F0E85F2F-8A22-8854-BB22-7CE779E85336}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\pos\\possystem\\possystem\\models\\models.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F0E85F2F-8A22-8854-BB22-7CE779E85336}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\models\\models.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{F0E85F2F-8A22-8854-BB22-7CE779E85336}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\pos\\possystem\\possystem\\data\\schema.sql||{CC5D8DF0-88F4-4BB2-9DBB-B48CEE65C30A}",
+      "RelativeMoniker": "D:0:0:{F0E85F2F-8A22-8854-BB22-7CE779E85336}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\data\\schema.sql||{CC5D8DF0-88F4-4BB2-9DBB-B48CEE65C30A}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\viewmodels\\menueditorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\viewmodels\\menueditorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\viewmodels\\dashboardviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\viewmodels\\dashboardviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\viewmodels\\checkoutviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\viewmodels\\checkoutviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\services\\syncservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\services\\syncservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\services\\reportservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\services\\reportservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\services\\orderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\services\\orderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\data\\schema.sql||{CC5D8DF0-88F4-4BB2-9DBB-B48CEE65C30A}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\data\\schema.sql||{CC5D8DF0-88F4-4BB2-9DBB-B48CEE65C30A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\views\\menueditorview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\views\\menueditorview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\views\\dashboardview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\views\\dashboardview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\views\\checkoutview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\views\\checkoutview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\possystem.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\possystem.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\source\\repos\\possystem\\possystem\\data\\schema.sql||{CC5D8DF0-88F4-4BB2-9DBB-B48CEE65C30A}|CodeFrame",
-      "RelativeMoniker": "D:0:0:{E3E8001B-2FAB-4300-9EE8-9FDE1C5A0305}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\data\\schema.sql||{CC5D8DF0-88F4-4BB2-9DBB-B48CEE65C30A}|CodeFrame"
+      "AbsoluteMoniker": "D:0:0:{F0E85F2F-8A22-8854-BB22-7CE779E85336}|PosSystem\\PosSystem.csproj|c:\\users\\mahmod\\pos\\possystem\\possystem\\data\\schema.sql||{CC5D8DF0-88F4-4BB2-9DBB-B48CEE65C30A}|CodeFrame",
+      "RelativeMoniker": "D:0:0:{F0E85F2F-8A22-8854-BB22-7CE779E85336}|PosSystem\\PosSystem.csproj|solutionrelative:possystem\\data\\schema.sql||{CC5D8DF0-88F4-4BB2-9DBB-B48CEE65C30A}|CodeFrame"
     }
   ],
   "DocumentGroupContainers": [
@@ -70,183 +22,31 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "DbInitializer.cs",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Data\\DbInitializer.cs",
-              "RelativeDocumentMoniker": "PosSystem\\Data\\DbInitializer.cs",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Data\\DbInitializer.cs",
-              "RelativeToolTip": "PosSystem\\Data\\DbInitializer.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-17T13:07:29.286Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Models.cs",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Models\\Models.cs",
+              "DocumentMoniker": "C:\\Users\\Mahmod\\pos\\PosSystem\\PosSystem\\Models\\Models.cs",
               "RelativeDocumentMoniker": "PosSystem\\Models\\Models.cs",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Models\\Models.cs",
+              "ToolTip": "C:\\Users\\Mahmod\\pos\\PosSystem\\PosSystem\\Models\\Models.cs",
               "RelativeToolTip": "PosSystem\\Models\\Models.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-17T13:08:06.511Z",
+              "WhenOpened": "2026-08-19T14:03:50.866Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "MenuEditorViewModel.cs",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\ViewModels\\MenuEditorViewModel.cs",
-              "RelativeDocumentMoniker": "PosSystem\\ViewModels\\MenuEditorViewModel.cs",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\ViewModels\\MenuEditorViewModel.cs",
-              "RelativeToolTip": "PosSystem\\ViewModels\\MenuEditorViewModel.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-17T13:02:58.27Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "DashboardViewModel.cs",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\ViewModels\\DashboardViewModel.cs",
-              "RelativeDocumentMoniker": "PosSystem\\ViewModels\\DashboardViewModel.cs",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\ViewModels\\DashboardViewModel.cs",
-              "RelativeToolTip": "PosSystem\\ViewModels\\DashboardViewModel.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-17T13:02:31.64Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "CheckoutViewModel.cs",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\ViewModels\\CheckoutViewModel.cs",
-              "RelativeDocumentMoniker": "PosSystem\\ViewModels\\CheckoutViewModel.cs",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\ViewModels\\CheckoutViewModel.cs",
-              "RelativeToolTip": "PosSystem\\ViewModels\\CheckoutViewModel.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-17T13:02:04.406Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "SyncService.cs",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Services\\SyncService.cs",
-              "RelativeDocumentMoniker": "PosSystem\\Services\\SyncService.cs",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Services\\SyncService.cs",
-              "RelativeToolTip": "PosSystem\\Services\\SyncService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-17T13:04:28.931Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "ReportService.cs",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Services\\ReportService.cs",
-              "RelativeDocumentMoniker": "PosSystem\\Services\\ReportService.cs",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Services\\ReportService.cs",
-              "RelativeToolTip": "PosSystem\\Services\\ReportService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-17T13:04:57.142Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "OrderService.cs",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Services\\OrderService.cs",
-              "RelativeDocumentMoniker": "PosSystem\\Services\\OrderService.cs",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Services\\OrderService.cs",
-              "RelativeToolTip": "PosSystem\\Services\\OrderService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-17T13:03:44.487Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 1,
               "Title": "schema.sql ",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Data\\schema.sql",
+              "DocumentMoniker": "C:\\Users\\Mahmod\\pos\\PosSystem\\PosSystem\\Data\\schema.sql",
               "RelativeDocumentMoniker": "PosSystem\\Data\\schema.sql",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Data\\schema.sql",
+              "ToolTip": "C:\\Users\\Mahmod\\pos\\PosSystem\\PosSystem\\Data\\schema.sql",
               "RelativeToolTip": "PosSystem\\Data\\schema.sql",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2026-08-17T13:06:57.113Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "App.xaml",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\App.xaml",
-              "RelativeDocumentMoniker": "PosSystem\\App.xaml",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\App.xaml",
-              "RelativeToolTip": "PosSystem\\App.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-08-17T12:59:25.592Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "MenuEditorView.xaml",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Views\\MenuEditorView.xaml",
-              "RelativeDocumentMoniker": "PosSystem\\Views\\MenuEditorView.xaml",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Views\\MenuEditorView.xaml",
-              "RelativeToolTip": "PosSystem\\Views\\MenuEditorView.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-08-17T12:59:09.451Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "DashboardView.xaml",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Views\\DashboardView.xaml",
-              "RelativeDocumentMoniker": "PosSystem\\Views\\DashboardView.xaml",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Views\\DashboardView.xaml",
-              "RelativeToolTip": "PosSystem\\Views\\DashboardView.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-08-17T12:58:09.573Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "CheckoutView.xaml",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Views\\CheckoutView.xaml",
-              "RelativeDocumentMoniker": "PosSystem\\Views\\CheckoutView.xaml",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\Views\\CheckoutView.xaml",
-              "RelativeToolTip": "PosSystem\\Views\\CheckoutView.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-08-17T12:57:34.452Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "PosSystem",
-              "DocumentMoniker": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\PosSystem.csproj",
-              "RelativeDocumentMoniker": "PosSystem\\PosSystem.csproj",
-              "ToolTip": "C:\\Users\\Mahmod\\source\\repos\\PosSystem\\PosSystem\\PosSystem.csproj",
-              "RelativeToolTip": "PosSystem\\PosSystem.csproj",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-08-17T12:50:02.636Z",
+              "WhenOpened": "2026-08-19T14:03:25.22Z",
               "EditorCaption": ""
             }
           ]
