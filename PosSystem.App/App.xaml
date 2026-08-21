@@ -5,9 +5,10 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Modern theme goes here. Colors.xaml is a placeholder palette to replace
-                     with real Material-You-inspired tokens (dynamic color, elevation, etc). -->
-                <ResourceDictionary Source="Themes/Colors.xaml" />
+                <!-- Colors.Light.xaml is the startup default (POS counters are usually in
+                     bright rooms). ThemeManager.SwitchTheme() swaps this entry for
+                     Colors.Dark.xaml at runtime — see Theming/ThemeManager.cs. -->
+                <ResourceDictionary Source="Themes/Colors.Light.xaml" />
                 <ResourceDictionary Source="Themes/Typography.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

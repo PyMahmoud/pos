@@ -17,9 +17,12 @@ PosSystem.Core/            <- class library, NO WPF/UI references at all
 PosSystem.App/              <- WPF shell, currently just a blank window
   App.xaml / App.xaml.cs
   MainWindow.xaml            <- proves the theme + Core reference both work, nothing else
+  Theming/
+    ThemeManager.cs           <- swaps Colors.Light/Dark.xaml at runtime (ThemeManager.Toggle())
   Themes/
-    Colors.xaml              <- Material-You-style token palette (placeholder values)
-    Typography.xaml          <- type scale (placeholder font, real sizes)
+    Colors.Light.xaml         <- real palette, generated from seed #6C4CE0 (Material Design 3 Fidelity scheme)
+    Colors.Dark.xaml          <- same tokens, dark variant, same seed
+    Typography.xaml           <- type scale (placeholder font, real sizes)
   ViewModels/
     ViewModelBase.cs          <- INotifyPropertyChanged base for every screen ViewModel
     RelayCommand.cs            <- ICommand implementation for button bindings
@@ -44,8 +47,53 @@ PosSystem.App/              <- WPF shell, currently just a blank window
 
 ## Next steps (in order)
 
-1. ~~**Verify Core against real data**~~ — done. `MainWindow.xaml.cs` now has a `RunCoreDataSmokeTest()` call that reads the `goods` table through `PosSystem.Core.Data.Goods.ReadAllGoodsRPic()` and prints the row count + first item to the window on launch. It targets `goods` (281 rows) rather than `customers` — **`customers`, `bills`, and `sells` are all empty (0 rows) in this seed `rovaShop.db`**, so a `customers` test would "pass" without proving anything. Delete `RunCoreDataSmokeTest()` and its call once a real screen exists.
-2. **Design the real color palette** — replace the placeholder hex values in `Themes/Colors.xaml` with your actual brand seed color. If going for genuine Material You, generate a full tonal palette from one seed color rather than picking values by eye.
+1. ~~**Verify Core against real data**~~ — done. `MainWindow.xaml.cs` now has a `RunCoreDataSmokeTest()` call that reads `goods` and `customers` through the Core data layer and prints row counts + total outstanding debt to the window on launch.
+2. ~~**Design the real color palette**~~ — done. See "Color palette" below for the seed, the scheme used, and why.
 3. **Build the app shell/navigation** — a left sidebar (Checkout, Customers, Inventory, Dashboard) is the natural Material-style layout for a POS. This replaces the old app's custom-drawn menu rectangle entirely.
 4. **Build Checkout first** — highest-traffic screen, and the one that most needs to look and feel modern since it's what the client's staff sees all day.
-5. **Build Customers/Debt screen second** — this is the feature the skincare client specifically asked for, and the data model already supports it. Note: the `customers` table in this seed db is empty, so it'll need real client data (or seeded test rows) to build/test against — the schema is ready but there's no sample data to develop with yet.
+5. **Build Customers/Debt screen second** — this is the feature the skincare client specifically asked for, and the data model already supports it. Seeded test data (see below) is now in place to build and eyeball this screen against before real client data arrives.
+
+## Color palette
+
+Seed color: `#6C4CE0` (bold violet). Generated with `materialyoucolor`, the real
+HCT-based engine behind Android's dynamic color — not hand-picked hex values —
+using the **Fidelity** scheme variant, which keeps Primary true to the seed
+color instead of muting it like Material's default scheme does.
+
+Design decision: **calm/neutral surfaces, violet reserved for things staff
+need to notice and act on** (buttons, totals, active nav state) rather than
+saturated purple everywhere. On cheap, uncalibrated store monitors, a fully
+saturated UI causes eye fatigue over a full shift; restrained neutrals with a
+confident accent color hold up better across 8–10 hour days and scale cleanly
+across different client verticals (cafes, food trucks, retail) without a
+redesign per client.
+
+The algorithm also auto-derived a warm amber/orange tertiary color
+(`#7C3F00` light / `#FFB781` dark) as the seed's complement — earmarked for
+discount badges, low-stock flags, or "card payment" state, so there's a second
+accent ready without introducing an arbitrary second color.
+
+`Colors.Light.xaml` and `Colors.Dark.xaml` define the identical set of brush
+keys (`PrimaryBrush`, `SurfaceBrush`, `OnSurfaceVariantBrush`, etc.) — every
+screen should bind only to these keys, never a raw hex, so
+`ThemeManager.Toggle()` (wired to a throwaway button in `MainWindow` right
+now) repaints the whole app with no per-screen logic. Startup default is
+Light (POS counters are usually in bright rooms); Dark is available via the
+toggle.
+
+## Seeded test data
+
+The original `rovaShop.db` had 0 rows in `customers`, `bills`, and `sells` — no way to build or eyeball the debt screen. Seeded 8 test customers with mixed states, plus 5 matching bill rows for the first four so bill-level Paid/Remain actually sums to the customer-level totals:
+
+| Customer | Paid | Remain | State |
+|---|---|---|---|
+| منى عبد الرحمن | 450 | 0 | Fully paid |
+| سارة حسن | 300 | 150 | Partial debt (2 bills: one settled, one open) |
+| ياسمين محمود | 0 | 620 | All debt, nothing paid yet |
+| هدى إبراهيم | 200 | 0 | Fully paid, small discount on bill |
+| نور الدين علي | 150 | 90 | Partial debt |
+| ريم فتحي | 0 | 275 | All debt |
+| أميرة سعيد | 500 | 500 | Half paid on a large order |
+| دينا كمال | 1000 | 0 | High-value customer, fully paid |
+
+This covers the states a debt screen needs to visually distinguish: zero balance, partial balance, full balance owed, and a big-spender case. Delete these rows (or swap in real client data) once the skincare seller's actual customer list is available.

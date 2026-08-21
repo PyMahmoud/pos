@@ -8,7 +8,10 @@
     <!--
         Empty shell on purpose. Build real navigation (a NavigationView /
         sidebar shell is the natural fit for Material-style POS screens:
-        Checkout, Customers, Inventory, Dashboard) once the theme is settled.
+        Checkout, Customers, Inventory, Dashboard) now that the theme is settled.
+
+        ThemeToggleButton below is a throwaway proof that Light/Dark switching
+        works end to end — remove once a real Settings screen owns this.
     -->
     <Grid>
         <TextBlock x:Name="StatusText"
@@ -18,5 +21,16 @@
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    TextAlignment="Center" />
+
+        <Button x:Name="ThemeToggleButton"
+                Content="Toggle Light / Dark"
+                Click="ThemeToggleButton_Click"
+                Background="{StaticResource PrimaryBrush}"
+                Foreground="{StaticResource OnPrimaryBrush}"
+                BorderThickness="0"
+                Padding="16,8"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,32" />
     </Grid>
 </Window>
