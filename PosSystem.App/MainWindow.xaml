@@ -5,7 +5,7 @@
         Title="PosSystem" Height="768" Width="1280"
         MinHeight="600" MinWidth="960"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BackgroundBrush}">
+        Background="{DynamicResource BackgroundBrush}">
 
     <Window.DataContext>
         <vm:MainViewModel />
@@ -19,8 +19,8 @@
 
         <!-- Sidebar -->
         <Border Grid.Column="0"
-                Background="{StaticResource SurfaceContainerLowBrush}"
-                BorderBrush="{StaticResource OutlineVariantBrush}"
+                Background="{DynamicResource SurfaceContainerLowBrush}"
+                BorderBrush="{DynamicResource OutlineVariantBrush}"
                 BorderThickness="0,0,1,0">
             <DockPanel LastChildFill="True">
 
@@ -29,30 +29,31 @@
                             Orientation="Horizontal"
                             Margin="16,20,16,16">
                     <Border Width="36" Height="36" CornerRadius="10"
-                            Background="{StaticResource PrimaryBrush}">
+                            Background="{DynamicResource PrimaryBrush}">
                         <TextBlock Text="P"
-                                   Foreground="{StaticResource OnPrimaryBrush}"
+                                   Foreground="{DynamicResource OnPrimaryBrush}"
                                    FontWeight="Bold" FontSize="18"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center" />
                     </Border>
                     <TextBlock Text="PosSystem"
                                Style="{StaticResource TitleMedium}"
-                               Foreground="{StaticResource OnSurfaceBrush}"
+                               Foreground="{DynamicResource OnSurfaceBrush}"
                                Margin="10,0,0,0"
                                VerticalAlignment="Center" />
                 </StackPanel>
 
                 <!-- Theme toggle — throwaway location, move into a real
                      Settings screen once one exists. Icon-free on purpose
-                     (no font dependency); label says which way it switches. -->
+                     (no font dependency); label says which way it switches.
+                     Uses ThemeToggleButtonStyle (NavStyles.xaml) instead of
+                     the default WPF Button template, which paints its own
+                     fixed system hover color and was unreadable in dark mode. -->
                 <Button x:Name="ThemeToggleButton"
                         DockPanel.Dock="Bottom"
                         Content="Toggle Light / Dark"
                         Click="ThemeToggleButton_Click"
-                        Background="{StaticResource SurfaceContainerBrush}"
-                        Foreground="{StaticResource OnSurfaceBrush}"
-                        BorderThickness="0"
+                        Style="{StaticResource ThemeToggleButtonStyle}"
                         Padding="12,10"
                         Margin="12,8,12,16"
                         HorizontalContentAlignment="Center" />

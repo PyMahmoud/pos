@@ -7,24 +7,24 @@
         <vm:DashboardViewModel />
     </UserControl.DataContext>
 
-    <Grid Background="{StaticResource BackgroundBrush}">
+    <Grid Background="{DynamicResource BackgroundBrush}">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560">
             <TextBlock Text="Dashboard"
                        Style="{StaticResource DisplayLarge}"
-                       Foreground="{StaticResource OnSurfaceBrush}"
+                       Foreground="{DynamicResource OnSurfaceBrush}"
                        HorizontalAlignment="Center" />
             <TextBlock Text="Sold-items and monthly-revenue charts land here in a later step — refreshed per order, per the business plan."
                        Style="{StaticResource BodyLarge}"
-                       Foreground="{StaticResource OnSurfaceVariantBrush}"
+                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
                        TextAlignment="Center"
                        TextWrapping="Wrap"
                        Margin="0,8,0,24" />
-            <Border Background="{StaticResource SurfaceContainerBrush}"
+            <Border Background="{DynamicResource SurfaceContainerBrush}"
                     CornerRadius="16"
                     Padding="24">
                 <TextBlock Text="{Binding StatusText}"
                            Style="{StaticResource BodyLarge}"
-                           Foreground="{StaticResource OnSurfaceBrush}"
+                           Foreground="{DynamicResource OnSurfaceBrush}"
                            TextAlignment="Center"
                            TextWrapping="Wrap" />
             </Border>

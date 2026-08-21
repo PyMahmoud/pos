@@ -2,15 +2,15 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Grid Background="{StaticResource BackgroundBrush}">
+    <Grid Background="{DynamicResource BackgroundBrush}">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="480">
             <TextBlock Text="Checkout"
                        Style="{StaticResource DisplayLarge}"
-                       Foreground="{StaticResource OnSurfaceBrush}"
+                       Foreground="{DynamicResource OnSurfaceBrush}"
                        HorizontalAlignment="Center" />
             <TextBlock Text="Highest-traffic screen — item grid + running order + Cash/Card toggle. Built next."
                        Style="{StaticResource BodyLarge}"
-                       Foreground="{StaticResource OnSurfaceVariantBrush}"
+                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
                        TextAlignment="Center"
                        TextWrapping="Wrap"
                        Margin="0,8,0,0" />

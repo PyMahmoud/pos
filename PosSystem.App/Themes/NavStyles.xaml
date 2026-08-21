@@ -22,27 +22,60 @@
                         <StackPanel Orientation="Horizontal">
                             <Path x:Name="IconPath"
                                   Data="{Binding IconData}"
-                                  Fill="{StaticResource OnSurfaceVariantBrush}"
+                                  Fill="{DynamicResource OnSurfaceVariantBrush}"
                                   Width="20" Height="20"
                                   Stretch="Uniform"
                                   VerticalAlignment="Center" />
                             <TextBlock x:Name="LabelText"
                                        Text="{Binding Label}"
                                        Style="{StaticResource BodyLarge}"
-                                       Foreground="{StaticResource OnSurfaceVariantBrush}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                        Margin="12,0,0,0"
                                        VerticalAlignment="Center" />
                         </StackPanel>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="{StaticResource SurfaceContainerHighBrush}" />
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="{StaticResource PrimaryContainerBrush}" />
-                            <Setter TargetName="IconPath" Property="Fill" Value="{StaticResource OnPrimaryContainerBrush}" />
-                            <Setter TargetName="LabelText" Property="Foreground" Value="{StaticResource OnPrimaryContainerBrush}" />
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource PrimaryContainerBrush}" />
+                            <Setter TargetName="IconPath" Property="Fill" Value="{DynamicResource OnPrimaryContainerBrush}" />
+                            <Setter TargetName="LabelText" Property="Foreground" Value="{DynamicResource OnPrimaryContainerBrush}" />
                             <Setter TargetName="LabelText" Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Theme toggle button (sidebar footer). Replaces the default WPF
+        Button template, which paints its own fixed system hover/pressed
+        colors that ignore Background/Foreground — that's why the old
+        version looked fine in light mode but was unreadable in dark
+        mode. This version uses only theme brush keys, so hover/pressed
+        stay legible under both Colors.Light.xaml and Colors.Dark.xaml.
+    -->
+    <Style x:Key="ThemeToggleButtonStyle" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Root"
+                            Background="{DynamicResource SurfaceContainerBrush}"
+                            CornerRadius="10"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource PrimaryContainerBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
