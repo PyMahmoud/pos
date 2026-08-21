@@ -1,0 +1,19 @@
+<UserControl x:Class="PosSystem.App.Views.CheckoutView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="480">
+            <TextBlock Text="Checkout"
+                       Style="{StaticResource DisplayLarge}"
+                       Foreground="{StaticResource OnSurfaceBrush}"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="Highest-traffic screen — item grid + running order + Cash/Card toggle. Built next."
+                       Style="{StaticResource BodyLarge}"
+                       Foreground="{StaticResource OnSurfaceVariantBrush}"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Margin="0,8,0,0" />
+        </StackPanel>
+    </Grid>
+</UserControl>

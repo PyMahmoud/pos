@@ -1,0 +1,19 @@
+<UserControl x:Class="PosSystem.App.Views.InventoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="480">
+            <TextBlock Text="Inventory"
+                       Style="{StaticResource DisplayLarge}"
+                       Foreground="{StaticResource OnSurfaceBrush}"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="Goods list, stock levels, pricing. 281 real products already in rovaShop.db to build against."
+                       Style="{StaticResource BodyLarge}"
+                       Foreground="{StaticResource OnSurfaceVariantBrush}"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Margin="0,8,0,0" />
+        </StackPanel>
+    </Grid>
+</UserControl>

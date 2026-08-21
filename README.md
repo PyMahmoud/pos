@@ -14,19 +14,29 @@ PosSystem.Core/            <- class library, NO WPF/UI references at all
     Server.cs              <- connection string + CreateDatabase/CreateTable helpers
   packages.config           <- only System.Data.SQLite, nothing else
 
-PosSystem.App/              <- WPF shell, currently just a blank window
+PosSystem.App/              <- WPF shell with real sidebar nav + 4 screens
   App.xaml / App.xaml.cs
-  MainWindow.xaml            <- proves the theme + Core reference both work, nothing else
+  MainWindow.xaml            <- shell: sidebar (240px) + active screen, MVVM-driven
+  Assets/
+    IconGeometries.cs         <- hand-authored flat vector nav icons (no font/library dependency)
   Theming/
     ThemeManager.cs           <- swaps Colors.Light/Dark.xaml at runtime (ThemeManager.Toggle())
   Themes/
     Colors.Light.xaml         <- real palette, generated from seed #6C4CE0 (Material Design 3 Fidelity scheme)
     Colors.Dark.xaml          <- same tokens, dark variant, same seed
     Typography.xaml           <- type scale (placeholder font, real sizes)
+    NavStyles.xaml             <- sidebar ListBoxItem style (icon + label, selected/hover states)
   ViewModels/
     ViewModelBase.cs          <- INotifyPropertyChanged base for every screen ViewModel
     RelayCommand.cs            <- ICommand implementation for button bindings
-  Views/                      <- empty, this is where real screens go
+    NavItem.cs                  <- sidebar entry model (label, icon, lazy view factory)
+    MainViewModel.cs             <- owns nav items + which screen is currently shown
+    DashboardViewModel.cs         <- runs the Core/SQLite smoke test, will host real KPIs later
+  Views/
+    DashboardView.xaml            <- shows smoke-test output; charts land here later
+    CheckoutView.xaml               <- placeholder, real screen is step 4
+    CustomersView.xaml               <- placeholder, real screen is step 5 (debt tracking)
+    InventoryView.xaml                <- placeholder, no step assigned yet
   rovaShop.db                 <- existing database, copied to output on build
 ```
 
@@ -43,15 +53,15 @@ PosSystem.App/              <- WPF shell, currently just a blank window
 1. Open `PosSystem.sln`
 2. Right-click the solution → **Restore NuGet Packages** (pulls down `System.Data.SQLite` for Core)
 3. Set **PosSystem.App** as the startup project
-4. Build & run — you should get a blank window with "PosSystem — skeleton running" in the middle. That confirms the Core reference, the theme resource dictionaries, and the SQLite package are all wired correctly before any real screen exists.
+4. Build & run — you get a sidebar (Dashboard, Checkout, Customers, Inventory) with Dashboard shown by default, printing the Core/SQLite smoke test result. Click other nav items to confirm routing works; use the "Toggle Light / Dark" button at the bottom of the sidebar to confirm both themes render correctly.
 
 ## Next steps (in order)
 
 1. ~~**Verify Core against real data**~~ — done. `MainWindow.xaml.cs` now has a `RunCoreDataSmokeTest()` call that reads `goods` and `customers` through the Core data layer and prints row counts + total outstanding debt to the window on launch.
 2. ~~**Design the real color palette**~~ — done. See "Color palette" below for the seed, the scheme used, and why.
-3. **Build the app shell/navigation** — a left sidebar (Checkout, Customers, Inventory, Dashboard) is the natural Material-style layout for a POS. This replaces the old app's custom-drawn menu rectangle entirely.
-4. **Build Checkout first** — highest-traffic screen, and the one that most needs to look and feel modern since it's what the client's staff sees all day.
-5. **Build Customers/Debt screen second** — this is the feature the skincare client specifically asked for, and the data model already supports it. Seeded test data (see below) is now in place to build and eyeball this screen against before real client data arrives.
+3. ~~**Build the app shell/navigation**~~ — done. `MainWindow.xaml` is now a real shell: 240px sidebar (logo, 4 nav items, theme toggle) driving a `ContentControl` via `MainViewModel`. Views are lazily created and cached per nav item, so switching tabs doesn't re-run each screen's setup every click. Dashboard, Checkout, Customers, and Inventory each have a real `View`/`ViewModel` pair — Dashboard has actual content (the data smoke test); the other three are placeholders ready to be filled in on their assigned steps.
+4. **Build Checkout first** — highest-traffic screen, and the one that most needs to look and feel modern since it's what the client's staff sees all day. Replace `Views/CheckoutView.xaml` in place; the nav wiring won't need to change.
+5. **Build Customers/Debt screen second** — this is the feature the skincare client specifically asked for, and the data model already supports it. Seeded test data (see below) is now in place to build and eyeball this screen against before real client data arrives. Replace `Views/CustomersView.xaml` in place.
 
 ## Color palette
 
@@ -80,6 +90,10 @@ screen should bind only to these keys, never a raw hex, so
 now) repaints the whole app with no per-screen logic. Startup default is
 Light (POS counters are usually in bright rooms); Dark is available via the
 toggle.
+
+## Sidebar icons
+
+`Assets/IconGeometries.cs` has 4 small hand-authored flat vector icons (Dashboard, Checkout, Customers, Inventory) as raw `Geometry` path data — not from an icon font or external package. Deliberate: Segoe MDL2 Assets isn't guaranteed on very old Windows installs, and an external icon library is one more dependency on machines this app needs to stay light on. They're legible and distinct but not polished — swap for a proper icon set later if the client wants something more refined; nothing else needs to change since `NavItem.IconData` is just a `Geometry` reference.
 
 ## Seeded test data
 

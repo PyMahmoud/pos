@@ -1,0 +1,19 @@
+<UserControl x:Class="PosSystem.App.Views.CustomersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="480">
+            <TextBlock Text="Customers"
+                       Style="{StaticResource DisplayLarge}"
+                       Foreground="{StaticResource OnSurfaceBrush}"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="Debt/credit tracking for the skincare client — 8 seeded test customers are already in rovaShop.db, ready to build this against."
+                       Style="{StaticResource BodyLarge}"
+                       Foreground="{StaticResource OnSurfaceVariantBrush}"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Margin="0,8,0,0" />
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,33 @@
+<UserControl x:Class="PosSystem.App.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:PosSystem.App.ViewModels">
+
+    <UserControl.DataContext>
+        <vm:DashboardViewModel />
+    </UserControl.DataContext>
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560">
+            <TextBlock Text="Dashboard"
+                       Style="{StaticResource DisplayLarge}"
+                       Foreground="{StaticResource OnSurfaceBrush}"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="Sold-items and monthly-revenue charts land here in a later step — refreshed per order, per the business plan."
+                       Style="{StaticResource BodyLarge}"
+                       Foreground="{StaticResource OnSurfaceVariantBrush}"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Margin="0,8,0,24" />
+            <Border Background="{StaticResource SurfaceContainerBrush}"
+                    CornerRadius="16"
+                    Padding="24">
+                <TextBlock Text="{Binding StatusText}"
+                           Style="{StaticResource BodyLarge}"
+                           Foreground="{StaticResource OnSurfaceBrush}"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

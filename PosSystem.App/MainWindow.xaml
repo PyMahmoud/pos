@@ -1,36 +1,75 @@
 <Window x:Class="PosSystem.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="PosSystem" Height="768" Width="1024"
+        xmlns:vm="clr-namespace:PosSystem.App.ViewModels"
+        Title="PosSystem" Height="768" Width="1280"
+        MinHeight="600" MinWidth="960"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource SurfaceBrush}">
+        Background="{StaticResource BackgroundBrush}">
 
-    <!--
-        Empty shell on purpose. Build real navigation (a NavigationView /
-        sidebar shell is the natural fit for Material-style POS screens:
-        Checkout, Customers, Inventory, Dashboard) now that the theme is settled.
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
 
-        ThemeToggleButton below is a throwaway proof that Light/Dark switching
-        works end to end — remove once a real Settings screen owns this.
-    -->
     <Grid>
-        <TextBlock x:Name="StatusText"
-                   Text="PosSystem — skeleton running"
-                   Style="{StaticResource HeadlineMedium}"
-                   Foreground="{StaticResource OnSurfaceBrush}"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   TextAlignment="Center" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <Button x:Name="ThemeToggleButton"
-                Content="Toggle Light / Dark"
-                Click="ThemeToggleButton_Click"
-                Background="{StaticResource PrimaryBrush}"
-                Foreground="{StaticResource OnPrimaryBrush}"
-                BorderThickness="0"
-                Padding="16,8"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Bottom"
-                Margin="0,0,0,32" />
+        <!-- Sidebar -->
+        <Border Grid.Column="0"
+                Background="{StaticResource SurfaceContainerLowBrush}"
+                BorderBrush="{StaticResource OutlineVariantBrush}"
+                BorderThickness="0,0,1,0">
+            <DockPanel LastChildFill="True">
+
+                <!-- Logo / app name -->
+                <StackPanel DockPanel.Dock="Top"
+                            Orientation="Horizontal"
+                            Margin="16,20,16,16">
+                    <Border Width="36" Height="36" CornerRadius="10"
+                            Background="{StaticResource PrimaryBrush}">
+                        <TextBlock Text="P"
+                                   Foreground="{StaticResource OnPrimaryBrush}"
+                                   FontWeight="Bold" FontSize="18"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="PosSystem"
+                               Style="{StaticResource TitleMedium}"
+                               Foreground="{StaticResource OnSurfaceBrush}"
+                               Margin="10,0,0,0"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Theme toggle — throwaway location, move into a real
+                     Settings screen once one exists. Icon-free on purpose
+                     (no font dependency); label says which way it switches. -->
+                <Button x:Name="ThemeToggleButton"
+                        DockPanel.Dock="Bottom"
+                        Content="Toggle Light / Dark"
+                        Click="ThemeToggleButton_Click"
+                        Background="{StaticResource SurfaceContainerBrush}"
+                        Foreground="{StaticResource OnSurfaceBrush}"
+                        BorderThickness="0"
+                        Padding="12,10"
+                        Margin="12,8,12,16"
+                        HorizontalContentAlignment="Center" />
+
+                <!-- Nav items -->
+                <ListBox ItemsSource="{Binding NavItems}"
+                         SelectedItem="{Binding SelectedNavItem, Mode=TwoWay}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Margin="12,0,12,0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         ItemContainerStyle="{StaticResource NavListBoxItemStyle}" />
+            </DockPanel>
+        </Border>
+
+        <!-- Active screen -->
+        <ContentControl Grid.Column="1" Content="{Binding CurrentView}" />
     </Grid>
 </Window>

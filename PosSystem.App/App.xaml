@@ -10,6 +10,7 @@
                      Colors.Dark.xaml at runtime — see Theming/ThemeManager.cs. -->
                 <ResourceDictionary Source="Themes/Colors.Light.xaml" />
                 <ResourceDictionary Source="Themes/Typography.xaml" />
+                <ResourceDictionary Source="Themes/NavStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
