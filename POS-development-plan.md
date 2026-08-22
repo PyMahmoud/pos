@@ -50,13 +50,13 @@ Current state: skeleton solution exists (`PosSystem.Core` + `PosSystem.App`), ol
 ## Phase 4 — Checkout screen
 **Goal:** the screen staff will live in all day — highest priority for both function and polish.
 
-- Product grid (tap to add), cart panel, running total
-- Cash / Card payment toggle (no gateway integration needed — confirmed manual-entry model)
-- Save order → writes to `Sells`/`Bills` tables via the existing `Data` layer
-- Sold-out toggle per product (flip `IsAvailable` — quick tap/long-press)
-- Test end-to-end: ring up a real order, confirm it lands correctly in the database
+- [x] Product grid (tap to add), cart panel, running total
+- [x] Cash / Card payment toggle (no gateway integration needed — confirmed manual-entry model)
+- [x] Save order → writes to `Sells`/`Bills` tables via the existing `Data` layer
+- [~] Sold-out toggle per product — there's no `IsAvailable` column on `Goods`, so this uses `Quantity <= 0` as the out-of-stock signal instead (dims the card, disables Add). A real toggle would need a schema change; flagging rather than adding one unasked.
+- [ ] **Test end-to-end in Visual Studio — not yet done.** This screen was written directly against the repo via file access, not compiled or run — there's no Windows/WPF runtime available to build it from here. Before treating Phase 4 as closed: open the solution, build, and ring up a real test sale (a few of the 281 seeded goods work fine) — confirm the Bills/Sells rows land correctly and `goods.Quantity` decrements as expected.
 
-**Exit criteria:** you can complete a full sale from product tap to saved order, styled with the real design system.
+**Exit criteria:** you can complete a full sale from product tap to saved order, styled with the real design system. *(Code is in place; this still needs a real build/run pass before calling it done.)*
 
 ---
 

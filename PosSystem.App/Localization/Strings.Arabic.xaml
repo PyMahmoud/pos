@@ -21,6 +21,15 @@
 
     <system:String x:Key="CheckoutHeading">الدفع</system:String>
     <system:String x:Key="CheckoutDescription">الشاشة الأكثر استخدامًا — شبكة المنتجات، الطلب الحالي، وتبديل الدفع نقدًا/بالبطاقة. قادمة في الخطوة التالية.</system:String>
+    <system:String x:Key="CheckoutAllCategory">الكل</system:String>
+    <system:String x:Key="CheckoutCartTitle">الطلب الحالي</system:String>
+    <system:String x:Key="CheckoutCartEmpty">السلة فارغة — اضغط على منتج لإضافته.</system:String>
+    <system:String x:Key="CheckoutTotal">الإجمالي</system:String>
+    <system:String x:Key="CheckoutCash">نقدًا</system:String>
+    <system:String x:Key="CheckoutCard">بطاقة</system:String>
+    <system:String x:Key="CheckoutCompleteSale">إتمام البيع</system:String>
+    <system:String x:Key="CheckoutSaleSuccess">تمت عملية البيع — فاتورة رقم {0}</system:String>
+    <system:String x:Key="CheckoutSaleError">حدث خطأ أثناء حفظ عملية البيع. حاول مرة أخرى.</system:String>
 
     <system:String x:Key="CustomersHeading">العملاء</system:String>
     <system:String x:Key="CustomersDescription">تتبّع الديون والأرصدة لعميلة مستحضرات التجميل — 8 عملاء تجريبيين موجودون بالفعل في rovaShop.db، جاهزون لبناء هذه الشاشة عليهم.</system:String>

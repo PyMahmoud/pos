@@ -21,6 +21,15 @@
 
     <system:String x:Key="CheckoutHeading">Checkout</system:String>
     <system:String x:Key="CheckoutDescription">Highest-traffic screen — item grid + running order + Cash/Card toggle. Built next.</system:String>
+    <system:String x:Key="CheckoutAllCategory">All</system:String>
+    <system:String x:Key="CheckoutCartTitle">Current Order</system:String>
+    <system:String x:Key="CheckoutCartEmpty">Cart is empty — tap an item to add it.</system:String>
+    <system:String x:Key="CheckoutTotal">Total</system:String>
+    <system:String x:Key="CheckoutCash">Cash</system:String>
+    <system:String x:Key="CheckoutCard">Card</system:String>
+    <system:String x:Key="CheckoutCompleteSale">Complete Sale</system:String>
+    <system:String x:Key="CheckoutSaleSuccess">Sale completed — Bill #{0}</system:String>
+    <system:String x:Key="CheckoutSaleError">Something went wrong saving the sale. Please try again.</system:String>
 
     <system:String x:Key="CustomersHeading">Customers</system:String>
     <system:String x:Key="CustomersDescription">Debt/credit tracking for the skincare client — 8 seeded test customers are already in rovaShop.db, ready to build this against.</system:String>

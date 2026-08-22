@@ -1,6 +1,7 @@
 <Application x:Class="PosSystem.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:PosSystem.App.Converters"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
@@ -12,6 +13,13 @@
                  FlowDirection="{DynamicResource AppFlowDirection}". -->
             <FlowDirection x:Key="AppFlowDirection">LeftToRight</FlowDirection>
 
+            <!-- Small, single-purpose converters used by Checkout (out-of-stock
+                 dimming/disabling, empty-cart message visibility). Kept as plain
+                 keyed resources rather than a merged dictionary since there's
+                 no XAML markup around them, just C# classes. -->
+            <conv:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
+            <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+
             <ResourceDictionary.MergedDictionaries>
                 <!-- Colors.Light.xaml is the startup default (POS counters are usually in
                      bright rooms). ThemeManager.SwitchTheme() swaps this entry for
@@ -19,6 +27,7 @@
                 <ResourceDictionary Source="Themes/Colors.Light.xaml" />
                 <ResourceDictionary Source="Themes/Typography.xaml" />
                 <ResourceDictionary Source="Themes/NavStyles.xaml" />
+                <ResourceDictionary Source="Themes/CheckoutStyles.xaml" />
 
                 <!-- Strings.English.xaml is the startup default.
                      LocalizationManager.SwitchLanguage() swaps this entry for
