@@ -24,5 +24,12 @@ namespace PosSystem.App.Assets
 
         public static readonly Geometry Inventory = Geometry.Parse(
             "M4,7 L12,3 L20,7 L12,11 Z M4,7 V17 L12,21 V11 Z M20,7 V17 L12,21 M12,11 V21");
+
+        // Sliders/equalizer glyph — three tracks with knobs at different
+        // positions. Common, unambiguous "Settings" read at nav-icon size.
+        public static readonly Geometry Settings = Geometry.Parse(
+            "M4,6 L20,6 L20,8 L4,8 Z M12.5,7 A2.5,2.5 0 1 0 17.5,7 A2.5,2.5 0 1 0 12.5,7 Z " +
+            "M4,11 L20,11 L20,13 L4,13 Z M6.5,12 A2.5,2.5 0 1 0 11.5,12 A2.5,2.5 0 1 0 6.5,12 Z " +
+            "M4,16 L20,16 L20,18 L4,18 Z M12.5,17 A2.5,2.5 0 1 0 17.5,17 A2.5,2.5 0 1 0 12.5,17 Z");
     }
 }

@@ -1,0 +1,35 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+
+    <!--
+        ARABIC strings — same key set as Strings.English.xaml (verify parity
+        whenever either file changes; LocalizationManager assumes both
+        dictionaries define every key). Paired with FlowDirection=RightToLeft,
+        set app-wide by LocalizationManager.SwitchLanguage via the
+        AppFlowDirection resource.
+    -->
+
+    <system:String x:Key="NavDashboard">لوحة التحكم</system:String>
+    <system:String x:Key="NavCheckout">الدفع</system:String>
+    <system:String x:Key="NavCustomers">العملاء</system:String>
+    <system:String x:Key="NavInventory">المخزون</system:String>
+    <system:String x:Key="NavSettings">الإعدادات</system:String>
+
+    <system:String x:Key="DashboardHeading">لوحة التحكم</system:String>
+    <system:String x:Key="DashboardDescription">ستظهر هنا لاحقًا رسوم بيانية للمنتجات الأكثر مبيعًا والإيرادات الشهرية — تُحدَّث مع كل عملية بيع، وفق خطة العمل.</system:String>
+
+    <system:String x:Key="CheckoutHeading">الدفع</system:String>
+    <system:String x:Key="CheckoutDescription">الشاشة الأكثر استخدامًا — شبكة المنتجات، الطلب الحالي، وتبديل الدفع نقدًا/بالبطاقة. قادمة في الخطوة التالية.</system:String>
+
+    <system:String x:Key="CustomersHeading">العملاء</system:String>
+    <system:String x:Key="CustomersDescription">تتبّع الديون والأرصدة لعميلة مستحضرات التجميل — 8 عملاء تجريبيين موجودون بالفعل في rovaShop.db، جاهزون لبناء هذه الشاشة عليهم.</system:String>
+
+    <system:String x:Key="InventoryHeading">المخزون</system:String>
+    <system:String x:Key="InventoryDescription">قائمة المنتجات، مستويات المخزون، والأسعار. 281 منتجًا حقيقيًا موجودون بالفعل في rovaShop.db للبناء عليهم.</system:String>
+
+    <system:String x:Key="SettingsHeading">الإعدادات</system:String>
+    <system:String x:Key="SettingsDescription">تعيش تفضيلات التطبيق العامة هنا. اللغة هي أول تفضيل — سيُضاف إعداد الطابعة، تذييل الإيصال، نسبة الضريبة، وغيرها حسب حاجة العميل.</system:String>
+    <system:String x:Key="LanguageToggleLabel">Toggle Language / تبديل اللغة</system:String>
+
+</ResourceDictionary>

@@ -1,0 +1,35 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+
+    <!--
+        ENGLISH strings — startup default. Strings.Arabic.xaml defines the
+        identical set of keys, so LocalizationManager can hot-swap this
+        dictionary for that one at runtime without any screen needing to
+        know which language is active. Every screen should bind only to
+        these keys via DynamicResource, never a hardcoded literal.
+    -->
+
+    <system:String x:Key="NavDashboard">Dashboard</system:String>
+    <system:String x:Key="NavCheckout">Checkout</system:String>
+    <system:String x:Key="NavCustomers">Customers</system:String>
+    <system:String x:Key="NavInventory">Inventory</system:String>
+    <system:String x:Key="NavSettings">Settings</system:String>
+
+    <system:String x:Key="DashboardHeading">Dashboard</system:String>
+    <system:String x:Key="DashboardDescription">Sold-items and monthly-revenue charts land here in a later step — refreshed per order, per the business plan.</system:String>
+
+    <system:String x:Key="CheckoutHeading">Checkout</system:String>
+    <system:String x:Key="CheckoutDescription">Highest-traffic screen — item grid + running order + Cash/Card toggle. Built next.</system:String>
+
+    <system:String x:Key="CustomersHeading">Customers</system:String>
+    <system:String x:Key="CustomersDescription">Debt/credit tracking for the skincare client — 8 seeded test customers are already in rovaShop.db, ready to build this against.</system:String>
+
+    <system:String x:Key="InventoryHeading">Inventory</system:String>
+    <system:String x:Key="InventoryDescription">Goods list, stock levels, pricing. 281 real products already in rovaShop.db to build against.</system:String>
+
+    <system:String x:Key="SettingsHeading">Settings</system:String>
+    <system:String x:Key="SettingsDescription">App-wide preferences live here. Language is the first one — printer setup, receipt footer, tax rate, etc. get added as the client needs them.</system:String>
+    <system:String x:Key="LanguageToggleLabel">Toggle Language / تبديل اللغة</system:String>
+
+</ResourceDictionary>

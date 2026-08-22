@@ -4,6 +4,14 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
+
+            <!-- Default FlowDirection — LocalizationManager.SwitchLanguage
+                 overwrites this entry directly (not via dictionary swap,
+                 since it's a single value, not a themed set of keys) when
+                 Arabic is selected. Screens bind to it via
+                 FlowDirection="{DynamicResource AppFlowDirection}". -->
+            <FlowDirection x:Key="AppFlowDirection">LeftToRight</FlowDirection>
+
             <ResourceDictionary.MergedDictionaries>
                 <!-- Colors.Light.xaml is the startup default (POS counters are usually in
                      bright rooms). ThemeManager.SwitchTheme() swaps this entry for
@@ -11,6 +19,12 @@
                 <ResourceDictionary Source="Themes/Colors.Light.xaml" />
                 <ResourceDictionary Source="Themes/Typography.xaml" />
                 <ResourceDictionary Source="Themes/NavStyles.xaml" />
+
+                <!-- Strings.English.xaml is the startup default.
+                     LocalizationManager.SwitchLanguage() swaps this entry for
+                     Strings.Arabic.xaml at runtime — see
+                     Localization/LocalizationManager.cs. -->
+                <ResourceDictionary Source="Localization/Strings.English.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

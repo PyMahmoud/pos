@@ -45,12 +45,16 @@ namespace PosSystem.App.ViewModels
 
         public MainViewModel()
         {
+            // NavItem takes a string-resource key now (not a literal label),
+            // so its Label re-resolves against whichever Strings.*.xaml
+            // LocalizationManager currently has loaded. See NavItem.cs.
             NavItems = new ObservableCollection<NavItem>
             {
-                new NavItem("Dashboard", IconGeometries.Dashboard, () => new DashboardView()),
-                new NavItem("Checkout", IconGeometries.Checkout, () => new CheckoutView()),
-                new NavItem("Customers", IconGeometries.Customers, () => new CustomersView()),
-                new NavItem("Inventory", IconGeometries.Inventory, () => new InventoryView()),
+                new NavItem("NavDashboard", IconGeometries.Dashboard, () => new DashboardView()),
+                new NavItem("NavCheckout", IconGeometries.Checkout, () => new CheckoutView()),
+                new NavItem("NavCustomers", IconGeometries.Customers, () => new CustomersView()),
+                new NavItem("NavInventory", IconGeometries.Inventory, () => new InventoryView()),
+                new NavItem("NavSettings", IconGeometries.Settings, () => new SettingsView()),
             };
 
             // Dashboard first — matches the sidebar order in all three

@@ -91,9 +91,19 @@ now) repaints the whole app with no per-screen logic. Startup default is
 Light (POS counters are usually in bright rooms); Dark is available via the
 toggle.
 
+## Language
+
+App language is switchable at runtime between English and Arabic — toggle it from the new **Settings** screen (5th sidebar item). Same swap pattern as the theme: `Localization/Strings.English.xaml` and `Localization/Strings.Arabic.xaml` define the identical set of string keys, `Localization/LocalizationManager.cs` hot-swaps which one is merged into `Application.Resources`, and every screen binds to those keys via `DynamicResource` instead of a hardcoded literal — so nothing screen-specific has to know which language is active.
+
+Arabic also flips the app to right-to-left: `LocalizationManager.SwitchLanguage()` sets an `AppFlowDirection` resource that `MainWindow` and every `View` bind their `FlowDirection` to, and WPF mirrors the layout automatically from there.
+
+Sidebar labels (`NavItem.Label`) are the one spot that couldn't use a plain XAML `DynamicResource` binding, since `NavItem` is a C# object, not a dependency property — `NavItem` instead resolves its label through `LocalizationManager.GetString()` and re-raises `PropertyChanged` when the language changes, so the sidebar updates live along with everything else.
+
+The existing "Toggle Light / Dark" button is unrelated to this and untouched — still in the sidebar footer, still does only what it always did.
+
 ## Sidebar icons
 
-`Assets/IconGeometries.cs` has 4 small hand-authored flat vector icons (Dashboard, Checkout, Customers, Inventory) as raw `Geometry` path data — not from an icon font or external package. Deliberate: Segoe MDL2 Assets isn't guaranteed on very old Windows installs, and an external icon library is one more dependency on machines this app needs to stay light on. They're legible and distinct but not polished — swap for a proper icon set later if the client wants something more refined; nothing else needs to change since `NavItem.IconData` is just a `Geometry` reference.
+`Assets/IconGeometries.cs` has 5 small hand-authored flat vector icons (Dashboard, Checkout, Customers, Inventory, Settings) as raw `Geometry` path data — not from an icon font or external package. Deliberate: Segoe MDL2 Assets isn't guaranteed on very old Windows installs, and an external icon library is one more dependency on machines this app needs to stay light on. They're legible and distinct but not polished — swap for a proper icon set later if the client wants something more refined; nothing else needs to change since `NavItem.IconData` is just a `Geometry` reference.
 
 ## Seeded test data
 

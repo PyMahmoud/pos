@@ -1,14 +1,15 @@
 <UserControl x:Class="PosSystem.App.Views.CheckoutView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="{DynamicResource AppFlowDirection}">
 
     <Grid Background="{DynamicResource BackgroundBrush}">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="480">
-            <TextBlock Text="Checkout"
+            <TextBlock Text="{DynamicResource CheckoutHeading}"
                        Style="{StaticResource DisplayLarge}"
                        Foreground="{DynamicResource OnSurfaceBrush}"
                        HorizontalAlignment="Center" />
-            <TextBlock Text="Highest-traffic screen — item grid + running order + Cash/Card toggle. Built next."
+            <TextBlock Text="{DynamicResource CheckoutDescription}"
                        Style="{StaticResource BodyLarge}"
                        Foreground="{DynamicResource OnSurfaceVariantBrush}"
                        TextAlignment="Center"

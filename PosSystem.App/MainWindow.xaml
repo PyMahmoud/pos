@@ -5,7 +5,8 @@
         Title="PosSystem" Height="768" Width="1280"
         MinHeight="600" MinWidth="960"
         WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource BackgroundBrush}">
+        Background="{DynamicResource BackgroundBrush}"
+        FlowDirection="{DynamicResource AppFlowDirection}">
 
     <Window.DataContext>
         <vm:MainViewModel />
@@ -43,12 +44,7 @@
                                VerticalAlignment="Center" />
                 </StackPanel>
 
-                <!-- Theme toggle — throwaway location, move into a real
-                     Settings screen once one exists. Icon-free on purpose
-                     (no font dependency); label says which way it switches.
-                     Uses ThemeToggleButtonStyle (NavStyles.xaml) instead of
-                     the default WPF Button template, which paints its own
-                     fixed system hover color and was unreadable in dark mode. -->
+                <!-- Theme toggle — left exactly as it was, untouched. -->
                 <Button x:Name="ThemeToggleButton"
                         DockPanel.Dock="Bottom"
                         Content="Toggle Light / Dark"
