@@ -56,6 +56,7 @@
     <Compile Include="Data\Bills.cs" />
     <Compile Include="Data\Categories.cs" />
     <Compile Include="Data\Customers.cs" />
+    <Compile Include="Data\DbNullSafe.cs" />
     <Compile Include="Data\Expense.cs" />
     <Compile Include="Data\Goods.cs" />
     <Compile Include="Data\Info.cs" />

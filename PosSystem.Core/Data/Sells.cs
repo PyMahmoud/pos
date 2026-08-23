@@ -106,20 +106,20 @@ namespace PosSystem.Core.Data
                     while (reader.Read())
                     {
                         var goods_List = new Models.Sells();
-                        goods_List.Id = Convert.ToInt32(reader["ID"]);
-                        goods_List.Name = reader["Name"].ToString();
-                        goods_List.Category = reader["Category"].ToString();
-                        goods_List.Quantity = Convert.ToDouble(reader["Quantity"]);
-                        goods_List.Cost = Convert.ToDouble(reader["Cost"]);
-                        goods_List.Price = Convert.ToDouble(reader["Price"]);
-                        goods_List.Type = reader["Type"].ToString();
-                        goods_List.Time = reader["Time"].ToString();
-                        goods_List.Datex = reader["Datex"].ToString();
-                        goods_List.Barcode = reader["Barcode"].ToString();
-                        goods_List.Billnumber = Convert.ToInt32(reader["Billnumber"]);
-                        goods_List.Earned = Convert.ToDouble(reader["Earned"]);
-                        goods_List.Returned = reader["Returned"].ToString();
-                        goods_List.Details = reader["Details"].ToString();
+                        goods_List.Id = DbNullSafe.ToInt32(reader["ID"]);
+                        goods_List.Name = DbNullSafe.ToStringSafe(reader["Name"]);
+                        goods_List.Category = DbNullSafe.ToStringSafe(reader["Category"]);
+                        goods_List.Quantity = DbNullSafe.ToDouble(reader["Quantity"]);
+                        goods_List.Cost = DbNullSafe.ToDouble(reader["Cost"]);
+                        goods_List.Price = DbNullSafe.ToDouble(reader["Price"]);
+                        goods_List.Type = DbNullSafe.ToStringSafe(reader["Type"]);
+                        goods_List.Time = DbNullSafe.ToStringSafe(reader["Time"]);
+                        goods_List.Datex = DbNullSafe.ToStringSafe(reader["Datex"]);
+                        goods_List.Barcode = DbNullSafe.ToStringSafe(reader["Barcode"]);
+                        goods_List.Billnumber = DbNullSafe.ToInt32(reader["Billnumber"]);
+                        goods_List.Earned = DbNullSafe.ToDouble(reader["Earned"]);
+                        goods_List.Returned = DbNullSafe.ToStringSafe(reader["Returned"]);
+                        goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
                         goods.Add(goods_List);
                       
                     }

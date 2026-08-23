@@ -282,13 +282,17 @@ namespace PosSystem.App.ViewModels
                 // Billnumber) — there's no dedicated "next ID" helper in
                 // Core, so compute both from the existing table rather than
                 // adding new SQL to a file Mahmoud might also be touching.
+                // DBNull-guarded: Convert.ToInt32 throws on a NULL cell
+                // ("Object cannot be cast from DBNull to other types"), and
+                // a bill row missing ID/Billnumber shouldn't block every
+                // future sale from saving — treat it as 0 and move on.
                 DataTable billsTable = _billsData.ReadAdapter("bills");
                 int nextId = 1;
                 int nextBillNumber = 1000;
                 foreach (DataRow row in billsTable.Rows)
                 {
-                    int rowId = Convert.ToInt32(row["ID"]);
-                    int rowBillNumber = Convert.ToInt32(row["Billnumber"]);
+                    int rowId = SafeInt(row["ID"]);
+                    int rowBillNumber = SafeInt(row["Billnumber"]);
                     if (rowId >= nextId) nextId = rowId + 1;
                     if (rowBillNumber >= nextBillNumber) nextBillNumber = rowBillNumber + 1;
                 }
@@ -366,5 +370,11 @@ namespace PosSystem.App.ViewModels
                 StatusMessage = LocalizationManager.GetString("CheckoutSaleError") + " (" + ex.Message + ")";
             }
         }
+
+        // DataRow returns DBNull.Value (not C# null) for a null cell —
+        // Convert.ToInt32(DBNull.Value) throws "Object cannot be cast from
+        // DBNull to other types", which is exactly what surfaced here.
+        private static int SafeInt(object value) =>
+            value == null || value == DBNull.Value ? 0 : Convert.ToInt32(value);
     }
 }

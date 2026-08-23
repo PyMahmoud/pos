@@ -54,13 +54,13 @@ namespace PosSystem.Core.Data
                     while (reader.Read())
                     {
                         var goods_List = new Models.Customers();
-                        goods_List.Id = Convert.ToInt32(reader["ID"]);
-                        goods_List.Ownername = reader["Ownername"].ToString();
-                        goods_List.Ownerid = reader["Ownerid"].ToString();
-                        goods_List.Ownernumber = reader["Ownernumber"].ToString();
+                        goods_List.Id = DbNullSafe.ToInt32(reader["ID"]);
+                        goods_List.Ownername = DbNullSafe.ToStringSafe(reader["Ownername"]);
+                        goods_List.Ownerid = DbNullSafe.ToStringSafe(reader["Ownerid"]);
+                        goods_List.Ownernumber = DbNullSafe.ToStringSafe(reader["Ownernumber"]);
                       
-                        goods_List.Paid = Convert.ToDouble(reader["Paid"]);
-                        goods_List.Remain = Convert.ToDouble(reader["Remain"]);
+                        goods_List.Paid = DbNullSafe.ToDouble(reader["Paid"]);
+                        goods_List.Remain = DbNullSafe.ToDouble(reader["Remain"]);
                       
                         //goods_List.Details = reader["Details"].ToString();
                         goods.Add(goods_List);
@@ -84,13 +84,13 @@ namespace PosSystem.Core.Data
                     while (reader.Read())
                     {
                         var goods_List = new Models.Customers();
-                        goods_List.Id = Convert.ToInt32(reader["ID"]);
-                        goods_List.Ownername = reader["Ownername"].ToString();
-                        goods_List.Ownerid = reader["Ownerid"].ToString();
-                        goods_List.Ownernumber = reader["Ownernumber"].ToString();
+                        goods_List.Id = DbNullSafe.ToInt32(reader["ID"]);
+                        goods_List.Ownername = DbNullSafe.ToStringSafe(reader["Ownername"]);
+                        goods_List.Ownerid = DbNullSafe.ToStringSafe(reader["Ownerid"]);
+                        goods_List.Ownernumber = DbNullSafe.ToStringSafe(reader["Ownernumber"]);
 
-                        goods_List.Paid = Convert.ToDouble(reader["Paid"]);
-                        goods_List.Remain = Convert.ToDouble(reader["Remain"]);
+                        goods_List.Paid = DbNullSafe.ToDouble(reader["Paid"]);
+                        goods_List.Remain = DbNullSafe.ToDouble(reader["Remain"]);
 
                         //goods_List.Details = reader["Details"].ToString();
                         goods.Add(goods_List);

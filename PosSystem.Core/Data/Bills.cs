@@ -129,20 +129,20 @@ namespace PosSystem.Core.Data
                     {
                         //string billnumber, double billcost, string time, string datex, string ownername, string ownerid, string ownernumber, double paid, double remain, double earned, double tax, double discount
                         var goods_List = new Models.Bills();
-                        goods_List.Id = Convert.ToInt32(reader["ID"]);
-                        goods_List.Billnumber = Convert.ToInt32(reader["billnumber"]);
-                        goods_List.Billcost = Convert.ToDouble(reader["billcost"]);
-                        goods_List.Time = reader["time"].ToString();
-                        goods_List.Datex = reader["datex"].ToString();
-                        goods_List.Ownername = reader["ownername"].ToString();
-                        goods_List.Ownerid = reader["ownerid"].ToString();
-                        goods_List.Ownernumber = reader["ownernumber"].ToString();
-                        goods_List.Paid = Convert.ToDouble(reader["paid"]);
-                        goods_List.Remain = Convert.ToDouble(reader["remain"]);
-                        goods_List.Earned = Convert.ToDouble(reader["earned"]);
-                        goods_List.Tax = Convert.ToDouble(reader["tax"]);
-                        goods_List.Discount = Convert.ToDouble(reader["discount"]);
-                        goods_List.Details = reader["Details"].ToString();
+                        goods_List.Id = DbNullSafe.ToInt32(reader["ID"]);
+                        goods_List.Billnumber = DbNullSafe.ToInt32(reader["billnumber"]);
+                        goods_List.Billcost = DbNullSafe.ToDouble(reader["billcost"]);
+                        goods_List.Time = DbNullSafe.ToStringSafe(reader["time"]);
+                        goods_List.Datex = DbNullSafe.ToStringSafe(reader["datex"]);
+                        goods_List.Ownername = DbNullSafe.ToStringSafe(reader["ownername"]);
+                        goods_List.Ownerid = DbNullSafe.ToStringSafe(reader["ownerid"]);
+                        goods_List.Ownernumber = DbNullSafe.ToStringSafe(reader["ownernumber"]);
+                        goods_List.Paid = DbNullSafe.ToDouble(reader["paid"]);
+                        goods_List.Remain = DbNullSafe.ToDouble(reader["remain"]);
+                        goods_List.Earned = DbNullSafe.ToDouble(reader["earned"]);
+                        goods_List.Tax = DbNullSafe.ToDouble(reader["tax"]);
+                        goods_List.Discount = DbNullSafe.ToDouble(reader["discount"]);
+                        goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
                         bills.Add(goods_List);
                       
                     }
