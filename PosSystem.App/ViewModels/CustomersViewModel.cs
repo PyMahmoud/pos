@@ -80,6 +80,14 @@ namespace PosSystem.App.ViewModels
 
         public ICommand AddCustomerCommand { get; }
         public ICommand RecordPaymentCommand { get; }
+        public ICommand ViewDetailsCommand { get; }
+
+        private CustomerDetailViewModel _selectedDetail;
+        public CustomerDetailViewModel SelectedDetail
+        {
+            get => _selectedDetail;
+            private set => SetProperty(ref _selectedDetail, value);
+        }
 
         public CustomersViewModel()
         {
@@ -87,6 +95,15 @@ namespace PosSystem.App.ViewModels
             RecordPaymentCommand = new RelayCommand(p =>
             {
                 if (p is CustomerRow row) RecordPayment(row);
+            });
+            ViewDetailsCommand = new RelayCommand(p =>
+            {
+                if (!(p is CustomerRow row)) return;
+
+                var model = new Core.Models.Customers(row.Id, row.Ownername, row.Ownerid, row.Ownernumber, row.Paid, row.Remain);
+                var detail = new CustomerDetailViewModel(model);
+                detail.CloseRequested += () => SelectedDetail = null;
+                SelectedDetail = detail;
             });
 
             CustomerDataEvents.CustomersChanged += LoadCustomers;

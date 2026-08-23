@@ -28,9 +28,9 @@ namespace PosSystem.Core.Data
         //	`Image`	BLOB
         //);
         //string billnumber, double billcost, string time, string datex, string ownername, string ownerid, string ownernumber, double paid, double remain, double earned, double tax, double discount
-        public void InsertBills(string TableName,int ID, int Billnumber, double Billcost, string Time, string Datex, string Ownername, string Ownerid, string Ownernumber, double Paid, double Remain, double Earned, double Tax, double Discount, string Details)
+        public void InsertBills(string TableName,int ID, int Billnumber, double Billcost, string Time, string Datex, string Ownername, string Ownerid, string Ownernumber, double Paid, double Remain, double Earned, double Tax, double Discount, string Details, int? CustomerId = null)
         {
-            string insertString = "insert into " + TableName + "(ID ,Billnumber ,Billcost ,Time ,Datex ,Ownername ,Ownerid  , Ownernumber ,  Paid ,Remain ,Earned , Tax ,Discount , Details) VALUES (@id ,@billnumber , @billcost , @time , @datex , @ownername ,@ownerid ,@pwnernumber , @paid ,@remain , @earned ,@tax ,@discount , @details)";
+            string insertString = "insert into " + TableName + "(ID ,Billnumber ,Billcost ,Time ,Datex ,Ownername ,Ownerid  , Ownernumber ,  Paid ,Remain ,Earned , Tax ,Discount , Details, CustomerId) VALUES (@id ,@billnumber , @billcost , @time , @datex , @ownername ,@ownerid ,@pwnernumber , @paid ,@remain , @earned ,@tax ,@discount , @details, @customerid)";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();
@@ -50,6 +50,7 @@ namespace PosSystem.Core.Data
                     cmd.Parameters.AddWithValue("@tax", Tax);
                     cmd.Parameters.AddWithValue("@discount", Discount);
                     cmd.Parameters.AddWithValue("@details", Details);
+                    cmd.Parameters.AddWithValue("@customerid", (object)CustomerId ?? DBNull.Value);
                     cmd.ExecuteNonQuery();
                     cmd.Dispose();
                 }
@@ -150,6 +151,45 @@ namespace PosSystem.Core.Data
                 }
             }
         }
-      
+              // Sales-history-per-customer, for the pharma stock-check feature's
+        // detail drill-down. Relies on bills.CustomerId (see
+        // DatabaseBootstrapper) rather than string-matching
+        // Ownername/Ownerid, which is fragile if a name gets re-typed
+        // slightly differently between visits.
+        public List<Models.Bills> ReadBillsByCustomer(string TableName, int CustomerId)
+        {
+            List<Models.Bills> bills = new List<Models.Bills>();
+            string readString = "SELECT * FROM " + TableName + " WHERE CustomerId = @customerid";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(readString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@customerid", CustomerId);
+                    IDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        var goods_List = new Models.Bills();
+                        goods_List.Id = DbNullSafe.ToInt32(reader["ID"]);
+                        goods_List.Billnumber = DbNullSafe.ToInt32(reader["billnumber"]);
+                        goods_List.Billcost = DbNullSafe.ToDouble(reader["billcost"]);
+                        goods_List.Time = DbNullSafe.ToStringSafe(reader["time"]);
+                        goods_List.Datex = DbNullSafe.ToStringSafe(reader["datex"]);
+                        goods_List.Ownername = DbNullSafe.ToStringSafe(reader["ownername"]);
+                        goods_List.Ownerid = DbNullSafe.ToStringSafe(reader["ownerid"]);
+                        goods_List.Ownernumber = DbNullSafe.ToStringSafe(reader["ownernumber"]);
+                        goods_List.Paid = DbNullSafe.ToDouble(reader["paid"]);
+                        goods_List.Remain = DbNullSafe.ToDouble(reader["remain"]);
+                        goods_List.Earned = DbNullSafe.ToDouble(reader["earned"]);
+                        goods_List.Tax = DbNullSafe.ToDouble(reader["tax"]);
+                        goods_List.Discount = DbNullSafe.ToDouble(reader["discount"]);
+                        goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
+                        bills.Add(goods_List);
+                    }
+                    return bills;
+                }
+            }
+        }
+
     }
 }

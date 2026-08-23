@@ -69,132 +69,382 @@
             </StackPanel>
         </Border>
 
-        <!-- Customer list -->
+        <!-- Right side: either the customer list, or one customer's detail
+             drill-down. Both occupy the same cell; only one is Visible at a
+             time based on whether SelectedDetail is null, via the {x:Null}
+             DataTrigger trick below — avoids needing a dedicated
+             null-to-visibility converter for just this one screen. -->
         <Grid Grid.Column="1" Margin="24,28,24,20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Margin="0,0,0,16">
-                <TextBlock Text="{DynamicResource CustomersListTitle}"
-                           Style="{StaticResource TitleMedium}"
-                           Foreground="{DynamicResource OnSurfaceBrush}"
-                           Margin="0,0,0,8" />
-                <TextBlock Text="{DynamicResource CustomersSearchLabel}"
-                           Style="{StaticResource LabelSmall}"
-                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                           Margin="0,0,0,4" />
-                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource ThemedTextBoxStyle}" />
-            </StackPanel>
+            <!-- ============ CUSTOMER LIST ============ -->
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedDetail}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
 
-            <Grid Grid.Row="1">
-                <TextBlock Text="{DynamicResource CustomersNoResults}"
-                           Style="{StaticResource BodyLarge}"
-                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                           TextWrapping="Wrap"
-                           VerticalAlignment="Top"
-                           Visibility="{Binding Customers.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Customers}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Width="280" Margin="0,0,16,16"
-                                        CornerRadius="14"
-                                        Padding="18"
-                                        Background="{DynamicResource SurfaceContainerBrush}">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Ownername}"
-                                                   Style="{StaticResource TitleMedium}"
-                                                   Foreground="{DynamicResource OnSurfaceBrush}"
-                                                   TextWrapping="Wrap" />
-                                        <TextBlock Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                                   Style="{StaticResource LabelSmall}"
-                                                   Margin="0,2,0,0">
-                                            <TextBlock.Text>
-                                                <MultiBinding StringFormat="{}{0}   {1}">
-                                                    <Binding Path="Ownernumber" />
-                                                    <Binding Path="Ownerid" />
-                                                </MultiBinding>
-                                            </TextBlock.Text>
-                                        </TextBlock>
+                <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                    <TextBlock Text="{DynamicResource CustomersListTitle}"
+                               Style="{StaticResource TitleMedium}"
+                               Foreground="{DynamicResource OnSurfaceBrush}"
+                               Margin="0,0,0,8" />
+                    <TextBlock Text="{DynamicResource CustomersSearchLabel}"
+                               Style="{StaticResource LabelSmall}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource ThemedTextBoxStyle}" />
+                </StackPanel>
 
-                                        <!-- Balance badge -->
-                                        <Border CornerRadius="8" Padding="10,6" Margin="0,12,0,0"
-                                                HorizontalAlignment="Left">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HasDebt}" Value="True">
-                                                            <Setter Property="Background" Value="{DynamicResource TertiaryContainerBrush}" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock FontWeight="SemiBold">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource LabelSmall}">
-                                                        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariantBrush}" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding HasDebt}" Value="True">
-                                                                <Setter Property="Foreground" Value="{DynamicResource OnTertiaryContainerBrush}" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
+                <Grid Grid.Row="1">
+                    <TextBlock Text="{DynamicResource CustomersNoResults}"
+                               Style="{StaticResource BodyLarge}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Top"
+                               Visibility="{Binding Customers.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Customers}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="280" Margin="0,0,16,16"
+                                            CornerRadius="14"
+                                            Padding="18"
+                                            Background="{DynamicResource SurfaceContainerBrush}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Ownername}"
+                                                       Style="{StaticResource TitleMedium}"
+                                                       Foreground="{DynamicResource OnSurfaceBrush}"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                       Style="{StaticResource LabelSmall}"
+                                                       Margin="0,2,0,0">
                                                 <TextBlock.Text>
-                                                    <MultiBinding Converter="{StaticResource CustomerBalanceTextConverter}">
-                                                        <Binding Path="Remain" />
-                                                        <Binding Path="DataContext.CurrentLanguage" RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                                    <MultiBinding StringFormat="{}{0}   {1}">
+                                                        <Binding Path="Ownernumber" />
+                                                        <Binding Path="Ownerid" />
                                                     </MultiBinding>
                                                 </TextBlock.Text>
                                             </TextBlock>
-                                        </Border>
 
-                                        <!-- Record payment (only meaningful when there's a balance) -->
-                                        <Grid Margin="0,14,0,0"
-                                              Visibility="{Binding HasDebt, Converter={StaticResource BoolToVisibilityConverter}}">
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto" />
-                                                <RowDefinition Height="Auto" />
-                                            </Grid.RowDefinitions>
-                                            <TextBlock Grid.Row="0"
-                                                       Text="{DynamicResource CustomersPaymentAmountLabel}"
-                                                       Style="{StaticResource LabelSmall}"
-                                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                                       Margin="0,0,0,4" />
-                                            <Grid Grid.Row="1">
+                                            <!-- Balance badge -->
+                                            <Border CornerRadius="8" Padding="10,6" Margin="0,12,0,0"
+                                                    HorizontalAlignment="Left">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasDebt}" Value="True">
+                                                                <Setter Property="Background" Value="{DynamicResource TertiaryContainerBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource LabelSmall}">
+                                                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariantBrush}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasDebt}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource OnTertiaryContainerBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                    <TextBlock.Text>
+                                                        <MultiBinding Converter="{StaticResource CustomerBalanceTextConverter}">
+                                                            <Binding Path="Remain" />
+                                                            <Binding Path="DataContext.CurrentLanguage" RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </Border>
+
+                                            <!-- Record payment (only meaningful when there's a balance) -->
+                                            <Grid Margin="0,14,0,0"
+                                                  Visibility="{Binding HasDebt, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Grid.Row="0"
+                                                           Text="{DynamicResource CustomersPaymentAmountLabel}"
+                                                           Style="{StaticResource LabelSmall}"
+                                                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                           Margin="0,0,0,4" />
+                                                <Grid Grid.Row="1">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox Grid.Column="0"
+                                                             Text="{Binding PaymentInput, UpdateSourceTrigger=PropertyChanged}"
+                                                             Style="{StaticResource ThemedTextBoxStyle}"
+                                                             Margin="0,0,8,0" />
+                                                    <Button Grid.Column="1"
+                                                            Content="{DynamicResource CustomersRecordPaymentButton}"
+                                                            Command="{Binding DataContext.RecordPaymentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Background="{DynamicResource PrimaryBrush}"
+                                                            Foreground="{DynamicResource OnPrimaryBrush}"
+                                                            Template="{StaticResource SelectableButtonTemplate}"
+                                                            Padding="12,8" />
+                                                </Grid>
+                                            </Grid>
+
+                                            <Button Content="{DynamicResource CustomersViewDetailsButton}"
+                                                    Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="{DynamicResource SurfaceContainerHighBrush}"
+                                                    Foreground="{DynamicResource OnSurfaceBrush}"
+                                                    Template="{StaticResource SelectableButtonTemplate}"
+                                                    Padding="0,10"
+                                                    Margin="0,10,0,0"
+                                                    HorizontalContentAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+
+            <!-- ============ CUSTOMER DETAIL ============ -->
+            <Grid DataContext="{Binding SelectedDetail}">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+
+                        <!-- Header -->
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding Customer.Ownername}"
+                                       Style="{StaticResource HeadlineMedium}"
+                                       Foreground="{DynamicResource OnSurfaceBrush}"
+                                       TextWrapping="Wrap" />
+                            <Button Grid.Column="1"
+                                    Content="{DynamicResource CustomerDetailBackButton}"
+                                    Command="{Binding CloseCommand}"
+                                    Background="{DynamicResource SurfaceContainerHighBrush}"
+                                    Foreground="{DynamicResource OnSurfaceBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="14,10"
+                                    VerticalAlignment="Top" />
+                        </Grid>
+
+                        <!-- Medications sold -->
+                        <TextBlock Text="{DynamicResource CustomerDetailSoldTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,10" />
+
+                        <TextBlock Text="{DynamicResource CustomerDetailSoldNone}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   Margin="0,0,0,20"
+                                   Visibility="{Binding SoldMedications.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+
+                        <Border Background="{DynamicResource SurfaceContainerBrush}"
+                                CornerRadius="14"
+                                Padding="18"
+                                Margin="0,0,0,24"
+                                Visibility="{Binding SoldMedications.Count, Converter={StaticResource PositiveCountToVisibilityConverter}}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="120" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{DynamicResource CustomerDetailSoldNameHeader}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource CustomerDetailSoldQtyHeader}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                    <TextBlock Grid.Column="2" Text="{DynamicResource CustomerDetailSoldRevenueHeader}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding SoldMedications}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,6,0,6">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="120" />
+                                                    <ColumnDefinition Width="120" />
                                                 </Grid.ColumnDefinitions>
-                                                <TextBox Grid.Column="0"
-                                                         Text="{Binding PaymentInput, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource ThemedTextBoxStyle}"
-                                                         Margin="0,0,8,0" />
-                                                <Button Grid.Column="1"
-                                                        Content="{DynamicResource CustomersRecordPaymentButton}"
-                                                        Command="{Binding DataContext.RecordPaymentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                        CommandParameter="{Binding}"
-                                                        Background="{DynamicResource PrimaryBrush}"
-                                                        Foreground="{DynamicResource OnPrimaryBrush}"
-                                                        Template="{StaticResource SelectableButtonTemplate}"
-                                                        Padding="12,8" />
+                                                <TextBlock Grid.Column="0" Text="{Binding Name}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceBrush}" TextWrapping="Wrap" />
+                                                <TextBlock Grid.Column="1" Text="{Binding TotalQuantity, StringFormat={}{0:0.##}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceBrush}" />
+                                                <TextBlock Grid.Column="2" Text="{Binding TotalRevenue, StringFormat={}{0:0.00}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceBrush}" />
                                             </Grid>
-                                        </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Record a stock check -->
+                        <TextBlock Text="{DynamicResource CustomerDetailAddStockCheckTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,4" />
+                        <TextBlock Text="{DynamicResource CustomerDetailAddStockCheckSubtitle}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12" />
+
+                        <Border Background="{DynamicResource SurfaceContainerBrush}"
+                                CornerRadius="14"
+                                Padding="18"
+                                Margin="0,0,0,24">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="16" />
+                                        <ColumnDefinition Width="160" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{DynamicResource CustomerDetailMedicationLabel}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding AvailableMedications}"
+                                                  SelectedItem="{Binding SelectedMedication}"
+                                                  DisplayMemberPath="Name"
+                                                  Style="{StaticResource ThemedComboBoxStyle}" />
                                     </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="{DynamicResource CustomerDetailQuantityLabel}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding QuantityInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="16" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{DynamicResource CustomerDetailBatchLabel}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding BatchInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="{DynamicResource CustomerDetailExpiryLabel}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding ExpiryInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="{DynamicResource CustomerDetailNotesLabel}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding NotesInput, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"
+                                         TextWrapping="Wrap"
+                                         AcceptsReturn="True"
+                                         Height="60"
+                                         Margin="0,0,0,12" />
+
+                                <Button Content="{DynamicResource CustomerDetailSaveButton}"
+                                        Command="{Binding SaveStockCheckCommand}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Foreground="{DynamicResource OnPrimaryBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="0,12"
+                                        HorizontalContentAlignment="Center" />
+
+                                <TextBlock Text="{Binding StatusMessage}"
+                                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,10,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Stock check history -->
+                        <TextBlock Text="{DynamicResource CustomerDetailStockHistoryTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,10" />
+
+                        <TextBlock Text="{DynamicResource CustomerDetailStockHistoryNone}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,20"
+                                   Visibility="{Binding StockCheckHistory.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+
+                        <Border Background="{DynamicResource SurfaceContainerBrush}"
+                                CornerRadius="14"
+                                Padding="18"
+                                Margin="0,0,0,20"
+                                Visibility="{Binding StockCheckHistory.Count, Converter={StaticResource PositiveCountToVisibilityConverter}}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="90" />
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="110" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{DynamicResource CustomerDetailSoldNameHeader}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource CustomerDetailStockQtyHeader}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                    <TextBlock Grid.Column="2" Text="{DynamicResource CustomerDetailStockBatchHeader}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                    <TextBlock Grid.Column="3" Text="{DynamicResource CustomerDetailStockExpiryHeader}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                    <TextBlock Grid.Column="4" Text="{DynamicResource CustomerDetailStockDateHeader}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding StockCheckHistory}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,6,0,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="90" />
+                                                    <ColumnDefinition Width="120" />
+                                                    <ColumnDefinition Width="100" />
+                                                    <ColumnDefinition Width="110" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding MedicationName}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceBrush}" TextWrapping="Wrap" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat={}{0:0.##}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceBrush}" />
+                                                <TextBlock Grid.Column="2" Text="{Binding BatchNumber}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" TextWrapping="Wrap" />
+                                                <TextBlock Grid.Column="3" Text="{Binding ExpiryDate}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                                <TextBlock Grid.Column="4" Text="{Binding CheckDate}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </ScrollViewer>
             </Grid>
         </Grid>

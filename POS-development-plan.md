@@ -73,6 +73,26 @@ Current state: skeleton solution exists (`PosSystem.Core` + `PosSystem.App`), ol
 
 ---
 
+## Phase 5b — Pharma stock-check feature (client requirement, added after Phase 6)
+**Goal:** the client turned out to be a pharma distributor, not (only) a skincare seller — this surfaced after Phase 6 shipped, so it's numbered out of chronological order but belongs conceptually next to Phase 5, as an extension of the Customers screen.
+
+**What it is:** the client sells medications to pharmacies (his "customers") and visits them roughly daily to check what's left of what he's already sold them — a restock-decision signal, not his own warehouse stock (that's the existing Inventory screen's job). Confirmed directly with the client:
+- It's the *pharmacy's* remaining stock being recorded, not the rep's own
+- Full history is needed (see how a pharmacy's stock trends visit to visit), not just a latest-number overwrite
+- Batch/lot number and expiry date are required per reading (pharma regulatory norm)
+
+- [x] New `stockchecks` table (append-only — every visit is a new row, never updated in place): CustomerId, medication, quantity, batch/lot, expiry, check date/time, notes
+- [x] New `bills.CustomerId` column — Bills previously only stored a denormalized name/ID/phone snapshot (`Ownername`/`Ownerid`/`Ownernumber`), which is fine for a receipt but fragile to join on (a re-typed name breaks the match). A real integer FK makes "every sale to customer X" correct instead of best-effort string matching. Both schema additions are applied automatically on startup via `DatabaseBootstrapper.EnsureSchema()` (idempotent `CREATE TABLE IF NOT EXISTS` / `ALTER TABLE ADD COLUMN` checks) — no manual migration step, no fresh `rovaShop.db` needed.
+- [x] Customers screen: "View Details" on any customer card opens a drill-down (in-place, not a new sidebar item) showing:
+  - **Medications Sold** — aggregated from every Bills row linked to this customer (via the new `CustomerId`) joined to its Sells line items. This part needed zero new schema — it's the natural consequence of Checkout's existing customer picker (Phase 5) once sales are actually linked.
+  - **Record a Stock Check** — a small form (medication picker, quantity, batch/lot, expiry, notes) writing a new `stockchecks` row
+  - **Stock Check History** — every past reading for this customer, newest first
+- [ ] **Test end-to-end in Visual Studio — not yet done**, same caveat every phase since 4 has shipped with. Before treating this as closed: build, open a customer's detail view, confirm their sales history shows real linked bills, record a stock check, confirm it appears in history immediately, and confirm a fresh `rovaShop.db` (or one from before this update) still opens cleanly — that's the actual test of whether `DatabaseBootstrapper` did its job.
+
+**Exit criteria:** clicking into a pharmacy customer shows what's been sold to them and lets the rep log a dated, batch/expiry-tracked stock reading from the field. *(Code is in place; needs the same real build/run pass every prior phase needed before calling it done.)*
+
+---
+
 ## Phase 6 — Dashboard
 **Goal:** real-time visibility, the feature you called out as core from day one.
 

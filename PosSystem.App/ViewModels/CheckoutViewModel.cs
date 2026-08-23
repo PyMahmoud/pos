@@ -321,7 +321,8 @@ namespace PosSystem.App.ViewModels
                 _billsData.InsertBills(
                     "bills", nextId, nextBillNumber, totalCost, time, date,
                     ownername, ownerid, ownernumber,
-                    billPaid, billRemain, totalEarned, 0, 0, paymentTag);
+                    billPaid, billRemain, totalEarned, 0, 0, paymentTag,
+                    linkedCustomer?.Id);
 
                 foreach (var line in CartLines)
                 {
