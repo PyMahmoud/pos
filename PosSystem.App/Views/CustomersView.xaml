@@ -58,7 +58,7 @@
                         Command="{Binding AddCustomerCommand}"
                         Background="{DynamicResource PrimaryBrush}"
                         Foreground="{DynamicResource OnPrimaryBrush}"
-                        BorderThickness="0"
+                        Template="{StaticResource SelectableButtonTemplate}"
                         Padding="0,12"
                         HorizontalContentAlignment="Center" />
 
@@ -186,7 +186,7 @@
                                                         CommandParameter="{Binding}"
                                                         Background="{DynamicResource PrimaryBrush}"
                                                         Foreground="{DynamicResource OnPrimaryBrush}"
-                                                        BorderThickness="0"
+                                                        Template="{StaticResource SelectableButtonTemplate}"
                                                         Padding="12,8" />
                                             </Grid>
                                         </Grid>

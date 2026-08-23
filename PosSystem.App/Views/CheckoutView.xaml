@@ -261,7 +261,7 @@
                             Command="{Binding CompleteSaleCommand}"
                             Background="{DynamicResource PrimaryBrush}"
                             Foreground="{DynamicResource OnPrimaryBrush}"
-                            BorderThickness="0"
+                            Template="{StaticResource SelectableButtonTemplate}"
                             Padding="0,14"
                             HorizontalContentAlignment="Center" />
 
