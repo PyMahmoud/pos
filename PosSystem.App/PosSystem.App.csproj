@@ -134,6 +134,7 @@
     <Compile Include="ViewModels\NavItem.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\DashboardViewModel.cs" />
+    <Compile Include="ViewModels\OrderEvents.cs" />
     <Compile Include="ViewModels\CategoryChip.cs" />
     <Compile Include="ViewModels\CartLine.cs" />
     <Compile Include="ViewModels\CheckoutViewModel.cs" />

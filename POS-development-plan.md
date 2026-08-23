@@ -76,12 +76,13 @@ Current state: skeleton solution exists (`PosSystem.Core` + `PosSystem.App`), ol
 ## Phase 6 — Dashboard
 **Goal:** real-time visibility, the feature you called out as core from day one.
 
-- Upgrade `LiveCharts` (old 0.9.7) → `LiveChartsCore.SkiaSharpView.WPF`
-- Cards/charts: today's revenue, top-selling items, cash-vs-card split, outstanding customer debt total
-- Wire updates to fire on order-save (event-driven), not on a polling timer — keeps CPU usage near zero between sales on old hardware
-- If multiple locations/trucks are in scope for this client, decide now whether the dashboard needs a location filter
+- [x] Upgrade `LiveCharts` (old 0.9.7) → `LiveChartsCore.SkiaSharpView.WPF` — **code written against this package, but it has NOT been installed via NuGet.** No nuget.org access and no Windows/MSBuild available to run a restore from where this was built — install `LiveChartsCore.SkiaSharpView.WPF` via the Package Manager Console/NuGet UI before building. If a build error is a missing type/member rather than a missing package, the exact API surface (`ISeries`, `ColumnSeries<T>`, `PieSeries<T>`, `Axis`, `SolidColorPaint`) may have shifted between package versions — flag it for a fix against whatever version actually installs.
+- [x] Cards/charts: today's revenue, today's profit, transactions today, and outstanding customer debt total as 4 KPI cards; top-selling items (all-time, top 5 by quantity) as a bar chart; today's Cash/Card/Pay-Later split as a pie chart
+- [x] Updates fire on order-save via a new `OrderEvents.OrderCompleted` static event (same pattern as `CustomerDataEvents.CustomersChanged`), not a polling timer — `DashboardViewModel` also refreshes on theme toggle (chart colors are plain SkiaSharp colors set in code, so they don't auto-repaint on a XAML resource swap the way a brush would) and on language toggle (payment-split legend labels)
+- [ ] **Multi-location/truck filter** — not addressed. Still Phase 9 scope per the plan below; the skincare client is single-location, so this stays deferred rather than guessed at now.
+- [ ] **Test end-to-end in Visual Studio — not yet done**, same caveat every phase since 4 has shipped with. This screen was written directly against the repo via file access; no Windows/WPF runtime available here to compile or run it. Before treating Phase 6 as closed: install the NuGet package, build, ring up a sale on Checkout, and confirm the KPI cards and both charts update immediately without navigating away and back. Also worth toggling theme and language once while on this screen, since both now trigger a dashboard refresh.
 
-**Exit criteria:** completing a sale on the Checkout screen visibly updates a chart on the Dashboard without any manual refresh.
+**Exit criteria:** completing a sale on the Checkout screen visibly updates a chart on the Dashboard without any manual refresh. *(Code is in place; needs the NuGet install plus the same real build/run pass every prior phase needed before calling it done.)*
 
 ---
 

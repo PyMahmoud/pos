@@ -17,7 +17,13 @@
     <system:String x:Key="NavSettings">الإعدادات</system:String>
 
     <system:String x:Key="DashboardHeading">لوحة التحكم</system:String>
-    <system:String x:Key="DashboardDescription">ستظهر هنا لاحقًا رسوم بيانية للمنتجات الأكثر مبيعًا والإيرادات الشهرية — تُحدَّث مع كل عملية بيع، وفق خطة العمل.</system:String>
+    <system:String x:Key="DashboardTodayRevenue">إيرادات اليوم</system:String>
+    <system:String x:Key="DashboardTodayProfit">ربح اليوم</system:String>
+    <system:String x:Key="DashboardTodayTransactions">عمليات بيع اليوم</system:String>
+    <system:String x:Key="DashboardOutstandingDebt">إجمالي ديون العملاء</system:String>
+    <system:String x:Key="DashboardTopItemsTitle">الأكثر مبيعًا (كل الأوقات)</system:String>
+    <system:String x:Key="DashboardPaymentSplitTitle">توزيع طرق الدفع اليوم</system:String>
+    <system:String x:Key="DashboardNoDataYet">لا توجد عمليات بيع مسجّلة بعد — أتمم عملية بيع من شاشة الدفع لترى هذه اللوحة تنبض بالحياة.</system:String>
 
     <system:String x:Key="CheckoutHeading">الدفع</system:String>
     <system:String x:Key="CheckoutDescription">الشاشة الأكثر استخدامًا — شبكة المنتجات، الطلب الحالي، وتبديل الدفع نقدًا/بالبطاقة. قادمة في الخطوة التالية.</system:String>

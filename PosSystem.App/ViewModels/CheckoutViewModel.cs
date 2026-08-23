@@ -352,6 +352,10 @@ namespace PosSystem.App.ViewModels
                 CartLines.Clear();
                 LoadGoods();
 
+                // Phase 6: every completed sale (not just customer-linked
+                // ones) needs to refresh Dashboard's KPIs/charts.
+                OrderEvents.RaiseOrderCompleted();
+
                 if (linkedCustomer != null)
                 {
                     CustomerDataEvents.RaiseCustomersChanged();

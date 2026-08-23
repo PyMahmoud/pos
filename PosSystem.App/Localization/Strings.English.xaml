@@ -17,7 +17,13 @@
     <system:String x:Key="NavSettings">Settings</system:String>
 
     <system:String x:Key="DashboardHeading">Dashboard</system:String>
-    <system:String x:Key="DashboardDescription">Sold-items and monthly-revenue charts land here in a later step — refreshed per order, per the business plan.</system:String>
+    <system:String x:Key="DashboardTodayRevenue">Today's Revenue</system:String>
+    <system:String x:Key="DashboardTodayProfit">Today's Profit</system:String>
+    <system:String x:Key="DashboardTodayTransactions">Transactions Today</system:String>
+    <system:String x:Key="DashboardOutstandingDebt">Outstanding Customer Debt</system:String>
+    <system:String x:Key="DashboardTopItemsTitle">Top-Selling Items (All-Time)</system:String>
+    <system:String x:Key="DashboardPaymentSplitTitle">Today's Payment Split</system:String>
+    <system:String x:Key="DashboardNoDataYet">No sales recorded yet — ring up a sale on Checkout to see this dashboard come to life.</system:String>
 
     <system:String x:Key="CheckoutHeading">Checkout</system:String>
     <system:String x:Key="CheckoutDescription">Highest-traffic screen — item grid + running order + Cash/Card toggle. Built next.</system:String>
