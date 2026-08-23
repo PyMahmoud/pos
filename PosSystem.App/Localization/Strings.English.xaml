@@ -30,9 +30,30 @@
     <system:String x:Key="CheckoutCompleteSale">Complete Sale</system:String>
     <system:String x:Key="CheckoutSaleSuccess">Sale completed — Bill #{0}</system:String>
     <system:String x:Key="CheckoutSaleError">Something went wrong saving the sale. Please try again.</system:String>
+    <system:String x:Key="CheckoutCustomerLabel">Customer</system:String>
+    <system:String x:Key="CheckoutWalkIn">Walk-in (no customer)</system:String>
+    <system:String x:Key="CheckoutPayLater">Pay Later</system:String>
+    <system:String x:Key="CheckoutPayLaterRequiresCustomer">Select a customer before choosing Pay Later.</system:String>
+    <system:String x:Key="CheckoutSaleSuccessCredit">Sale completed — Bill #{0}, added to {1}'s tab.</system:String>
 
     <system:String x:Key="CustomersHeading">Customers</system:String>
-    <system:String x:Key="CustomersDescription">Debt/credit tracking for the skincare client — 8 seeded test customers are already in rovaShop.db, ready to build this against.</system:String>
+    <system:String x:Key="CustomersAddSectionTitle">Add a customer</system:String>
+    <system:String x:Key="CustomersNameField">Name</system:String>
+    <system:String x:Key="CustomersPhoneField">Phone</system:String>
+    <system:String x:Key="CustomersCodeField">Customer code (optional)</system:String>
+    <system:String x:Key="CustomersAddButton">Add customer</system:String>
+    <system:String x:Key="CustomersAddMissingName">Enter a name before adding this customer.</system:String>
+    <system:String x:Key="CustomersAddSuccess">Customer added.</system:String>
+    <system:String x:Key="CustomersAddError">Something went wrong. Please try again.</system:String>
+    <system:String x:Key="CustomersListTitle">Customers</system:String>
+    <system:String x:Key="CustomersSearchLabel">Search by name, phone, or code</system:String>
+    <system:String x:Key="CustomersNoResults">No customers yet — add the first one on the left.</system:String>
+    <system:String x:Key="CustomersBalancePaidUp">Paid up</system:String>
+    <system:String x:Key="CustomersBalanceOwes">Owes {0:0.00}</system:String>
+    <system:String x:Key="CustomersPaymentAmountLabel">Payment amount</system:String>
+    <system:String x:Key="CustomersRecordPaymentButton">Record payment</system:String>
+    <system:String x:Key="CustomersPaymentSuccess">Payment recorded for {0}.</system:String>
+    <system:String x:Key="CustomersPaymentInvalid">Enter a valid payment amount.</system:String>
 
     <system:String x:Key="InventoryHeading">Inventory</system:String>
     <system:String x:Key="InventoryDescription">Goods list, stock levels, pricing. 281 real products already in rovaShop.db to build against.</system:String>

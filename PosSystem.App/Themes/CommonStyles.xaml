@@ -1,0 +1,69 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Shared form-control styles used by more than one screen (currently
+        Customers' add-customer form + search box, and Checkout's customer
+        picker). Checkout's existing search TextBox predates this file and
+        sets its brushes inline instead — left as-is rather than retrofitted,
+        since it already works and touching it risks nothing being gained.
+        New TextBox/ComboBox usage from here on should use these instead of
+        repeating the same five setters inline.
+    -->
+
+    <!--
+        Background is SurfaceContainerHigh (not the same SurfaceContainer
+        several card/panel backgrounds already use) plus a real border, so
+        this never silently blends into whatever it's placed on — the first
+        version used SurfaceContainerBrush with BorderThickness 0, which was
+        invisible on the Customers screen's payment cards (same brush as the
+        card itself, so a typed amount just floated with no box around it).
+        Border brightens to Primary on focus so it's obvious which field is
+        active.
+    -->
+    <Style x:Key="ThemedTextBoxStyle" TargetType="TextBox">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighestBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariantBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Root"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="10"
+                            Padding="{TemplateBinding Padding}">
+                        <ScrollViewer x:Name="PART_ContentHost" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                            <Setter TargetName="Root" Property="BorderThickness" Value="2" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Setters-only — no ControlTemplate override. A full custom ComboBox
+        template means reimplementing the dropdown popup/arrow/toggle
+        behavior correctly, which isn't verifiable without a WPF runtime to
+        actually click through; the stock template already reads Background/
+        Foreground/BorderBrush correctly in every common Windows theme, so
+        this gets legible theming with much lower risk of a broken dropdown.
+    -->
+    <Style x:Key="ThemedComboBoxStyle" TargetType="ComboBox">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariantBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,8" />
+    </Style>
+
+</ResourceDictionary>

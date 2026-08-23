@@ -30,9 +30,30 @@
     <system:String x:Key="CheckoutCompleteSale">إتمام البيع</system:String>
     <system:String x:Key="CheckoutSaleSuccess">تمت عملية البيع — فاتورة رقم {0}</system:String>
     <system:String x:Key="CheckoutSaleError">حدث خطأ أثناء حفظ عملية البيع. حاول مرة أخرى.</system:String>
+    <system:String x:Key="CheckoutCustomerLabel">العميل</system:String>
+    <system:String x:Key="CheckoutWalkIn">بدون عميل (زبون عابر)</system:String>
+    <system:String x:Key="CheckoutPayLater">الدفع لاحقًا</system:String>
+    <system:String x:Key="CheckoutPayLaterRequiresCustomer">اختر عميلاً قبل اختيار الدفع لاحقًا.</system:String>
+    <system:String x:Key="CheckoutSaleSuccessCredit">تمت عملية البيع — فاتورة رقم {0}، أُضيفت إلى حساب {1}.</system:String>
 
     <system:String x:Key="CustomersHeading">العملاء</system:String>
-    <system:String x:Key="CustomersDescription">تتبّع الديون والأرصدة لعميلة مستحضرات التجميل — 8 عملاء تجريبيين موجودون بالفعل في rovaShop.db، جاهزون لبناء هذه الشاشة عليهم.</system:String>
+    <system:String x:Key="CustomersAddSectionTitle">إضافة عميل</system:String>
+    <system:String x:Key="CustomersNameField">الاسم</system:String>
+    <system:String x:Key="CustomersPhoneField">الهاتف</system:String>
+    <system:String x:Key="CustomersCodeField">كود العميل (اختياري)</system:String>
+    <system:String x:Key="CustomersAddButton">إضافة العميل</system:String>
+    <system:String x:Key="CustomersAddMissingName">أدخل الاسم قبل إضافة هذا العميل.</system:String>
+    <system:String x:Key="CustomersAddSuccess">تمت إضافة العميل.</system:String>
+    <system:String x:Key="CustomersAddError">حدث خطأ. حاول مرة أخرى.</system:String>
+    <system:String x:Key="CustomersListTitle">العملاء</system:String>
+    <system:String x:Key="CustomersSearchLabel">ابحث بالاسم أو الهاتف أو الكود</system:String>
+    <system:String x:Key="CustomersNoResults">لا يوجد عملاء بعد — أضف أول عميل على اليسار.</system:String>
+    <system:String x:Key="CustomersBalancePaidUp">لا يوجد رصيد مستحق</system:String>
+    <system:String x:Key="CustomersBalanceOwes">مستحق {0:0.00}</system:String>
+    <system:String x:Key="CustomersPaymentAmountLabel">مبلغ الدفعة</system:String>
+    <system:String x:Key="CustomersRecordPaymentButton">تسجيل الدفعة</system:String>
+    <system:String x:Key="CustomersPaymentSuccess">تم تسجيل الدفعة لـ {0}.</system:String>
+    <system:String x:Key="CustomersPaymentInvalid">أدخل مبلغًا صحيحًا للدفعة.</system:String>
 
     <system:String x:Key="InventoryHeading">المخزون</system:String>
     <system:String x:Key="InventoryDescription">قائمة المنتجات، مستويات المخزون، والأسعار. 281 منتجًا حقيقيًا موجودون بالفعل في rovaShop.db للبناء عليهم.</system:String>

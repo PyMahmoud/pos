@@ -12,7 +12,12 @@ namespace PosSystem.App.ViewModels
     public enum PaymentMethod
     {
         Cash,
-        Card
+        Card,
+        // Phase 5 addition. Only reachable when a real customer (not
+        // Walk-in) is selected — see CanPayLater / the guard at the top of
+        // CompleteSale(). Leaves the bill partially/fully unpaid and adds
+        // the difference to the linked customer's Remain.
+        PayLater
     }
 
     /// <summary>
@@ -25,24 +30,29 @@ namespace PosSystem.App.ViewModels
     /// per line, and each sold good's Quantity decremented — all via the
     /// existing Core.Data layer, no new SQL added here.
     ///
-    /// Every completed sale is treated as paid in full. Cash and Card are
-    /// both immediately-settled tender types per the business plan (no
-    /// payment gateway — staff key in whatever the card reader showed as a
-    /// logged payment). "Buy now, pay later" belongs to the Customers/Debt
-    /// screen (Phase 5), not here — Ownername/Ownerid/Ownernumber are left
-    /// blank (walk-in sale) until Checkout gets a "link to customer" step.
+    /// Every completed sale settles in full UNLESS Pay Later is selected
+    /// (Phase 5): Cash and Card are still both immediately-settled tender
+    /// types (no payment gateway — staff key in whatever the card reader
+    /// showed as a logged payment), but a sale can now optionally be linked
+    /// to a customer via the picker either way. Linking a customer under
+    /// Cash/Card just records who the sale was for (Paid grows on their
+    /// running total, Remain doesn't); linking under Pay Later is the
+    /// actual "buy now, pay later" flow — Remain grows by the full total
+    /// instead, and gets paid down later from the Customers screen.
     /// </summary>
     public class CheckoutViewModel : ViewModelBase
     {
         private readonly Core.Data.Goods _goodsData = new Core.Data.Goods();
         private readonly Core.Data.Bills _billsData = new Core.Data.Bills();
         private readonly Core.Data.Sells _sellsData = new Core.Data.Sells();
+        private readonly Core.Data.Customers _customersData = new Core.Data.Customers();
 
         private List<GoodsR> _allGoods = new List<GoodsR>();
 
         public ObservableCollection<GoodsR> FilteredGoods { get; } = new ObservableCollection<GoodsR>();
         public ObservableCollection<CategoryChip> Categories { get; } = new ObservableCollection<CategoryChip>();
         public ObservableCollection<CartLine> CartLines { get; } = new ObservableCollection<CartLine>();
+        public ObservableCollection<CustomerOption> Customers { get; } = new ObservableCollection<CustomerOption>();
 
         private CategoryChip _selectedCategory;
         public CategoryChip SelectedCategory
@@ -64,6 +74,25 @@ namespace PosSystem.App.ViewModels
             }
         }
 
+        private CustomerOption _selectedCustomer;
+        public CustomerOption SelectedCustomer
+        {
+            get => _selectedCustomer;
+            set
+            {
+                if (!SetProperty(ref _selectedCustomer, value)) return;
+                OnPropertyChanged(nameof(CanPayLater));
+
+                // Walk-in (Model == null) can't carry a tab — fall back to
+                // Cash automatically rather than leaving Pay Later selected
+                // with nothing to attach it to.
+                if (!CanPayLater && SelectedPaymentMethod == PaymentMethod.PayLater)
+                    SelectedPaymentMethod = PaymentMethod.Cash;
+            }
+        }
+
+        public bool CanPayLater => SelectedCustomer?.Model != null;
+
         private PaymentMethod _selectedPaymentMethod = PaymentMethod.Cash;
         public PaymentMethod SelectedPaymentMethod
         {
@@ -74,12 +103,14 @@ namespace PosSystem.App.ViewModels
                 {
                     OnPropertyChanged(nameof(IsCashSelected));
                     OnPropertyChanged(nameof(IsCardSelected));
+                    OnPropertyChanged(nameof(IsPayLaterSelected));
                 }
             }
         }
 
         public bool IsCashSelected => SelectedPaymentMethod == PaymentMethod.Cash;
         public bool IsCardSelected => SelectedPaymentMethod == PaymentMethod.Card;
+        public bool IsPayLaterSelected => SelectedPaymentMethod == PaymentMethod.PayLater;
 
         public double Subtotal => CartLines.Sum(l => l.LineTotal);
 
@@ -105,7 +136,8 @@ namespace PosSystem.App.ViewModels
         {
             SetPaymentMethodCommand = new RelayCommand(p =>
             {
-                if (p is PaymentMethod method) SelectedPaymentMethod = method;
+                if (p is PaymentMethod method && (method != PaymentMethod.PayLater || CanPayLater))
+                    SelectedPaymentMethod = method;
             });
             AddToCartCommand = new RelayCommand(p => AddToCart(p as GoodsR));
             IncrementLineCommand = new RelayCommand(p =>
@@ -127,9 +159,15 @@ namespace PosSystem.App.ViewModels
             CompleteSaleCommand = new RelayCommand(_ => CompleteSale());
 
             CartLines.CollectionChanged += (s, e) => RaiseTotals();
-            LocalizationManager.LanguageChanged += _ => RebuildCategoryChips();
+            LocalizationManager.LanguageChanged += _ =>
+            {
+                RebuildCategoryChips();
+                RebuildCustomerOptions();
+            };
+            CustomerDataEvents.CustomersChanged += RebuildCustomerOptions;
 
             LoadGoods();
+            RebuildCustomerOptions();
         }
 
         private void RaiseTotals()
@@ -168,6 +206,28 @@ namespace PosSystem.App.ViewModels
             OnPropertyChanged(nameof(SelectedCategory));
         }
 
+        private void RebuildCustomerOptions()
+        {
+            int? previousId = SelectedCustomer?.Model?.Id;
+
+            Customers.Clear();
+            Customers.Add(new CustomerOption
+            {
+                DisplayName = LocalizationManager.GetString("CheckoutWalkIn"),
+                Model = null
+            });
+            foreach (var customer in _customersData.ReadCustomers("customers").OrderBy(c => c.Ownername))
+            {
+                Customers.Add(new CustomerOption { DisplayName = customer.Ownername, Model = customer });
+            }
+
+            _selectedCustomer = previousId.HasValue
+                ? Customers.FirstOrDefault(c => c.Model?.Id == previousId.Value) ?? Customers[0]
+                : Customers[0];
+            OnPropertyChanged(nameof(SelectedCustomer));
+            OnPropertyChanged(nameof(CanPayLater));
+        }
+
         private void ApplyFilter()
         {
             IEnumerable<GoodsR> query = _allGoods;
@@ -203,6 +263,15 @@ namespace PosSystem.App.ViewModels
         {
             if (CartLines.Count == 0) return;
 
+            if (SelectedPaymentMethod == PaymentMethod.PayLater && !CanPayLater)
+            {
+                // Guard only — the Pay Later button is disabled in this
+                // state (see CheckoutView.xaml IsEnabled binding), this just
+                // prevents a bad write if it's ever reached another way.
+                StatusMessage = LocalizationManager.GetString("CheckoutPayLaterRequiresCustomer");
+                return;
+            }
+
             try
             {
                 DateTime now = DateTime.Now;
@@ -226,12 +295,29 @@ namespace PosSystem.App.ViewModels
 
                 double totalCost = Total;
                 double totalEarned = CartLines.Sum(l => (l.Price - l.Cost) * l.Quantity);
-                string paymentTag = SelectedPaymentMethod == PaymentMethod.Cash ? "Cash" : "Card";
+
+                var linkedCustomer = SelectedCustomer?.Model;
+                bool isPayLater = SelectedPaymentMethod == PaymentMethod.PayLater;
+
+                string ownername = linkedCustomer?.Ownername ?? "";
+                string ownerid = linkedCustomer?.Ownerid ?? "";
+                string ownernumber = linkedCustomer?.Ownernumber ?? "";
+
+                // Cash/Card settle the bill in full immediately (Paid =
+                // total, Remain = 0) — exactly what this screen always did,
+                // whether or not a customer happens to be linked. Pay Later
+                // is the one case that leaves a balance: nothing collected
+                // now, the whole total goes on the linked customer's tab.
+                double billPaid = isPayLater ? 0 : totalCost;
+                double billRemain = isPayLater ? totalCost : 0;
+                string paymentTag = SelectedPaymentMethod == PaymentMethod.Cash ? "Cash"
+                                   : SelectedPaymentMethod == PaymentMethod.Card ? "Card"
+                                   : "Credit";
 
                 _billsData.InsertBills(
                     "bills", nextId, nextBillNumber, totalCost, time, date,
-                    "", "", "",
-                    totalCost, 0, totalEarned, 0, 0, paymentTag);
+                    ownername, ownerid, ownernumber,
+                    billPaid, billRemain, totalEarned, 0, 0, paymentTag);
 
                 foreach (var line in CartLines)
                 {
@@ -244,10 +330,32 @@ namespace PosSystem.App.ViewModels
                     _goodsData.UpdateGoodCount("goods", line.Barcode, newQuantity);
                 }
 
-                StatusMessage = string.Format(LocalizationManager.GetString("CheckoutSaleSuccess"), nextBillNumber);
+                // Linked customer's running totals: Paid grows by whatever
+                // was actually collected now, Remain grows by whatever
+                // wasn't (0 for Cash/Card, the full total for Pay Later).
+                // See CustomersViewModel.RecordPayment for how a later
+                // payment brings Remain back down.
+                if (linkedCustomer != null)
+                {
+                    double newCustomerPaid = linkedCustomer.Paid + billPaid;
+                    double newCustomerRemain = linkedCustomer.Remain + billRemain;
+                    _customersData.UpdateCustomers(
+                        "customers", linkedCustomer.Id, linkedCustomer.Ownername,
+                        linkedCustomer.Ownerid, linkedCustomer.Ownernumber,
+                        newCustomerPaid, newCustomerRemain);
+                }
+
+                StatusMessage = isPayLater
+                    ? string.Format(LocalizationManager.GetString("CheckoutSaleSuccessCredit"), nextBillNumber, ownername)
+                    : string.Format(LocalizationManager.GetString("CheckoutSaleSuccess"), nextBillNumber);
 
                 CartLines.Clear();
                 LoadGoods();
+
+                if (linkedCustomer != null)
+                {
+                    CustomerDataEvents.RaiseCustomersChanged();
+                }
             }
             catch (Exception ex)
             {

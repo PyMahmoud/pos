@@ -54,21 +54,22 @@ Current state: skeleton solution exists (`PosSystem.Core` + `PosSystem.App`), ol
 - [x] Cash / Card payment toggle (no gateway integration needed — confirmed manual-entry model)
 - [x] Save order → writes to `Sells`/`Bills` tables via the existing `Data` layer
 - [~] Sold-out toggle per product — there's no `IsAvailable` column on `Goods`, so this uses `Quantity <= 0` as the out-of-stock signal instead (dims the card, disables Add). A real toggle would need a schema change; flagging rather than adding one unasked.
-- [ ] **Test end-to-end in Visual Studio — not yet done.** This screen was written directly against the repo via file access, not compiled or run — there's no Windows/WPF runtime available to build it from here. Before treating Phase 4 as closed: open the solution, build, and ring up a real test sale (a few of the 281 seeded goods work fine) — confirm the Bills/Sells rows land correctly and `goods.Quantity` decrements as expected.
+- [x] **Tested end-to-end in Visual Studio — confirmed working (Mahmoud, real build/run pass).**
 
-**Exit criteria:** you can complete a full sale from product tap to saved order, styled with the real design system. *(Code is in place; this still needs a real build/run pass before calling it done.)*
+**Exit criteria met.** You can complete a full sale from product tap to saved order, styled with the real design system. Closed.
 
 ---
 
 ## Phase 5 — Customers & debt tracking
 **Goal:** the specific feature the skincare client is waiting for.
 
-- Customer list screen: name, phone, current balance (`Remain`)
-- "Record payment" action: reduces `Remain`, logs the payment (consider a small `CustomerPayments`-style log table if you want a full payment history, not just a running balance)
-- Link orders to a customer optionally at checkout, with a "pay later / add to tab" option that increases their `Remain` instead of requiring full payment
-- Confirm with the client directly: does "debt" only mean customers owing *them* (accounts receivable), or does the client also want to track what they owe suppliers (accounts payable)? Current data model only covers the former — flagged as an open question since Phase 0.
+- [x] Customer list screen: name, phone, current balance (`Remain`) — plus customer code (`Ownerid`), search by name/phone/code, and an "add a customer" form (not explicitly listed above, but there was no way to onboard a new customer without it)
+- [x] "Record payment" action: reduces `Remain`, increases `Paid`. **No `CustomerPayments` log table was added** — the plan flagged this as optional ("if you want a full payment history"), and adding one is a schema change nobody asked for yet; Customers.Paid/Remain stay running totals only, same tradeoff Phase 4 made for the Goods `IsAvailable` question. Revisit if the client wants an actual payment history/audit trail, not just a current balance.
+- [x] Link orders to a customer optionally at checkout, with a "pay later / add to tab" option that increases their `Remain` instead of requiring full payment — Checkout now has a customer picker (Walk-in by default, unchanged behavior) and a third Pay Later button next to Cash/Card, enabled only once a real customer is selected. Linking a customer under Cash/Card (fully paid) also now records who the sale was for and grows their `Paid` running total — a small extension beyond what was asked, since the `Paid` field on `customers` was otherwise going to sit at 0 forever for anyone who always pays in full.
+- [ ] **Confirm with the client: accounts receivable only, or also payable?** Still open, flagged since Phase 0. Everything built in Phase 5 assumes receivable only (customers owing the shop) — the data model has no supplier/payable concept, and none was added.
+- [ ] **Test end-to-end in Visual Studio — not yet done**, same caveat Phase 4 shipped with. This screen (and the Checkout additions) were written directly against the repo via file access, not compiled or run — no Windows/WPF runtime available here. Before treating Phase 5 as closed: build, add a test customer, ring up a Pay Later sale against them from Checkout, confirm their balance updates on the Customers screen (including when Checkout wasn't the last screen you were on — that cross-screen refresh is real logic, not just a coincidence of load order), then record a partial payment and confirm `Remain` drops correctly. Also worth toggling language and light/dark mid-flow once, since Phase 5 touches both.
 
-**Exit criteria:** a customer can buy on credit, and later have a payment recorded that correctly reduces their balance — visible in the UI.
+**Exit criteria:** a customer can buy on credit, and later have a payment recorded that correctly reduces their balance — visible in the UI. *(Code is in place for this; needs the same real build/run pass as Phase 4 before calling it done.)*
 
 ---
 

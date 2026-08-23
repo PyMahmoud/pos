@@ -84,4 +84,29 @@
         </Style.Triggers>
     </Style>
 
+    <!--
+        Pay Later toggle — Phase 5. Uses TertiaryBrush rather than
+        PrimaryBrush like Cash/Card's selected state: Colors.Light.xaml
+        documents Tertiary as the accent for "discount badges, low-stock
+        flags" — states that want a second color separate from the app's
+        main action color — and "this sale is going on a tab" fits that
+        same category. SelectableButtonTemplate (above) has no disabled
+        visual of its own, so the IsEnabled=False trigger here is what
+        actually dims the button while no customer is picked.
+    -->
+    <Style x:Key="PayLaterToggleButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsPayLaterSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource TertiaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnTertiaryBrush}" />
+            </DataTrigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
 </ResourceDictionary>

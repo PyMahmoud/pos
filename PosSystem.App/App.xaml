@@ -14,11 +14,14 @@
             <FlowDirection x:Key="AppFlowDirection">LeftToRight</FlowDirection>
 
             <!-- Small, single-purpose converters used by Checkout (out-of-stock
-                 dimming/disabling, empty-cart message visibility). Kept as plain
-                 keyed resources rather than a merged dictionary since there's
-                 no XAML markup around them, just C# classes. -->
+                 dimming/disabling, empty-cart message visibility) and
+                 Customers (balance badge text, payment-row visibility). Kept
+                 as plain keyed resources rather than a merged dictionary
+                 since there's no XAML markup around them, just C# classes. -->
             <conv:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
             <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <conv:CustomerBalanceTextConverter x:Key="CustomerBalanceTextConverter" />
 
             <ResourceDictionary.MergedDictionaries>
                 <!-- Colors.Light.xaml is the startup default (POS counters are usually in
@@ -28,6 +31,7 @@
                 <ResourceDictionary Source="Themes/Typography.xaml" />
                 <ResourceDictionary Source="Themes/NavStyles.xaml" />
                 <ResourceDictionary Source="Themes/CheckoutStyles.xaml" />
+                <ResourceDictionary Source="Themes/CommonStyles.xaml" />
 
                 <!-- Strings.English.xaml is the startup default.
                      LocalizationManager.SwitchLanguage() swaps this entry for
