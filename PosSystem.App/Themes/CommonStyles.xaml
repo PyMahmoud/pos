@@ -51,19 +51,259 @@
     </Style>
 
     <!--
-        Setters-only — no ControlTemplate override. A full custom ComboBox
-        template means reimplementing the dropdown popup/arrow/toggle
-        behavior correctly, which isn't verifiable without a WPF runtime to
-        actually click through; the stock template already reads Background/
-        Foreground/BorderBrush correctly in every common Windows theme, so
-        this gets legible theming with much lower risk of a broken dropdown.
+        Full ControlTemplate override, added 2026-08-24 (previously
+        setters-only, see round-4/round-5 history in Dashboard-Parity-Plan.md
+        for the same pattern applied to DatePicker). Setters-only theming
+        only reaches the closed box — Background/Foreground/BorderBrush on
+        ComboBox itself — because the dropdown popup, its background, and
+        each ComboBoxItem's hover/selection colors are owned by the stock
+        template's own Border/Popup/highlight brushes, which setters can't
+        reach. That's exactly what Mahmoud's screenshot showed: a themed
+        closed box opening onto a plain white system dropdown list.
+
+        Standard, widely-documented ComboBox part contract (the classic
+        "override a ComboBox template" shape — not obscure or
+        library-specific like the LiveCharts risk elsewhere in this
+        project): the only element ComboBox's OnApplyTemplate looks up BY
+        NAME is "PART_Popup" (a Popup); everything else (the toggle button,
+        the selection ContentPresenter) just needs correct Bindings/
+        TemplateBindings, not a specific name, since the standard
+        IsDropDownOpen TwoWay-bound ToggleButton pattern below is how the
+        control actually opens/closes — not name-based wiring like
+        DatePicker's PART_Button.
     -->
     <Style x:Key="ThemedComboBoxStyle" TargetType="ComboBox">
         <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariantBrush}" />
         <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="12,9" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <Border x:Name="Chrome"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter x:Name="ContentSite"
+                                                  Grid.Column="0"
+                                                  IsHitTestVisible="False"
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                  Margin="{TemplateBinding Padding}"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Left" />
+                                <ToggleButton x:Name="ToggleButton"
+                                              Grid.Column="1"
+                                              Width="34" Height="28"
+                                              Margin="0,0,4,0"
+                                              Background="Transparent"
+                                              BorderThickness="0"
+                                              Focusable="False"
+                                              ClickMode="Press"
+                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border x:Name="ButtonChrome"
+                                                    Background="{TemplateBinding Background}"
+                                                    CornerRadius="8">
+                                                <Path Data="M2,3 L8,9 L14,3"
+                                                      Stroke="{DynamicResource OnSurfaceVariantBrush}"
+                                                      StrokeThickness="1.6"
+                                                      StrokeStartLineCap="Round"
+                                                      StrokeEndLineCap="Round"
+                                                      Width="14" Height="9"
+                                                      Stretch="Uniform"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ButtonChrome" Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                            </Grid>
+                        </Border>
+                        <Popup x:Name="PART_Popup"
+                               Placement="Bottom"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Slide">
+                            <Border x:Name="DropDownBorder"
+                                    Background="{DynamicResource SurfaceContainerHighestBrush}"
+                                    BorderBrush="{DynamicResource OutlineVariantBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Margin="0,4,0,0"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    SnapsToDevicePixels="True">
+                                <ScrollViewer SnapsToDevicePixels="True" Padding="4">
+                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                            <Setter TargetName="Chrome" Property="BorderThickness" Value="2" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Chrome" Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Implicit (key-less) ComboBoxItem style, so every row inside the
+        dropdown above is themed automatically — same mechanism as the
+        implicit DatePickerTextBox style below reaching PART_TextBox inside
+        ThemedDatePickerStyle. IsHighlighted (distinct from IsMouseOver) is
+        the real WPF property for "this row has keyboard/mouse focus while
+        the dropdown is open" — what the stock template shows as a blue bar,
+        themed here to SurfaceContainerHighBrush/PrimaryBrush instead.
+    -->
+    <Style TargetType="{x:Type ComboBoxItem}">
         <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Root"
+                            Background="Transparent"
+                            CornerRadius="6"
+                            Margin="4,2"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Implicit (key-less) ScrollBar style, added 2026-08-24 alongside the
+        ComboBox fix above — same complaint, same root cause: nothing in the
+        app had ever styled ScrollBar, so every scrollbar (Checkout's item
+        browser, Checkout's cart, and now the ComboBox dropdown above) sat
+        on stock Windows chrome regardless of theme.
+
+        Deliberately themes ScrollBar itself rather than overriding
+        ScrollViewer's own template: the stock ScrollViewer template
+        instantiates its scrollbars with Style="{DynamicResource
+        {x:Type ScrollBar}}" internally, so a key-less style for ScrollBar
+        here reaches every ScrollViewer in the app automatically — including
+        ones this file has no XAML changes to and never touches directly.
+        Rewriting ScrollViewer's own template instead would mean correctly
+        reproducing ITS part contract too (PART_VerticalScrollBar,
+        PART_HorizontalScrollBar, PART_ScrollContentPresenter, PART_Track on
+        each ScrollBar again) for zero extra benefit — more risk, same
+        result. Track requires the name "PART_Track" exactly (ScrollBar's
+        one required named part); DecreaseRepeatButton/Thumb/
+        IncreaseRepeatButton don't need names, just the correct Command/
+        Style wiring shown below — this is the standard, widely-reused
+        "thin themed scrollbar" shape, not unusual API surface.
+    -->
+    <Style x:Key="ThemedScrollBarThumb" TargetType="Thumb">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="{DynamicResource OutlineVariantBrush}" CornerRadius="4" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ThemedScrollBarPageButton" TargetType="RepeatButton">
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Rectangle Fill="Transparent" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type ScrollBar}">
+        <Setter Property="Width" Value="10" />
+        <Setter Property="MinWidth" Value="10" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid Background="Transparent">
+                        <Track x:Name="PART_Track"
+                               IsDirectionReversed="True"
+                               Width="8"
+                               HorizontalAlignment="Center">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource ThemedScrollBarPageButton}" Command="ScrollBar.PageUpCommand" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource ThemedScrollBarPageButton}" Command="ScrollBar.PageDownCommand" />
+                            </Track.IncreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource ThemedScrollBarThumb}" Width="8" MinHeight="24" />
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="Height" Value="10" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ScrollBar">
+                            <Grid Background="Transparent">
+                                <Track x:Name="PART_Track"
+                                       Height="8"
+                                       VerticalAlignment="Center">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Style="{StaticResource ThemedScrollBarPageButton}" Command="ScrollBar.PageLeftCommand" />
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Style="{StaticResource ThemedScrollBarPageButton}" Command="ScrollBar.PageRightCommand" />
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource ThemedScrollBarThumb}" Height="8" MinWidth="24" />
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!--

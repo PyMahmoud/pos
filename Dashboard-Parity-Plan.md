@@ -375,6 +375,48 @@ custom-model series gaining one more field and one more tooltip line, no new
 Mapping/API surface. Worth checking Revenue by Category's tooltip shows all
 three numbers correctly matched per bar.
 
+### Post-Stage-1 revision, round 9 (2026-08-24) — ComboBox dropdown + ScrollBar in dark mode
+
+Mahmoud flagged the Checkout customer `ComboBox` dropdown and every
+scrollbar in the app as looking bad in dark mode (screenshot: a themed
+closed box opening onto a plain white system dropdown list, plus a
+default-gray scrollbar next to the category chips). Root cause: both
+`ThemedComboBoxStyle` and `ScrollBar` had only ever been setters-only or
+never touched at all — setters reach a control's own top-level properties,
+not the popup/thumb chrome owned by the stock template underneath.
+
+**Different risk tier than round 5, worth saying plainly since round 5 just
+broke on the actual build:** the LiveChartsCore `Mapping` API is
+third-party, version-specific, and had zero prior working calls in this
+codebase to lean on — that's why it broke. Overriding `ComboBox`/`ScrollBar`
+templates is a standard, decades-old WPF pattern with a small, well-known
+part contract (`ComboBox` needs only `"PART_Popup"` named correctly;
+`ScrollBar` needs only `"PART_Track"`) — not obscure, not library-specific.
+
+**What changed**, in `CommonStyles.xaml`:
+- `ThemedComboBoxStyle`: full `ControlTemplate` override — rounded box
+  matching every other input, themed dropdown popup background, themed
+  chevron toggle button (same visual language as `ThemedDatePickerStyle`'s
+  button).
+- New implicit `ComboBoxItem` style: themed hover (`IsHighlighted`) and
+  selected states for each dropdown row. Applies automatically to every
+  `ComboBox` in the app, not just Checkout's.
+- New implicit `ScrollBar` style: thin, rounded thumb in theme colors, both
+  orientations. Applied as a key-less style rather than overriding
+  `ScrollViewer` itself — the stock `ScrollViewer` template already looks
+  up `ScrollBar`'s style by type internally, so this one change reaches
+  every scrollbar in the app (Checkout's item browser, Checkout's cart, and
+  the `ComboBox` dropdown above) without touching `ScrollViewer` or any
+  view file at all.
+
+**Not yet build-tested.** Given round 5 just broke on first build, worth
+building this one on its own before stacking anything further on top, so
+if something's off it's easy to isolate. On the next pass: open the
+customer dropdown and confirm it opens/closes/selects normally and is
+legible, and check scroll behavior (mouse drag on the thumb, mouse wheel,
+and the small page-up/down click zones above/below the thumb) in both the
+item browser and the cart.
+
 ### Post-Stage-1 revision (2026-08-24)
 
 Mahmoud reviewed a screenshot of the built Payment Split donut and asked for

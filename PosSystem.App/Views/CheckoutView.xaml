@@ -8,14 +8,22 @@
         <vm:CheckoutViewModel />
     </UserControl.DataContext>
 
-    <Grid Background="{DynamicResource BackgroundBrush}">
+    <!-- Panel positions are pinned LeftToRight regardless of language.
+         Item browser always on the left, cart always on the right (per
+         explicit request: RTL auto-mirroring was flipping this whole
+         two-column layout, which isn't wanted here). Each panel below
+         re-binds its own FlowDirection to AppFlowDirection so the CONTENT
+         inside (Arabic text alignment, chip wrap order, etc.) still adapts
+         correctly per language. Only the outer left/right placement of
+         the two panels is fixed. -->
+    <Grid Background="{DynamicResource BackgroundBrush}" FlowDirection="LeftToRight">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="360" />
         </Grid.ColumnDefinitions>
 
         <!-- Item browser -->
-        <Grid Grid.Column="0" Margin="24,20,16,20">
+        <Grid Grid.Column="0" Margin="24,20,16,20" FlowDirection="{DynamicResource AppFlowDirection}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -128,7 +136,8 @@
         <Border Grid.Column="1"
                 Background="{DynamicResource SurfaceContainerLowBrush}"
                 BorderBrush="{DynamicResource OutlineVariantBrush}"
-                BorderThickness="1,0,0,0">
+                BorderThickness="1,0,0,0"
+                FlowDirection="{DynamicResource AppFlowDirection}">
             <Grid Margin="20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
