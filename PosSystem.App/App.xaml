@@ -20,6 +20,7 @@
                  since there's no XAML markup around them, just C# classes. -->
             <conv:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
             <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+            <conv:PositiveCountToVisibilityConverter x:Key="PositiveCountToVisibilityConverter" />
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <conv:CustomerBalanceTextConverter x:Key="CustomerBalanceTextConverter" />
 

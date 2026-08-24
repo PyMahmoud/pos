@@ -73,6 +73,32 @@
     <system:String x:Key="CustomersRecordPaymentButton">تسجيل الدفعة</system:String>
     <system:String x:Key="CustomersPaymentSuccess">تم تسجيل الدفعة لـ {0}.</system:String>
     <system:String x:Key="CustomersPaymentInvalid">أدخل مبلغًا صحيحًا للدفعة.</system:String>
+    <system:String x:Key="CustomersViewDetailsButton">عرض التفاصيل</system:String>
+
+    <system:String x:Key="CustomerDetailBackButton">→ العودة إلى العملاء</system:String>
+    <system:String x:Key="CustomerDetailSoldTitle">الأدوية المباعة</system:String>
+    <system:String x:Key="CustomerDetailSoldNone">لا توجد مبيعات مرتبطة بهذا العميل بعد.</system:String>
+    <system:String x:Key="CustomerDetailSoldNameHeader">الدواء</system:String>
+    <system:String x:Key="CustomerDetailSoldQtyHeader">الكمية المباعة</system:String>
+    <system:String x:Key="CustomerDetailSoldRevenueHeader">الإيراد</system:String>
+    <system:String x:Key="CustomerDetailAddStockCheckTitle">تسجيل جرد مخزون</system:String>
+    <system:String x:Key="CustomerDetailAddStockCheckSubtitle">الكمية المتبقية لدى هذه الصيدلية مما بعته لها، حسب زيارة اليوم.</system:String>
+    <system:String x:Key="CustomerDetailMedicationLabel">الدواء</system:String>
+    <system:String x:Key="CustomerDetailQuantityLabel">الكمية المتوفرة</system:String>
+    <system:String x:Key="CustomerDetailBatchLabel">رقم التشغيلة / الباتش</system:String>
+    <system:String x:Key="CustomerDetailExpiryLabel">تاريخ الانتهاء</system:String>
+    <system:String x:Key="CustomerDetailNotesLabel">ملاحظات (اختياري)</system:String>
+    <system:String x:Key="CustomerDetailSaveButton">حفظ الجرد</system:String>
+    <system:String x:Key="CustomerDetailStockHistoryTitle">سجل جرد المخزون</system:String>
+    <system:String x:Key="CustomerDetailStockHistoryNone">لا توجد عمليات جرد مسجّلة بعد — استخدم النموذج أعلاه بعد زيارتك القادمة.</system:String>
+    <system:String x:Key="CustomerDetailStockQtyHeader">الكمية</system:String>
+    <system:String x:Key="CustomerDetailStockBatchHeader">التشغيلة</system:String>
+    <system:String x:Key="CustomerDetailStockExpiryHeader">الانتهاء</system:String>
+    <system:String x:Key="CustomerDetailStockDateHeader">تاريخ الجرد</system:String>
+    <system:String x:Key="StockCheckMissingMedication">اختر دواءً أولاً.</system:String>
+    <system:String x:Key="StockCheckInvalidQuantity">أدخل كمية صحيحة (0 أو أكثر).</system:String>
+    <system:String x:Key="StockCheckSaveSuccess">تم حفظ الجرد.</system:String>
+    <system:String x:Key="StockCheckSaveError">حدث خطأ أثناء الحفظ. حاول مرة أخرى.</system:String>
 
     <system:String x:Key="InventoryHeading">المخزون</system:String>
     <system:String x:Key="InventoryDescription">قائمة المنتجات، مستويات المخزون، والأسعار. 281 منتجًا حقيقيًا موجودون بالفعل في rovaShop.db للبناء عليهم.</system:String>

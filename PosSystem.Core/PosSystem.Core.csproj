@@ -52,10 +52,12 @@
     <Compile Include="Models\Returned.cs" />
     <Compile Include="Models\Sells.cs" />
     <Compile Include="Models\SellsOffline.cs" />
+    <Compile Include="Models\StockCheck.cs" />
     <!-- Data access -->
     <Compile Include="Data\Bills.cs" />
     <Compile Include="Data\Categories.cs" />
     <Compile Include="Data\Customers.cs" />
+    <Compile Include="Data\DatabaseBootstrapper.cs" />
     <Compile Include="Data\DbNullSafe.cs" />
     <Compile Include="Data\Expense.cs" />
     <Compile Include="Data\Goods.cs" />
@@ -65,6 +67,7 @@
     <Compile Include="Data\Returned.cs" />
     <Compile Include="Data\Sells.cs" />
     <Compile Include="Data\SellsOffline.cs" />
+    <Compile Include="Data\StockChecks.cs" />
     <Compile Include="Data\Server.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

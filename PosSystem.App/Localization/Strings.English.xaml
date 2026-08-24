@@ -73,6 +73,32 @@
     <system:String x:Key="CustomersRecordPaymentButton">Record payment</system:String>
     <system:String x:Key="CustomersPaymentSuccess">Payment recorded for {0}.</system:String>
     <system:String x:Key="CustomersPaymentInvalid">Enter a valid payment amount.</system:String>
+    <system:String x:Key="CustomersViewDetailsButton">View Details</system:String>
+
+    <system:String x:Key="CustomerDetailBackButton">← Back to Customers</system:String>
+    <system:String x:Key="CustomerDetailSoldTitle">Medications Sold</system:String>
+    <system:String x:Key="CustomerDetailSoldNone">No sales linked to this customer yet.</system:String>
+    <system:String x:Key="CustomerDetailSoldNameHeader">Medication</system:String>
+    <system:String x:Key="CustomerDetailSoldQtyHeader">Qty Sold</system:String>
+    <system:String x:Key="CustomerDetailSoldRevenueHeader">Revenue</system:String>
+    <system:String x:Key="CustomerDetailAddStockCheckTitle">Record a Stock Check</system:String>
+    <system:String x:Key="CustomerDetailAddStockCheckSubtitle">What's left at this pharmacy of what you've sold them, as of today's visit.</system:String>
+    <system:String x:Key="CustomerDetailMedicationLabel">Medication</system:String>
+    <system:String x:Key="CustomerDetailQuantityLabel">Quantity on hand</system:String>
+    <system:String x:Key="CustomerDetailBatchLabel">Batch / Lot number</system:String>
+    <system:String x:Key="CustomerDetailExpiryLabel">Expiry date</system:String>
+    <system:String x:Key="CustomerDetailNotesLabel">Notes (optional)</system:String>
+    <system:String x:Key="CustomerDetailSaveButton">Save Stock Check</system:String>
+    <system:String x:Key="CustomerDetailStockHistoryTitle">Stock Check History</system:String>
+    <system:String x:Key="CustomerDetailStockHistoryNone">No stock checks recorded yet — use the form above after your next visit.</system:String>
+    <system:String x:Key="CustomerDetailStockQtyHeader">Qty</system:String>
+    <system:String x:Key="CustomerDetailStockBatchHeader">Batch</system:String>
+    <system:String x:Key="CustomerDetailStockExpiryHeader">Expiry</system:String>
+    <system:String x:Key="CustomerDetailStockDateHeader">Checked On</system:String>
+    <system:String x:Key="StockCheckMissingMedication">Select a medication first.</system:String>
+    <system:String x:Key="StockCheckInvalidQuantity">Enter a valid quantity (0 or more).</system:String>
+    <system:String x:Key="StockCheckSaveSuccess">Stock check saved.</system:String>
+    <system:String x:Key="StockCheckSaveError">Something went wrong saving this. Please try again.</system:String>
 
     <system:String x:Key="InventoryHeading">Inventory</system:String>
     <system:String x:Key="InventoryDescription">Goods list, stock levels, pricing. 281 real products already in rovaShop.db to build against.</system:String>

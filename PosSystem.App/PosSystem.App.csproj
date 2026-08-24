@@ -187,6 +187,7 @@
     <Compile Include="Assets\IconGeometries.cs" />
     <Compile Include="Converters\GreaterThanZeroConverter.cs" />
     <Compile Include="Converters\CountToVisibilityConverter.cs" />
+    <Compile Include="Converters\PositiveCountToVisibilityConverter.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\CustomerBalanceTextConverter.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
@@ -202,6 +203,8 @@
     <Compile Include="ViewModels\CustomerRow.cs" />
     <Compile Include="ViewModels\CustomerDataEvents.cs" />
     <Compile Include="ViewModels\CustomersViewModel.cs" />
+    <Compile Include="ViewModels\CustomerDetailViewModel.cs" />
+    <Compile Include="ViewModels\SoldMedicationSummary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
