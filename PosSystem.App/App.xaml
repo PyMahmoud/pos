@@ -13,6 +13,13 @@
                  FlowDirection="{DynamicResource AppFlowDirection}". -->
             <FlowDirection x:Key="AppFlowDirection">LeftToRight</FlowDirection>
 
+            <!-- Visibility pair for language-specific layouts that can't rely
+                 on FlowDirection auto-mirroring (e.g. reordering, not just
+                 mirroring, a row of controls). LocalizationManager.SwitchLanguage
+                 sets both directly, same pattern as AppFlowDirection above. -->
+            <Visibility x:Key="EnglishOnlyVisibility">Visible</Visibility>
+            <Visibility x:Key="ArabicOnlyVisibility">Collapsed</Visibility>
+
             <!-- Small, single-purpose converters used by Checkout (out-of-stock
                  dimming/disabling, empty-cart message visibility) and
                  Customers (balance badge text, payment-row visibility). Kept

@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using LiveChartsCore;
+using LiveChartsCore.Kernel;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
@@ -51,10 +52,10 @@ namespace PosSystem.App.ViewModels
     /// SelectedPaymentChip (Cash/Card/Pay Later/All), and
     /// SelectedCategoryChip (a real category from the data, or All) all
     /// combine into one filtered set of `sells` rows per recompute — KPIs,
-    /// the payment-split donut, and the category-revenue chart are ALL
-    /// derived from that same filtered set, so they always agree with each
-    /// other no matter which filters are combined (this is what makes it
-    /// "cross-filtering" rather than three independently-filtered charts
+    /// Top Items, the payment-split donut, and the category-revenue chart
+    /// are ALL derived from that same filtered set, so they always agree
+    /// with each other no matter which filters are combined (this is what
+    /// makes it "cross-filtering" rather than independently-filtered charts
     /// that could disagree). The revenue trend line uses the same filtered
     /// set too, bucketed by day (or by week if the selected range is long —
     /// Performance rule: cap chart points on old hardware).
@@ -293,6 +294,27 @@ namespace PosSystem.App.ViewModels
             private set => SetProperty(ref _chartLegendTextPaint, value);
         }
 
+        // Tooltip colors (the popup shown when hovering a chart point/bar) —
+        // same category of bug as the axis colors above: LiveChartsCore
+        // defaults these to its own light-theme colors regardless of the
+        // app's active theme, which is why the tooltip in the reported
+        // screenshot was a light box floating on a dark chart. Set from
+        // RefreshDashboard alongside ChartLegendTextPaint, same trigger set
+        // (real data reload, theme toggle, language toggle).
+        private SolidColorPaint _chartTooltipBackgroundPaint;
+        public SolidColorPaint ChartTooltipBackgroundPaint
+        {
+            get => _chartTooltipBackgroundPaint;
+            private set => SetProperty(ref _chartTooltipBackgroundPaint, value);
+        }
+
+        private SolidColorPaint _chartTooltipTextPaint;
+        public SolidColorPaint ChartTooltipTextPaint
+        {
+            get => _chartTooltipTextPaint;
+            private set => SetProperty(ref _chartTooltipTextPaint, value);
+        }
+
         public ObservableCollection<ISeries> RevenueTrendSeries { get; } = new ObservableCollection<ISeries>();
         private Axis[] _revenueTrendXAxes = { new Axis() };
         public Axis[] RevenueTrendXAxes { get => _revenueTrendXAxes; private set => SetProperty(ref _revenueTrendXAxes, value); }
@@ -467,9 +489,10 @@ namespace PosSystem.App.ViewModels
                 OutstandingDebtTotal = customers.Sum(c => c.Remain); // unfiltered — see field comment
 
                 ChartLegendTextPaint = new SolidColorPaint(GetThemeColor("OnSurfaceColor", "#1C1A23"));
+                ChartTooltipBackgroundPaint = new SolidColorPaint(GetThemeColor("SurfaceContainerHighestColor", "#E6E0ED"));
+                ChartTooltipTextPaint = new SolidColorPaint(GetThemeColor("OnSurfaceColor", "#1C1A23"));
 
                 RebuildCategoryChips(_cachedSells);
-                BuildTopItemsChart(_cachedSells); // deliberately all-time, unfiltered — see method comment
 
                 RecomputeAndRedraw();
 
@@ -505,14 +528,42 @@ namespace PosSystem.App.ViewModels
             DateTime.TryParseExact(datex, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
 
         /// <summary>
-        /// The heart of the cross-filtering pipeline. KPIs, the
+        /// Builds an Axis with theme-aware label text and gridline colors.
+        /// Added 2026-08-24 — axes previously used plain `new Axis()`, which
+        /// left LabelsPaint/SeparatorsPaint on LiveChartsCore's own default
+        /// (effectively black-on-white), fine in light theme but reading as
+        /// mismatched/illegible next to a dark card background (flagged via
+        /// screenshot). Reuses the same GetThemeColor + SolidColorPaint
+        /// pattern already proven for series Fill/Stroke and
+        /// ChartLegendTextPaint elsewhere in this file, rather than a new
+        /// approach — same confidence level as that existing code, not a
+        /// new area of LiveCharts API risk. One shared helper instead of
+        /// repeating this at each of the six axis call sites, so a future
+        /// theme-color tweak can't accidentally miss one.
+        /// </summary>
+        private static Axis ThemedAxis(string[] labels = null, double? minLimit = null)
+        {
+            var axis = new Axis
+            {
+                LabelsPaint = new SolidColorPaint(GetThemeColor("OnSurfaceVariantColor", "#484554")),
+                SeparatorsPaint = new SolidColorPaint(GetThemeColor("OutlineVariantColor", "#CAC4D7")) { StrokeThickness = 1 }
+            };
+            if (labels != null) axis.Labels = labels;
+            if (minLimit.HasValue) axis.MinLimit = minLimit.Value;
+            return axis;
+        }
+
+        /// <summary>
+        /// The heart of the cross-filtering pipeline. KPIs, Top Items, the
         /// payment-split donut, and the category-revenue bar chart are ALL
         /// derived from the same `sellsFiltered` list built here — that's
         /// what makes combining filters behave correctly (e.g. "Cash sales
-        /// of Beverages this week") instead of three charts that each apply
+        /// of Beverages this week") instead of charts that each apply
         /// filters slightly differently and can disagree with each other.
         /// The revenue trend line also derives from `sellsFiltered`, bucketed
-        /// by day or week (see BuildRevenueTrendChart).
+        /// by day or week (see BuildRevenueTrendChart). Top Items joined
+        /// this pipeline 2026-08-25 — see BuildTopItemsChart's own comment
+        /// for why it was originally the one exception and isn't anymore.
         /// </summary>
         private void ApplyFiltersAndRebuildCharts(List<Core.Models.Bills> allBills, List<Core.Models.Sells> allSells)
         {
@@ -539,39 +590,84 @@ namespace PosSystem.App.ViewModels
             FilteredProfit = sellsFiltered.Sum(s => s.Earned);
             FilteredTransactionCount = sellsFiltered.Select(s => s.Billnumber).Distinct().Count();
 
+            BuildTopItemsChart(sellsFiltered);
             BuildPaymentSplitChart(sellsFiltered, billNumberToPayment);
             BuildCategoryRevenueChart(sellsFiltered);
             BuildRevenueTrendChart(sellsFiltered, start, end);
         }
 
-        private void BuildTopItemsChart(List<Core.Models.Sells> allSells)
+        private void BuildTopItemsChart(List<Core.Models.Sells> sellsFiltered)
         {
-            // Deliberately all-time and unfiltered, unlike everything else
-            // on this screen — this chart answers "what do we sell the
-            // most of, ever," a different question from "how did the
-            // selected period perform." Left out of the cross-filter
-            // pipeline on purpose, not an oversight; its own title says
-            // "All-Time" so this isn't ambiguous to whoever's reading it.
-            var topItems = allSells
+            // Changed 2026-08-25: this WAS deliberately all-time and
+            // unfiltered (see Dashboard-Parity-Plan.md's "Design deviations"
+            // / "Explicitly NOT filtered" notes for the original reasoning —
+            // now historical, not current behavior). Mahmoud asked for it to
+            // respect the active filters instead, on the grounds that the
+            // All Time quick-range button already covers the
+            // "what sells best, ever" case explicitly — so a permanently-
+            // unfiltered exception isn't needed alongside it. Now takes
+            // sellsFiltered (the same filtered set every other chart on this
+            // screen uses) and is called from ApplyFiltersAndRebuildCharts,
+            // not RefreshDashboard — so it's now part of the same
+            // cross-filter pipeline as Payment Split, Category Revenue, and
+            // Revenue Trend, instead of being the one standing exception.
+            //
+            // Carries Revenue and Profit (Quantity * Price, and Earned,
+            // summed) per item too, so the hover tooltip can show both
+            // numbers alongside Quantity — see TopItemPoint.cs.
+            var topItems = sellsFiltered
                 .GroupBy(s => s.Name)
-                .Select(g => new { Name = g.Key, Quantity = g.Sum(s => s.Quantity) })
+                .Select(g => new TopItemPoint
+                {
+                    Name = g.Key,
+                    Quantity = g.Sum(s => s.Quantity),
+                    Revenue = g.Sum(s => s.Price * s.Quantity),
+                    Profit = g.Sum(s => s.Earned)
+                })
                 .OrderByDescending(x => x.Quantity)
                 .Take(5)
                 .ToList();
 
             var primary = GetThemeColor("PrimaryColor", "#6C4CE0");
+            string unitsSoldLabel = LocalizationManager.GetString("DashboardUnitsSoldLabel");
+            string revenueLabel = LocalizationManager.GetString("DashboardItemRevenueLabel");
+            string profitLabel = LocalizationManager.GetString("DashboardTodayProfit");
 
             TopItemsSeries.Clear();
-            TopItemsSeries.Add(new ColumnSeries<double>
+            TopItemsSeries.Add(new ColumnSeries<TopItemPoint>
             {
-                Values = topItems.Select(x => x.Quantity).ToArray(),
+                Values = topItems,
                 Name = "Units sold",
                 Fill = new SolidColorPaint(primary),
-                MaxBarWidth = 42
+                MaxBarWidth = 42,
+                // Mapping tells LiveCharts how to turn each TopItemPoint into
+                // a plotted (X, Y) Coordinate: X is just the bar's position
+                // (the `index` parameter, same order as the Labels array
+                // below), Y is Quantity — same bar heights as before this
+                // change, only the underlying model type changed.
+                //
+                // NOTE (2026-08-24): the installed LiveChartsCore version's
+                // Mapping signature is Func<TopItemPoint, int, Coordinate> —
+                // (model, index) => Coordinate — not the older
+                // Action<TModel, ChartPoint> style that set point.PrimaryValue/
+                // SecondaryValue directly. That older form is what caused the
+                // CS0246/CS1643/CS1061 build errors (the compiler correctly
+                // inferred `point` as the int index, which has no
+                // PrimaryValue/SecondaryValue/Context members). Fixed to match
+                // the real installed API surface, flagging per the standing
+                // rule that this package's exact API is the least-certain part
+                // of this file.
+                Mapping = (item, index) => new Coordinate(index, item.Quantity),
+                // The actual point of the model change: point.Model gives
+                // back the original TopItemPoint for whichever bar is being
+                // hovered, so the tooltip can show Revenue and Profit
+                // alongside the Quantity that was already there.
+                YToolTipLabelFormatter = point =>
+                    $"{unitsSoldLabel}: {point.Model.Quantity:0}\n{revenueLabel}: {point.Model.Revenue:0.00}\n{profitLabel}: {point.Model.Profit:0.00}"
             });
 
-            TopItemsXAxes = new[] { new Axis { Labels = topItems.Select(x => x.Name).ToArray() } };
-            TopItemsYAxes = new[] { new Axis { MinLimit = 0 } };
+            TopItemsXAxes = new[] { ThemedAxis(labels: topItems.Select(x => x.Name).ToArray()) };
+            TopItemsYAxes = new[] { ThemedAxis(minLimit: 0) };
         }
 
         private void BuildPaymentSplitChart(List<Core.Models.Sells> sellsFiltered, Dictionary<int, string> billNumberToPayment)
@@ -607,38 +703,69 @@ namespace PosSystem.App.ViewModels
             string cardLabel = LocalizationManager.GetString("CheckoutCard");
             string creditLabel = LocalizationManager.GetString("CheckoutPayLater");
 
+            // Percentage-of-total alongside each legend label (requested
+            // 2026-08-24). LiveChartsCore's legend renders each series'
+            // Name verbatim — no separate legend-label template API to hook
+            // into (same low-risk-API reasoning as the rest of this file's
+            // LiveCharts usage) — so the percentage is folded directly into
+            // Name here rather than attempting a custom legend item
+            // template, which would be new, unverified chart-API surface.
+            // Computed from cashTotal/cardTotal/creditTotal (the same
+            // filtered totals the slices themselves are built from), so the
+            // percentage always matches whatever filter is active — never a
+            // separate, potentially-stale calculation.
+            double totalRevenue = cashTotal + cardTotal + creditTotal;
+            string PctSuffix(double part) => totalRevenue > 0
+                ? $" ({Math.Round(part / totalRevenue * 100).ToString(CultureInfo.InvariantCulture)}%)"
+                : " (0%)";
+
             PaymentSplitSeries.Clear();
 
             // Full circle, not a donut — InnerRadius omitted (defaults to 0).
             if (cashTotal > 0)
-                PaymentSplitSeries.Add(new PieSeries<double> { Values = new[] { cashTotal }, Name = cashLabel, Fill = new SolidColorPaint(primary) });
+                PaymentSplitSeries.Add(new PieSeries<double> { Values = new[] { cashTotal }, Name = cashLabel + PctSuffix(cashTotal), Fill = new SolidColorPaint(primary) });
             if (cardTotal > 0)
-                PaymentSplitSeries.Add(new PieSeries<double> { Values = new[] { cardTotal }, Name = cardLabel, Fill = new SolidColorPaint(secondary) });
+                PaymentSplitSeries.Add(new PieSeries<double> { Values = new[] { cardTotal }, Name = cardLabel + PctSuffix(cardTotal), Fill = new SolidColorPaint(secondary) });
             if (creditTotal > 0)
-                PaymentSplitSeries.Add(new PieSeries<double> { Values = new[] { creditTotal }, Name = creditLabel, Fill = new SolidColorPaint(tertiary) });
+                PaymentSplitSeries.Add(new PieSeries<double> { Values = new[] { creditTotal }, Name = creditLabel + PctSuffix(creditTotal), Fill = new SolidColorPaint(tertiary) });
         }
 
         private void BuildCategoryRevenueChart(List<Core.Models.Sells> sellsFiltered)
         {
             var categoryTotals = sellsFiltered
                 .GroupBy(s => string.IsNullOrWhiteSpace(s.Category) ? "—" : s.Category)
-                .Select(g => new { Category = g.Key, Revenue = g.Sum(s => s.Price * s.Quantity) })
+                .Select(g => new CategoryRevenuePoint
+                {
+                    Category = g.Key,
+                    Quantity = g.Sum(s => s.Quantity),
+                    Revenue = g.Sum(s => s.Price * s.Quantity),
+                    Profit = g.Sum(s => s.Earned)
+                })
                 .OrderByDescending(x => x.Revenue)
                 .ToList();
 
             var primary = GetThemeColor("PrimaryColor", "#6C4CE0");
+            string unitsSoldLabel = LocalizationManager.GetString("DashboardUnitsSoldLabel");
+            string revenueLabel = LocalizationManager.GetString("DashboardItemRevenueLabel");
+            string profitLabel = LocalizationManager.GetString("DashboardTodayProfit");
 
             CategoryRevenueSeries.Clear();
-            CategoryRevenueSeries.Add(new ColumnSeries<double>
+            CategoryRevenueSeries.Add(new ColumnSeries<CategoryRevenuePoint>
             {
-                Values = categoryTotals.Select(x => x.Revenue).ToArray(),
+                Values = categoryTotals,
                 Name = LocalizationManager.GetString("DashboardCategoryRevenueTitle"),
                 Fill = new SolidColorPaint(primary),
-                MaxBarWidth = 56
+                MaxBarWidth = 56,
+                // Same Mapping/tooltip pattern as TopItemsSeries above — see
+                // that Mapping's comment for why this is (model, index) =>
+                // Coordinate rather than the older ChartPoint-mutation form.
+                Mapping = (item, index) => new Coordinate(index, item.Revenue),
+                YToolTipLabelFormatter = point =>
+                    $"{unitsSoldLabel}: {point.Model.Quantity:0}\n{revenueLabel}: {point.Model.Revenue:0.00}\n{profitLabel}: {point.Model.Profit:0.00}"
             });
 
-            CategoryRevenueXAxes = new[] { new Axis { Labels = categoryTotals.Select(x => x.Category).ToArray() } };
-            CategoryRevenueYAxes = new[] { new Axis { MinLimit = 0 } };
+            CategoryRevenueXAxes = new[] { ThemedAxis(labels: categoryTotals.Select(x => x.Category).ToArray()) };
+            CategoryRevenueYAxes = new[] { ThemedAxis(minLimit: 0) };
         }
 
         private void BuildRevenueTrendChart(List<Core.Models.Sells> sellsFiltered, DateTime start, DateTime end)
@@ -651,9 +778,13 @@ namespace PosSystem.App.ViewModels
             bool aggregateWeekly = totalDays > 60;
             int bucketDays = aggregateWeekly ? 7 : 1;
 
-            var buckets = new SortedDictionary<DateTime, double>();
+            // Revenue and Profit tracked per bucket now (Profit added so the
+            // hover tooltip can show both, same as TopItemsSeries and
+            // CategoryRevenueSeries) — hence RevenueTrendPoint instead of a
+            // plain double per bucket.
+            var buckets = new SortedDictionary<DateTime, RevenueTrendPoint>();
             for (DateTime d = start; d <= end; d = d.AddDays(bucketDays))
-                buckets[d] = 0;
+                buckets[d] = new RevenueTrendPoint();
 
             foreach (var sell in sellsFiltered)
             {
@@ -661,11 +792,15 @@ namespace PosSystem.App.ViewModels
                 DateTime bucketKey = aggregateWeekly
                     ? start.AddDays(((d.Date - start).Days / 7) * 7)
                     : d.Date;
-                if (buckets.ContainsKey(bucketKey))
-                    buckets[bucketKey] += sell.Price * sell.Quantity;
+                if (buckets.TryGetValue(bucketKey, out RevenueTrendPoint point))
+                {
+                    point.Revenue += sell.Price * sell.Quantity;
+                    point.Profit += sell.Earned;
+                }
             }
 
             var keys = buckets.Keys.ToList();
+            var values = buckets.Values.ToList();
             // Usability rule: don't overcrowd — thin labels to roughly 8
             // regardless of range length or bucket size, always including
             // the last (most recent) point so "now" is never unlabeled.
@@ -675,20 +810,28 @@ namespace PosSystem.App.ViewModels
                 labels[i] = (i % labelEvery == 0 || i == keys.Count - 1) ? keys[i].ToString("d/M") : "";
 
             var primary = GetThemeColor("PrimaryColor", "#6C4CE0");
+            string revenueLabel = LocalizationManager.GetString("DashboardItemRevenueLabel");
+            string profitLabel = LocalizationManager.GetString("DashboardTodayProfit");
 
             RevenueTrendSeries.Clear();
-            RevenueTrendSeries.Add(new LineSeries<double>
+            RevenueTrendSeries.Add(new LineSeries<RevenueTrendPoint>
             {
-                Values = buckets.Values.ToArray(),
+                Values = values,
                 Name = LocalizationManager.GetString("DashboardRevenueTrendTitle"),
                 Stroke = new SolidColorPaint(primary, 3),
                 Fill = null,
                 GeometrySize = 0,
-                LineSmoothness = 0
+                LineSmoothness = 0,
+                // Same Mapping/tooltip pattern as TopItemsSeries — see that
+                // Mapping's comment for why this is (model, index) =>
+                // Coordinate rather than the older ChartPoint-mutation form.
+                Mapping = (item, index) => new Coordinate(index, item.Revenue),
+                YToolTipLabelFormatter = point =>
+                    $"{revenueLabel}: {point.Model.Revenue:0.00}\n{profitLabel}: {point.Model.Profit:0.00}"
             });
 
-            RevenueTrendXAxes = new[] { new Axis { Labels = labels } };
-            RevenueTrendYAxes = new[] { new Axis { MinLimit = 0 } };
+            RevenueTrendXAxes = new[] { ThemedAxis(labels: labels) };
+            RevenueTrendYAxes = new[] { ThemedAxis(minLimit: 0) };
         }
 
         // Reads straight from the currently-active theme's Color resources

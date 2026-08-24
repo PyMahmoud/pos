@@ -75,17 +75,47 @@
                                 Style="{StaticResource RangeAllTimeButtonStyle}"
                                 Padding="14,8" Margin="0,0,16,8" />
 
-                        <StackPanel Orientation="Horizontal" Margin="0,0,8,8" VerticalAlignment="Center">
+                        <!-- Two prebuilt rows instead of one auto-mirrored
+                             one: FlowDirection-based mirroring wasn't giving
+                             a reliable result for this specific reordering
+                             (box-before-label, not just left/right swap), so
+                             each language gets its own explicit, fixed
+                             element order, gated by EnglishOnlyVisibility /
+                             ArabicOnlyVisibility (set directly by
+                             LocalizationManager.SwitchLanguage). Both are
+                             pinned FlowDirection=LeftToRight so nothing here
+                             depends on inherited mirroring at all. -->
+
+                        <!-- English: label, box, label, box (unchanged from before) -->
+                        <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight"
+                                    Visibility="{DynamicResource EnglishOnlyVisibility}"
+                                    Margin="0,0,16,8" VerticalAlignment="Center">
                             <TextBlock Text="{DynamicResource DashboardFilterFromLabel}"
                                        Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                        VerticalAlignment="Center" Margin="0,0,6,0" />
                             <DatePicker SelectedDate="{Binding FilterStartDate, Mode=TwoWay}" Style="{StaticResource ThemedDatePickerStyle}" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,8,8" VerticalAlignment="Center">
                             <TextBlock Text="{DynamicResource DashboardFilterToLabel}"
                                        Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                       VerticalAlignment="Center" Margin="0,0,6,0" />
+                                       VerticalAlignment="Center" Margin="14,0,6,0" />
                             <DatePicker SelectedDate="{Binding FilterEndDate, Mode=TwoWay}" Style="{StaticResource ThemedDatePickerStyle}" />
+                        </StackPanel>
+
+                        <!-- Arabic: the whole block order is swapped, not just
+                             label/box within a pair. "من" is read first in
+                             من...إلى so its pair must be the rightmost block on
+                             screen, with "إلى"'s pair to its left. Physical
+                             left-to-right: [to box][إلى][from box][من]. -->
+                        <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight"
+                                    Visibility="{DynamicResource ArabicOnlyVisibility}"
+                                    Margin="0,0,16,8" VerticalAlignment="Center">
+                            <DatePicker SelectedDate="{Binding FilterEndDate, Mode=TwoWay}" Style="{StaticResource ThemedDatePickerStyle}" />
+                            <TextBlock Text="{DynamicResource DashboardFilterToLabel}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       VerticalAlignment="Center" Margin="6,0,14,0" />
+                            <DatePicker SelectedDate="{Binding FilterStartDate, Mode=TwoWay}" Style="{StaticResource ThemedDatePickerStyle}" />
+                            <TextBlock Text="{DynamicResource DashboardFilterFromLabel}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       VerticalAlignment="Center" Margin="6,0,0,0" />
                         </StackPanel>
                     </WrapPanel>
 
@@ -225,7 +255,10 @@
                     <lvc:CartesianChart Grid.Row="1"
                                          Series="{Binding RevenueTrendSeries}"
                                          XAxes="{Binding RevenueTrendXAxes}"
-                                         YAxes="{Binding RevenueTrendYAxes}" />
+                                         YAxes="{Binding RevenueTrendYAxes}"
+                                         Background="Transparent"
+                                         TooltipBackgroundPaint="{Binding ChartTooltipBackgroundPaint}"
+                                         TooltipTextPaint="{Binding ChartTooltipTextPaint}" />
                 </Grid>
             </Border>
 
@@ -247,7 +280,10 @@
                     <lvc:CartesianChart Grid.Row="1"
                                          Series="{Binding CategoryRevenueSeries}"
                                          XAxes="{Binding CategoryRevenueXAxes}"
-                                         YAxes="{Binding CategoryRevenueYAxes}" />
+                                         YAxes="{Binding CategoryRevenueYAxes}"
+                                         Background="Transparent"
+                                         TooltipBackgroundPaint="{Binding ChartTooltipBackgroundPaint}"
+                                         TooltipTextPaint="{Binding ChartTooltipTextPaint}" />
                 </Grid>
             </Border>
 
@@ -272,7 +308,10 @@
                         <lvc:CartesianChart Grid.Row="1"
                                              Series="{Binding TopItemsSeries}"
                                              XAxes="{Binding TopItemsXAxes}"
-                                             YAxes="{Binding TopItemsYAxes}" />
+                                             YAxes="{Binding TopItemsYAxes}"
+                                             Background="Transparent"
+                                             TooltipBackgroundPaint="{Binding ChartTooltipBackgroundPaint}"
+                                             TooltipTextPaint="{Binding ChartTooltipTextPaint}" />
                     </Grid>
                 </Border>
 
@@ -290,7 +329,10 @@
                         <lvc:PieChart Grid.Row="1"
                                       Series="{Binding PaymentSplitSeries}"
                                       LegendPosition="Right"
-                                      LegendTextPaint="{Binding ChartLegendTextPaint}" />
+                                      LegendTextPaint="{Binding ChartLegendTextPaint}"
+                                      Background="Transparent"
+                                      TooltipBackgroundPaint="{Binding ChartTooltipBackgroundPaint}"
+                                      TooltipTextPaint="{Binding ChartTooltipTextPaint}" />
                     </Grid>
                 </Border>
             </Grid>

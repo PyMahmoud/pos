@@ -57,6 +57,17 @@ namespace PosSystem.App.Localization
             Application.Current.Resources["AppFlowDirection"] =
                 language == AppLanguage.Arabic ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
 
+            // Same direct-value-swap pattern as AppFlowDirection above, for
+            // the handful of spots (Dashboard's From/To date range row) that
+            // need an actual reordering per language, not just a mirror --
+            // relying on FlowDirection auto-mirroring alone for that turned
+            // out not to be reliable, so those spots use two prebuilt rows
+            // gated by these two resources instead.
+            Application.Current.Resources["EnglishOnlyVisibility"] =
+                language == AppLanguage.Arabic ? Visibility.Collapsed : Visibility.Visible;
+            Application.Current.Resources["ArabicOnlyVisibility"] =
+                language == AppLanguage.Arabic ? Visibility.Visible : Visibility.Collapsed;
+
             Thread.CurrentThread.CurrentUICulture = language == AppLanguage.Arabic
                 ? CultureInfo.GetCultureInfo("ar")
                 : CultureInfo.GetCultureInfo("en-US");

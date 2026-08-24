@@ -21,7 +21,7 @@
     <system:String x:Key="DashboardTodayProfit">Profit</system:String>
     <system:String x:Key="DashboardTodayTransactions">Transactions</system:String>
     <system:String x:Key="DashboardOutstandingDebt">Outstanding Customer Debt</system:String>
-    <system:String x:Key="DashboardTopItemsTitle">Top-Selling Items (All-Time)</system:String>
+    <system:String x:Key="DashboardTopItemsTitle">Top-Selling Items</system:String>
     <system:String x:Key="DashboardPaymentSplitTitle">Payment Split</system:String>
     <system:String x:Key="DashboardRevenueTrendTitle">Revenue Trend</system:String>
     <system:String x:Key="DashboardCategoryRevenueTitle">Revenue by Category</system:String>
@@ -37,6 +37,8 @@
     <system:String x:Key="DashboardPaymentFilterLabel">Payment method</system:String>
     <system:String x:Key="DashboardCategoryFilterLabel">Category</system:String>
     <system:String x:Key="DashboardClearFilters">Clear filters</system:String>
+    <system:String x:Key="DashboardUnitsSoldLabel">Units sold</system:String>
+    <system:String x:Key="DashboardItemRevenueLabel">Revenue</system:String>
 
     <system:String x:Key="CheckoutHeading">Checkout</system:String>
     <system:String x:Key="CheckoutDescription">Highest-traffic screen — item grid + running order + Cash/Card toggle. Built next.</system:String>

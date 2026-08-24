@@ -205,6 +205,9 @@
     <Compile Include="ViewModels\CustomersViewModel.cs" />
     <Compile Include="ViewModels\CustomerDetailViewModel.cs" />
     <Compile Include="ViewModels\SoldMedicationSummary.cs" />
+    <Compile Include="ViewModels\TopItemPoint.cs" />
+    <Compile Include="ViewModels\RevenueTrendPoint.cs" />
+    <Compile Include="ViewModels\CategoryRevenuePoint.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

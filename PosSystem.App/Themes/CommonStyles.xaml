@@ -67,34 +67,138 @@
     </Style>
 
     <!--
-        Dashboard date-range pickers (added 2026-08-24, replacing the stock
-        white system DatePicker Mahmoud flagged as visually jarring next to
-        the rest of the app). Same setters-only tradeoff as
-        ThemedComboBoxStyle just above, and for the same reason: a full
-        ControlTemplate override of DatePicker means correctly reproducing
-        its PART_Root/PART_Button/PART_TextBox/PART_Popup contract, which
-        isn't verifiable without a WPF runtime to click through — get one
-        part wrong and the calendar popup silently stops opening. Plain
-        setters carry much lower risk of a broken control, at the cost of
-        not being able to round the corners (Border.CornerRadius isn't a
-        DatePicker property, so this stays square-ish, unlike every other
-        input in the app) — flagged here rather than silently accepted.
+        Dashboard date-range pickers. Originally (2026-08-24) a setters-only
+        style — deliberately not a full ControlTemplate override, because
+        correctly reproducing DatePicker's PART_Root/PART_Button/
+        PART_TextBox/PART_Popup contract isn't verifiable without a WPF
+        runtime to click through, and getting one part wrong risks silently
+        breaking the calendar popup. That tradeoff meant square-ish corners
+        and a plain system-chrome toggle button, which Mahmoud flagged as
+        looking bad next to the rest of the app (screenshot, 2026-08-24) —
+        this revision picks up that deferred risk on his explicit request.
 
-        DatePickerTextBox (below) is a genuine subtype of TextBox, not a
-        separate composite control, so an implicit (key-less) style for it
-        applies automatically wherever a DatePicker renders its internal
-        text box — this is what actually removes the plain-white inner box
-        and mismatched text color; ThemedDatePickerStyle above only reaches
-        the outer chrome.
+        SCOPE, kept deliberately narrow: this restyles the outer box (Border
+        chrome, rounded like every other input) and the calendar-toggle
+        button (now a themed chevron instead of the plain system calendar
+        glyph) — i.e. exactly what's visible/ugly in the closed-popup state
+        shown in the screenshot. The POPUP CALENDAR ITSELF (the actual
+        month/day grid that drops down) is deliberately left on the default
+        Windows Calendar control appearance — restyling that is a much
+        larger, separate risk surface (its own PART contract: CalendarItem,
+        CalendarDayButton, month/year navigation buttons, etc.) that isn't
+        what the screenshot complained about. Flagging this as a known,
+        deliberate follow-up rather than silently leaving it half-themed —
+        if the popup itself turns out to look equally out of place once
+        this is actually seen open, that's a real fast-follow, not a
+        surprise.
+
+        Part-by-part mapping to the standard DatePicker contract (this is
+        the exact set OnApplyTemplate looks for by name — omitting or
+        misnaming any of these is what would break the control):
+        - PART_Root   → the outer Grid
+        - PART_TextBox → the DatePickerTextBox (date text entry)
+        - PART_Button  → the calendar-toggle Button
+        - PART_Popup   → the Popup DatePicker itself assigns its internal
+                         Calendar into at runtime (this template does not,
+                         and should not, put a Calendar inside it directly)
     -->
     <Style x:Key="ThemedDatePickerStyle" TargetType="DatePicker">
         <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighestBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariantBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="4" />
+        <Setter Property="Padding" Value="12,9" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePicker">
+                    <Grid x:Name="PART_Root">
+                        <Border x:Name="Chrome"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <DatePickerTextBox x:Name="PART_TextBox"
+                                                    Grid.Column="0"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Foreground="{TemplateBinding Foreground}"
+                                                    Padding="{TemplateBinding Padding}"
+                                                    VerticalContentAlignment="Center"
+                                                    VerticalAlignment="Stretch" />
+                                <Button x:Name="PART_Button"
+                                        Grid.Column="1"
+                                        Width="34" Height="28"
+                                        Margin="0,0,4,0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Focusable="False"
+                                        Cursor="Hand">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="ButtonChrome"
+                                                    Background="{TemplateBinding Background}"
+                                                    CornerRadius="8">
+                                                <Path Data="M2,3 L8,9 L14,3"
+                                                      Stroke="{DynamicResource OnSurfaceVariantBrush}"
+                                                      StrokeThickness="1.6"
+                                                      StrokeStartLineCap="Round"
+                                                      StrokeEndLineCap="Round"
+                                                      Width="14" Height="9"
+                                                      Stretch="Uniform"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ButtonChrome" Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
+                        </Border>
+                        <!-- DatePicker assigns its internal Calendar as this
+                             Popup's Child at runtime — deliberately left
+                             empty here, see class-level comment above on
+                             why the popup's own appearance isn't themed in
+                             this revision. -->
+                        <Popup x:Name="PART_Popup"
+                               Placement="Bottom"
+                               PlacementTarget="{Binding ElementName=Chrome}"
+                               StaysOpen="False"
+                               AllowsTransparency="True" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                            <Setter TargetName="Chrome" Property="BorderThickness" Value="2" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Chrome" Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
+    <!--
+        DatePickerTextBox is a genuine subtype of TextBox, not a separate
+        composite control, so this implicit (key-less) style applies
+        automatically wherever one renders — including the PART_TextBox
+        instance inside the ControlTemplate above (its own Background/
+        BorderThickness setters there win for those two properties via
+        local-value precedence, but Foreground/CaretBrush/selection colors
+        still come from here).
+    -->
     <Style TargetType="{x:Type DatePickerTextBox}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />

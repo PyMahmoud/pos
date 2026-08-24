@@ -129,15 +129,251 @@ bug and two requests:
    — it's a genuine `TextBox` subtype, not a separate composite control, so
    this automatically reaches the inner text area everywhere a `DatePicker`
    renders one, without touching `DatePicker`'s own template.
-   **Known limitation, accepted rather than hidden:** corners stay
-   square-ish — `Border.CornerRadius` isn't a `DatePicker` property, so this
-   is the one input in the app that doesn't get the usual 10px rounding. If
-   that turns out to matter once seen for real, the fix is the fuller
-   `ControlTemplate` override this revision deliberately avoided — not a
-   rebuild, just picking up the risk that was set aside here.
+   **Known limitation at the time, since resolved (2026-08-24, second
+   revision):** corners stayed square-ish because `Border.CornerRadius`
+   isn't a `DatePicker` property, and the setters-only style couldn't reach
+   it. Mahmoud saw the actual rendered result and flagged it as looking bad
+   next to the rest of the app — the fuller `ControlTemplate` override
+   deliberately avoided here was then picked up on his explicit request.
+   See "Post-Stage-1 revision, round 3" below for what changed and what's
+   still deliberately out of scope (the popup calendar's own appearance).
 
 All three changes are **not yet build-tested**, same standing caveat as
 everything else in this file.
+
+### Post-Stage-1 revision, round 3 (2026-08-24)
+
+Mahmoud saw the actual rendered date pickers and flagged them as looking
+bad — plain gray box, square corners, mismatched calendar-icon button —
+and asked for them to match the app's design system. This is exactly the
+risk the round-2 revision above deliberately deferred (a full `DatePicker`
+`ControlTemplate` override, correctly reproducing its
+`PART_Root`/`PART_Button`/`PART_TextBox`/`PART_Popup` contract without a
+WPF runtime to verify it against) — flagged as such before proceeding, per
+his own stated preference for conflicts with a prior deliberate call to be
+surfaced once, then actioned on explicit request.
+
+**What changed**, in `CommonStyles.xaml`'s `ThemedDatePickerStyle`:
+- Full `ControlTemplate` override: rounded 10px `Border` chrome matching
+  every other input in the app (`ThemedTextBoxStyle`'s corner radius),
+  themed background/border/focus-state colors, and a redrawn
+  calendar-toggle button (a themed chevron `Path` instead of the plain
+  system calendar glyph), with a hover state on the toggle button
+  (`SurfaceContainerHighBrush`) and a focus state on the whole control
+  (`PrimaryBrush` border, thickness 2) — mirroring `ThemedTextBoxStyle`'s
+  existing focus-state pattern exactly, not inventing a new one.
+- `PART_TextBox`, `PART_Button`, `PART_Popup` named exactly per the
+  standard `DatePicker` part contract. `PART_Popup` is left with no
+  explicit content — `DatePicker` assigns its own internal `Calendar`
+  instance as that Popup's `Child` at runtime; the template must not add
+  one itself.
+
+**Deliberately still out of scope, flagged not hidden:** the popup
+calendar's own appearance (the month/day grid that drops down when the
+toggle button is clicked) still uses the default Windows `Calendar` control
+look — restyling that is a separate, larger risk surface (`CalendarItem`,
+`CalendarDayButton`, month/year navigation buttons all have their own PART
+contracts) that the reported screenshot didn't actually show, since it only
+captured the closed-picker state. If the open popup turns out to look
+equally mismatched once this is actually seen in the running app, that's a
+real fast-follow — same tradeoff pattern as the rest of this plan, not a
+surprise gap.
+
+**Not yet build-tested**, same standing caveat as everything else in this
+file — and this one specifically carries the exact risk category the round-2
+note above described: if the calendar popup silently stops opening once
+built, that's the named risk materializing, not a mystery regression. Check
+this first, before anything else, on the next build/run pass: click the
+toggle button on both the From and To pickers and confirm the calendar
+actually drops down and a date can be picked, in both light and dark theme,
+and under Arabic/RTL.
+
+### Post-Stage-1 revision, round 4 (2026-08-24) — chart colors in dark mode
+
+Mahmoud sent a dark-mode screenshot: every chart's plot area was a plain
+white rectangle sitting inside an otherwise-dark card, axis labels/gridlines
+were unreadable-by-mismatch (not literally unreadable, just visibly the
+wrong theme), and the hover tooltip was a light box floating on the dark
+chart. Root cause, in two parts:
+
+1. **Chart backgrounds were never set.** `CartesianChart`/`PieChart`
+   default to an opaque (effectively white) background unless told
+   otherwise — nothing in `DashboardView.xaml` overrode this, so every
+   chart ignored the app's theme entirely regardless of light/dark. Fixed
+   with `Background="Transparent"` on all four chart controls (three
+   `CartesianChart`, one `PieChart`), so the surrounding card's own
+   `SurfaceContainerBrush` shows through instead.
+2. **Axis labels and gridlines were never given theme colors.** All six
+   `Axis` instances (`TopItems`, `CategoryRevenue`, `RevenueTrend` × X/Y)
+   were plain `new Axis()`, leaving `LabelsPaint`/`SeparatorsPaint` on
+   LiveChartsCore's own default — fine-looking in light theme by
+   coincidence, wrong in dark. Fixed with a new `ThemedAxis(...)` helper in
+   `DashboardViewModel` that sets both from `OnSurfaceVariantColor` (labels)
+   and `OutlineVariantColor` (gridlines) via the same `GetThemeColor` +
+   `SolidColorPaint` pattern already proven for series colors and
+   `ChartLegendTextPaint` — not a new API risk category, reuse of an
+   already-working pattern. All six axis call sites now go through this one
+   helper instead of repeating the setup, so a future palette tweak can't
+   miss one.
+
+**Also fixed while in the same area (same bug category, not scope creep):**
+the hover tooltip (visible in the screenshot as a light box on "اتجاه
+  الإيرادات — 0") had the same never-themed problem. Added
+`ChartTooltipBackgroundPaint`/`ChartTooltipTextPaint` (from
+`SurfaceContainerHighestColor`/`OnSurfaceColor`), set alongside
+`ChartLegendTextPaint` in `RefreshDashboard` (same trigger set — real data
+reload, theme toggle, language toggle), bound on all four chart controls.
+
+**Not yet build-tested.** `Background` is a plain `FrameworkElement`
+property, essentially zero API risk. `LabelsPaint`/`SeparatorsPaint` and
+`TooltipBackgroundPaint`/`TooltipTextPaint` are the same `SolidColorPaint`
+type and same general "paint property on a chart control" shape as
+`ChartLegendTextPaint`, which is already in the codebase from the earlier
+Stage-1 revision — so this carries that same, already-accepted level of
+confidence, not a new uncertain area. Still: confirm on the next build,
+specifically in dark theme — chart backgrounds blend into their cards, axis
+text/gridlines are legible, and the hover tooltip is readable — then repeat
+in light theme to confirm nothing regressed there.
+
+### Post-Stage-1 revision, round 5 (2026-08-24) — Revenue in the Top Items tooltip
+
+Mahmoud asked for the Top-Selling Items hover tooltip to also show total
+revenue for that item (Quantity × Price, summed), not just Units sold —
+named "Revenue" for consistency with every other revenue-labeled number on
+this screen (Revenue KPI, Revenue Trend, Revenue by Category).
+
+**This is a genuinely higher-risk change than anything else in this file so
+far, and that's worth being direct about.** Every other chart here plots a
+plain `double[]` — `Values`, a `Fill`/`Stroke` color, done. Showing a
+second number in the tooltip needed the point to carry more than one value,
+which meant:
+- A new small model class, `TopItemPoint` (`ViewModels/TopItemPoint.cs`):
+  `Name`, `Quantity`, `Revenue`.
+- `ColumnSeries<TopItemPoint>` instead of `ColumnSeries<double>` — first
+  custom-model series in the app.
+- A `Mapping` delegate telling LiveCharts how to turn each `TopItemPoint`
+  into a plotted point (`point.PrimaryValue = item.Quantity`,
+  `point.SecondaryValue = point.Context.Index`) — bar heights are
+  unchanged from before, only the underlying type changed.
+- A `YToolTipLabelFormatter` reading `point.Model.Quantity` /
+  `point.Model.Revenue` back off the hovered point to build the two-line
+  tooltip text.
+
+All four of `Mapping`, `point.Context.Index`, `YToolTipLabelFormatter`, and
+`point.Model` are documented LiveChartsCore v2 API for exactly this
+"plot a custom type, customize its tooltip" use case — not guessed at
+random — but unlike `Background`, `LabelsPaint`, or `TooltipTextPaint`
+(round 4, just above), none of these four have been used anywhere in this
+codebase before now, so there's no prior working call in this project to
+point at as precedent. If a build error shows up here specifically, it's
+the most likely place in the whole Dashboard for a real missing-member/
+signature mismatch against whatever LiveChartsCore version actually
+installs — flag it plainly and fix against the real API, this is exactly
+the kind of thing the standing LiveCharts caveat throughout this plan is
+for, not a guess to be made twice.
+
+**Not yet build-tested.** Once it builds, worth checking specifically:
+hovering each of the 5 bars shows both numbers correctly matched to that
+item (not off-by-one against the wrong bar — a real risk with any custom
+index mapping), the tooltip is still legible in dark mode with the round-4
+tooltip paint, and Arabic/RTL number formatting reads sensibly.
+
+### Post-Stage-1 revision, round 6 (2026-08-24) — Profit added to every hover tooltip except Payment Split
+
+Mahmoud asked for Profit to show up on hover for the Revenue Trend line,
+the Revenue by Category bars, and the Top Items bars (Top Items already had
+Revenue from round 5 above; this adds Profit alongside it) — explicitly
+**not** the Payment Split pie chart, which stays as-is.
+
+Same pattern as round 5 for all three, since that's the established,
+lowest-risk way to plot a custom type in this codebase now:
+- `TopItemPoint` gained a `Profit` field (`g.Sum(s => s.Earned)` per item);
+  its `YToolTipLabelFormatter` now shows Units sold / Revenue / Profit.
+- Two new model classes, `RevenueTrendPoint` (`Revenue`, `Profit`) and
+  `CategoryRevenuePoint` (`Category`, `Revenue`, `Profit`) —
+  `RevenueTrendSeries` and `CategoryRevenueSeries` moved from plain
+  `LineSeries<double>`/`ColumnSeries<double>` to `LineSeries<RevenueTrendPoint>`/
+  `ColumnSeries<CategoryRevenuePoint>`, each with its own `Mapping`
+  (`(item, index) => new Coordinate(index, item.Revenue)` — bar/line
+  heights unchanged, only the underlying type changed) and
+  `YToolTipLabelFormatter` reading `point.Model.Revenue`/`point.Model.Profit`.
+- Profit label reuses the existing `DashboardTodayProfit` resource key ("Profit"
+  in English) already used by the KPI card, rather than adding a new
+  localization key for the same word.
+- All three new/changed model-class `.cs` files added to
+  `PosSystem.App.csproj`'s `<Compile Include>` list — this project is the
+  old-style, non-SDK-style `.csproj`, so a file sitting on disk without an
+  explicit `<Compile Include>` entry is invisible to the compiler regardless
+  of its content (this exact mistake happened with `TopItemPoint.cs` in
+  round 5 and produced CS0246 on first build — fixed once already, not
+  repeated here).
+- Payment Split (`BuildPaymentSplitChart`, `PieSeries<double>`)
+  deliberately untouched, per the explicit instruction to leave it as-is.
+
+**Not yet build-tested.** Carries the same confidence level as round 5's
+Top Items change, now applied to two more series — worth checking
+specifically: hovering the Revenue Trend line and every Revenue by Category
+bar shows Revenue and Profit correctly matched to that point/bar (same
+off-by-one risk as round 5, now in two more places), Payment Split's
+tooltip is unchanged from before this round, and dark-mode tooltip legibility
+(round 4's paint) still holds for the two newly-custom-typed series.
+
+### Post-Stage-1 revision, round 7 (2026-08-25) — Top Items now respects filters (reverses round 5's "all-time, unfiltered" call)
+
+Mahmoud reported Top Items didn't update when picking a category, and I
+flagged that this was deliberate (see round 5 and "Explicitly NOT filtered"
+below) rather than fixing it silently — per his standing preference, a
+conflict with an existing written decision gets stated once, then goes
+with whatever he decides. He initially confirmed keeping it unfiltered, then
+reversed that: since the **All Time** quick-range button (added round 2)
+already covers "what sells best, ever" explicitly, a permanently-unfiltered
+exception isn't needed alongside it — so Top Items should just be another
+filtered chart like the rest.
+
+**What changed:**
+- `BuildTopItemsChart` now takes `sellsFiltered` and is called from
+  `ApplyFiltersAndRebuildCharts` (the shared cross-filter pipeline), not
+  from `RefreshDashboard` with the raw all-time `_cachedSells`. Date range,
+  payment chip, and category chip all now apply to it, same as Payment
+  Split, Category Revenue, and Revenue Trend.
+- Title changed from "Top-Selling Items (All-Time)" to plain "Top-Selling
+  Items" in both `Strings.English.xaml` and `Strings.Arabic.xaml` — the
+  "(All-Time)" qualifier would now be actively wrong whenever any filter
+  other than the All Time quick-range is active. The shared
+  `ActiveRangeText` line already shown above the filter bar covers "what
+  period is this" the same way it does for every other chart, so no
+  chart-specific date qualifier is needed in the title itself.
+- The "Explicitly NOT filtered" line further down this file and the
+  Design Deviations section are now historical — they describe why this
+  call was originally made, not current behavior. Left in place rather than
+  deleted, since the reasoning (why an unfiltered exception seemed useful
+  in the first place) is still useful context for why this reversal is a
+  deliberate override and not just noticing an oversight.
+
+**Not yet build-tested.** No new LiveCharts API surface here — same
+`ColumnSeries<TopItemPoint>`/`Mapping`/`YToolTipLabelFormatter` shape from
+rounds 5–6, just fed a different (filtered) list. Worth checking
+specifically: Top Items now changes when date range/payment/category
+filters change, the bars still correctly rank by Quantity within whatever's
+filtered (a category filter could plausibly leave fewer than 5 items —
+confirm the chart handles that without erroring), and the title reads
+correctly (no leftover "All-Time" text) in both languages.
+
+### Post-Stage-1 revision, round 8 (2026-08-25) — Units sold added to Revenue by Category's tooltip
+
+Mahmoud asked for units sold alongside Revenue/Profit on the Revenue by
+Category bars' hover tooltip. Same established pattern as every round since
+5: `CategoryRevenuePoint` gained a `Quantity` field (`g.Sum(s => s.Quantity)`
+per category), and the tooltip formatter now reads Units sold / Revenue /
+Profit, in that order — matching Top Items' own tooltip layout for
+consistency between the two bar charts. Reuses the existing
+`DashboardUnitsSoldLabel` ("Units sold") resource key already used by Top
+Items, no new localization key needed.
+
+**Not yet build-tested.** Same low-risk shape as rounds 6–7 — an existing
+custom-model series gaining one more field and one more tooltip line, no new
+Mapping/API surface. Worth checking Revenue by Category's tooltip shows all
+three numbers correctly matched per bar.
 
 ### Post-Stage-1 revision (2026-08-24)
 
@@ -175,11 +411,12 @@ package version is actually installed, that's a missing-member build error,
 not a logic bug, and should be fixed against the real installed API rather
 than guessed at again.
 
-**Explicitly NOT filtered:** the Top-Selling Items (all-time) chart and
-Outstanding Customer Debt KPI stay unfiltered on purpose — the former is
-titled "All-Time" and answers a different question than the filtered
-period; the latter is a live balance snapshot, not a period metric, and
-filtering a snapshot by date range wouldn't mean anything real.
+**Explicitly NOT filtered:** the Outstanding Customer Debt KPI stays
+unfiltered on purpose — it's a live balance snapshot, not a period metric,
+and filtering a snapshot by date range wouldn't mean anything real.
+(Top-Selling Items used to be unfiltered too, for a similar-sounding but
+distinct reason; see round 7 above for why that was reversed — it now
+respects every filter like the rest of the charts.)
 
 **Performance:** every filter interaction (date pickers, chips) re-filters
 already-loaded data in memory — `RefreshDashboard` (real SQLite reads, on
