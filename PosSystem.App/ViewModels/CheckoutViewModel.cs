@@ -165,6 +165,14 @@ namespace PosSystem.App.ViewModels
                 RebuildCustomerOptions();
             };
             CustomerDataEvents.CustomersChanged += RebuildCustomerOptions;
+            // Phase 7: a direct quantity adjustment on the Inventory screen
+            // needs to show up here too — same cross-screen-freshness
+            // reasoning as the CustomerDataEvents subscription just above.
+            // LoadGoods() below already fires this same event after a
+            // completed sale, so this screen's own writes don't cause a
+            // problematic self-reload loop — just one extra (harmless) pass,
+            // same as CustomersViewModel/RecordPayment already does today.
+            InventoryDataEvents.GoodsChanged += LoadGoods;
 
             LoadGoods();
             RebuildCustomerOptions();
@@ -356,6 +364,11 @@ namespace PosSystem.App.ViewModels
 
                 CartLines.Clear();
                 LoadGoods();
+
+                // Phase 7: Inventory needs to know its cached Quantity
+                // values just went stale, same as this event already tells
+                // Checkout when Inventory adjusts stock directly.
+                InventoryDataEvents.RaiseGoodsChanged();
 
                 // Phase 6: every completed sale (not just customer-linked
                 // ones) needs to refresh Dashboard's KPIs/charts.

@@ -103,7 +103,21 @@
     <system:String x:Key="StockCheckSaveError">Something went wrong saving this. Please try again.</system:String>
 
     <system:String x:Key="InventoryHeading">Inventory</system:String>
-    <system:String x:Key="InventoryDescription">Goods list, stock levels, pricing. 281 real products already in rovaShop.db to build against.</system:String>
+    <system:String x:Key="InventorySearchLabel">Search by name or barcode</system:String>
+    <system:String x:Key="InventoryStockFilterLabel">Stock status</system:String>
+    <system:String x:Key="InventoryStockAll">All</system:String>
+    <system:String x:Key="InventoryStockLow">Low stock</system:String>
+    <system:String x:Key="InventoryStockOut">Out of stock</system:String>
+    <system:String x:Key="InventoryStatusOutOfStock">Out of stock</system:String>
+    <system:String x:Key="InventoryStatusLowStock">Low stock</system:String>
+    <system:String x:Key="InventoryStatusInStock">In stock</system:String>
+    <system:String x:Key="InventoryQuantityLabel">Quantity</system:String>
+    <system:String x:Key="InventoryAdjustLabel">Set quantity to</system:String>
+    <system:String x:Key="InventoryAdjustButton">Update</system:String>
+    <system:String x:Key="InventoryAdjustSuccess">Updated {0}'s stock to {1:0.##}.</system:String>
+    <system:String x:Key="InventoryAdjustInvalid">Enter a valid quantity (0 or more).</system:String>
+    <system:String x:Key="InventoryAdjustError">Something went wrong. Please try again.</system:String>
+    <system:String x:Key="InventoryNoResults">No products match your filters.</system:String>
 
     <system:String x:Key="SettingsHeading">Settings</system:String>
     <system:String x:Key="SettingsDescription">App-wide preferences live here. Language is the first one — printer setup, receipt footer, tax rate, etc. get added as the client needs them.</system:String>

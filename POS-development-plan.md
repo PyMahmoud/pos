@@ -110,11 +110,59 @@ Current state: skeleton solution exists (`PosSystem.Core` + `PosSystem.App`), ol
 ## Phase 7 — Inventory & reporting polish
 **Goal:** round out the rest of the app — lower priority than 4–6, but needed for a complete product.
 
-- Inventory screen: stock levels, low-stock indication, tied to `Goods` model
-- Monthly report: scheduled job (Windows Task Scheduler-triggered console app or background service) that queries the last 30 days, builds an HTML/PDF summary, sends via SMTP (MailKit)
-- Apply the design system to Purchases/Expenses/Bank screens — visual pass only, logic mostly stays as the original repo had it unless the client asks for more
+- [x] Inventory screen: stock levels, low-stock indication, tied to `Goods` model. Search by
+  name/barcode, category chips (same pattern as Checkout's), and a stock-status
+  filter (All / Low stock / Out of stock). Each product card shows Quantity and
+  a status badge — Tertiary color for low stock (matches `Colors.Light.xaml`'s
+  own documented "discount badges, low-stock flags" role for that token),
+  Error color for out of stock — plus an inline "set quantity to" adjustment
+  (`InventoryViewModel.AdjustQuantity`, writes via the existing
+  `Goods.UpdateGoodCount`, no new SQL). New `InventoryDataEvents.GoodsChanged`
+  event (same static-event pattern as `CustomerDataEvents`/`OrderEvents`) keeps
+  this screen and Checkout in sync with each other regardless of which was the
+  active tab — a Checkout sale now tells Inventory its cached quantities are
+  stale, and an Inventory adjustment tells Checkout the same.
+  **Low-stock threshold is a plain constant** (`InventoryRow.LowStockThreshold
+  = 10`), not a schema column or a settings field — no client-confirmed number
+  exists yet, and adding one unasked would repeat exactly the tradeoff Phase 4
+  already flagged for `Goods.IsAvailable` rather than learn from it. Revisit if
+  the client wants this configurable per-product or shop-wide.
+  **Not yet build-tested** — written via direct file access, no Windows/WPF
+  runtime available here, same standing caveat as every phase since 4. One
+  real bug was caught and fixed before it ever reached a build, though, worth
+  naming: an early draft tried to bind a `DynamicResource` string into a
+  `MultiBinding`'s `Binding.Source` to compose a localized "Qty: 12" label —
+  `Binding` isn't a `DependencyObject`, so that resolves once at load and
+  never updates on a language toggle. Caught on review, replaced with two
+  plain elements (a `DynamicResource`-bound label `TextBlock` next to a
+  data-bound value `TextBlock`) — the same two-element shape every other
+  screen already uses for this, not a new pattern.
+- [ ] **Monthly report — not started.** This is genuinely a different piece of
+  infrastructure from everything built so far: a separate scheduled
+  process (Windows Task Scheduler-triggered console app or background
+  service, per the plan), not a WPF screen — plus it needs real inputs only
+  the client can provide before any code is worth writing: an SMTP
+  server/credentials to send from, and who the report should actually go
+  to. Building this against guessed placeholder credentials would produce
+  something that looks done but silently can't send anything — flagging
+  rather than guessing, same as every other client-input gap this plan has
+  hit (accounts receivable vs. payable, low-stock threshold above, etc.).
+- [ ] **Purchases/Expenses/Bank visual pass — not started, and not
+  actionable yet either.** The plan's own wording ("visual pass only,
+  logic mostly stays as the original repo had it") assumes these screens
+  already exist in the rebuilt UI. They don't — Phase 0 removed the old UI
+  entirely, and only Dashboard/Checkout/Customers/Inventory/Settings have
+  been rebuilt since. `PosSystem.Core` still has the underlying
+  `Purchase`/`Expense` data/model classes from the original repo, so the
+  data layer isn't the gap — there's simply no current-UI screen to
+  restyle. Building these from scratch is a real scope decision (new
+  screens, not a reskin) that's worth confirming is still wanted before
+  writing them, rather than assuming.
 
-**Exit criteria:** monthly report email actually arrives with real numbers in it; inventory screen reflects real stock changes from sales.
+**Exit criteria:** monthly report email actually arrives with real numbers in it;
+inventory screen reflects real stock changes from sales. *(Inventory screen
+half of this is now built, same not-yet-tested caveat as the rest of the
+app; the monthly-report half needs client input before it can start.)*
 
 ---
 

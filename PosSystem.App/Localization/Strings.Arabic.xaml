@@ -103,7 +103,21 @@
     <system:String x:Key="StockCheckSaveError">حدث خطأ أثناء الحفظ. حاول مرة أخرى.</system:String>
 
     <system:String x:Key="InventoryHeading">المخزون</system:String>
-    <system:String x:Key="InventoryDescription">قائمة المنتجات، مستويات المخزون، والأسعار. 281 منتجًا حقيقيًا موجودون بالفعل في rovaShop.db للبناء عليهم.</system:String>
+    <system:String x:Key="InventorySearchLabel">ابحث بالاسم أو الباركود</system:String>
+    <system:String x:Key="InventoryStockFilterLabel">حالة المخزون</system:String>
+    <system:String x:Key="InventoryStockAll">الكل</system:String>
+    <system:String x:Key="InventoryStockLow">مخزون منخفض</system:String>
+    <system:String x:Key="InventoryStockOut">نفد من المخزون</system:String>
+    <system:String x:Key="InventoryStatusOutOfStock">نفد من المخزون</system:String>
+    <system:String x:Key="InventoryStatusLowStock">مخزون منخفض</system:String>
+    <system:String x:Key="InventoryStatusInStock">متوفر</system:String>
+    <system:String x:Key="InventoryQuantityLabel">الكمية</system:String>
+    <system:String x:Key="InventoryAdjustLabel">تعيين الكمية إلى</system:String>
+    <system:String x:Key="InventoryAdjustButton">تحديث</system:String>
+    <system:String x:Key="InventoryAdjustSuccess">تم تحديث مخزون {0} إلى {1:0.##}.</system:String>
+    <system:String x:Key="InventoryAdjustInvalid">أدخل كمية صحيحة (0 أو أكثر).</system:String>
+    <system:String x:Key="InventoryAdjustError">حدث خطأ. حاول مرة أخرى.</system:String>
+    <system:String x:Key="InventoryNoResults">لا توجد منتجات مطابقة للفلاتر المحددة.</system:String>
 
     <system:String x:Key="SettingsHeading">الإعدادات</system:String>
     <system:String x:Key="SettingsDescription">تعيش تفضيلات التطبيق العامة هنا. اللغة هي أول تفضيل — سيُضاف إعداد الطابعة، تذييل الإيصال، نسبة الضريبة، وغيرها حسب حاجة العميل.</system:String>

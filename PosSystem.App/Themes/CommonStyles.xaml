@@ -252,8 +252,8 @@
     </Style>
 
     <Style TargetType="{x:Type ScrollBar}">
-        <Setter Property="Width" Value="10" />
-        <Setter Property="MinWidth" Value="10" />
+        <Setter Property="Width" Value="16" />
+        <Setter Property="MinWidth" Value="16" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Template">
             <Setter.Value>
@@ -261,7 +261,7 @@
                     <Grid Background="Transparent">
                         <Track x:Name="PART_Track"
                                IsDirectionReversed="True"
-                               Width="8"
+                               Width="14"
                                HorizontalAlignment="Center">
                             <Track.DecreaseRepeatButton>
                                 <RepeatButton Style="{StaticResource ThemedScrollBarPageButton}" Command="ScrollBar.PageUpCommand" />
@@ -270,7 +270,7 @@
                                 <RepeatButton Style="{StaticResource ThemedScrollBarPageButton}" Command="ScrollBar.PageDownCommand" />
                             </Track.IncreaseRepeatButton>
                             <Track.Thumb>
-                                <Thumb Style="{StaticResource ThemedScrollBarThumb}" Width="8" MinHeight="24" />
+                                <Thumb Style="{StaticResource ThemedScrollBarThumb}" Width="14" MinHeight="32" />
                             </Track.Thumb>
                         </Track>
                     </Grid>
@@ -280,13 +280,13 @@
         <Style.Triggers>
             <Trigger Property="Orientation" Value="Horizontal">
                 <Setter Property="Width" Value="Auto" />
-                <Setter Property="Height" Value="10" />
+                <Setter Property="Height" Value="16" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ScrollBar">
                             <Grid Background="Transparent">
                                 <Track x:Name="PART_Track"
-                                       Height="8"
+                                       Height="14"
                                        VerticalAlignment="Center">
                                     <Track.DecreaseRepeatButton>
                                         <RepeatButton Style="{StaticResource ThemedScrollBarPageButton}" Command="ScrollBar.PageLeftCommand" />
@@ -295,7 +295,7 @@
                                         <RepeatButton Style="{StaticResource ThemedScrollBarPageButton}" Command="ScrollBar.PageRightCommand" />
                                     </Track.IncreaseRepeatButton>
                                     <Track.Thumb>
-                                        <Thumb Style="{StaticResource ThemedScrollBarThumb}" Height="8" MinWidth="24" />
+                                        <Thumb Style="{StaticResource ThemedScrollBarThumb}" Height="14" MinWidth="32" />
                                     </Track.Thumb>
                                 </Track>
                             </Grid>
