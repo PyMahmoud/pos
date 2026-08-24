@@ -61,7 +61,7 @@ Current state: skeleton solution exists (`PosSystem.Core` + `PosSystem.App`), ol
 ---
 
 ## Phase 5 — Customers & debt tracking
-**Goal:** the specific feature the skincare client is waiting for.
+**Goal:** the specific feature the client is waiting for.
 
 - [x] Customer list screen: name, phone, current balance (`Remain`) — plus customer code (`Ownerid`), search by name/phone/code, and an "add a customer" form (not explicitly listed above, but there was no way to onboard a new customer without it)
 - [x] "Record payment" action: reduces `Remain`, increases `Paid`. **No `CustomerPayments` log table was added** — the plan flagged this as optional ("if you want a full payment history"), and adding one is a schema change nobody asked for yet; Customers.Paid/Remain stay running totals only, same tradeoff Phase 4 made for the Goods `IsAvailable` question. Revisit if the client wants an actual payment history/audit trail, not just a current balance.
@@ -99,7 +99,7 @@ Current state: skeleton solution exists (`PosSystem.Core` + `PosSystem.App`), ol
 - [x] Upgrade `LiveCharts` (old 0.9.7) → `LiveChartsCore.SkiaSharpView.WPF` — **code written against this package, but it has NOT been installed via NuGet.** No nuget.org access and no Windows/MSBuild available to run a restore from where this was built — install `LiveChartsCore.SkiaSharpView.WPF` via the Package Manager Console/NuGet UI before building. If a build error is a missing type/member rather than a missing package, the exact API surface (`ISeries`, `ColumnSeries<T>`, `PieSeries<T>`, `Axis`, `SolidColorPaint`) may have shifted between package versions — flag it for a fix against whatever version actually installs.
 - [x] Cards/charts: today's revenue, today's profit, transactions today, and outstanding customer debt total as 4 KPI cards; top-selling items (all-time, top 5 by quantity) as a bar chart; today's Cash/Card/Pay-Later split as a pie chart
 - [x] Updates fire on order-save via a new `OrderEvents.OrderCompleted` static event (same pattern as `CustomerDataEvents.CustomersChanged`), not a polling timer — `DashboardViewModel` also refreshes on theme toggle (chart colors are plain SkiaSharp colors set in code, so they don't auto-repaint on a XAML resource swap the way a brush would) and on language toggle (payment-split legend labels)
-- [ ] **Multi-location/truck filter** — not addressed. Still Phase 9 scope per the plan below; the skincare client is single-location, so this stays deferred rather than guessed at now.
+- [ ] **Multi-location/truck filter** — not addressed. Still Phase 9 scope per the plan below; the client is single-location, so this stays deferred rather than guessed at now.
 - [x] **Dashboard-Parity-Plan.md Stages 1–4 all written** (ahead of that plan's original schedule — twice overridden by explicit request, once to start Stage 1 early and again to do "all of the dashboard plan" in one pass). Added: a revenue trend line, donut-styled payment split, a working date-range filter (quick-range buttons + custom date pickers), payment-method and category filter chips that genuinely cross-filter the KPIs and every date-aware chart together, and a new "Revenue by Category" chart. **This is not a literal port of the reference** — no drag slider, no location filter (schema has none), no click-a-chart-element interaction; see `Dashboard-Parity-Plan.md`'s "Design deviations" section for the reasoning (short version: Usability rules over pixel-matching, plus real risk in an unverifiable LiveCharts click-event API). Same not-yet-build-tested caveat as everything else below — this is the single largest untested change in the project so far.
 - [ ] **Test end-to-end in Visual Studio — not yet done**, same caveat every phase since 4 has shipped with, but bigger this time: this covers the original Phase 6 base (KPIs/charts/events) AND the parity-plan additions (filters, chips, date pickers) together, none of it run once. This screen was written directly against the repo via file access; no Windows/WPF runtime available here to compile or run it. Before treating Phase 6 as closed: install the NuGet package, build, and work through the full checklist in `Dashboard-Parity-Plan.md` — quick-range buttons, custom date range, chip filtering (individually and combined), Clear filters, a live sale updating the dashboard mid-filter, light/dark, and English/Arabic including RTL on the new filter bar specifically (date pickers + chips are new UI surface that's never been checked under RTL before).
 
@@ -118,15 +118,15 @@ Current state: skeleton solution exists (`PosSystem.Core` + `PosSystem.App`), ol
 
 ---
 
-## Phase 8 — Client pilot (skincare seller)
+## Phase 8 — Client pilot (pharma distributor)
 **Goal:** get real-world validation before calling this "done."
 
 - Install on the client's actual machine
-- Walk them through Checkout + Customer/Debt screens directly — these are the two they'll use daily
-- Watch them use it live if possible — UX problems surface fast this way, faster than any amount of your own testing
+- Walk them through Checkout, Customers/Debt, and the customer detail drill-down (sales history + stock-check logging, Phase 5b) — these are the screens he'll actually live in, both back at the desk and out visiting pharmacies
+- Watch him use it live if possible, ideally including a real pharmacy visit if practical — UX problems surface fast this way, faster than any amount of your own testing
 - Collect a punch list of friction points, fix the highest-impact ones first
 
-**Exit criteria:** the client is running real sales through it without you standing next to them.
+**Exit criteria:** the client is running real sales and stock checks through it without you standing next to him.
 
 ---
 
@@ -134,7 +134,7 @@ Current state: skeleton solution exists (`PosSystem.Core` + `PosSystem.App`), ol
 **Goal:** apply the same core app to the original target market.
 
 - Confirm final hardware (repurposed old laptop, per earlier decision) actually runs it acceptably
-- Adjust checkout flow for a quick-order, no-tables use case if the skincare-client version ended up more retail-shaped
+- Adjust checkout flow for a quick-order, no-tables use case — the current build is shaped around a B2B pharma distributor rather than a walk-up retail counter, so this adaptation likely needs fresh thought rather than assuming the existing flow translates directly
 - Build the multi-truck owner dashboard view (aggregate across locations) — this was flagged as the actual differentiator for the caravan/fleet market
 
 **Exit criteria:** the same core product serves both a retail shop and a food truck without maintaining two separate codebases.
@@ -152,4 +152,4 @@ Current state: skeleton solution exists (`PosSystem.Core` + `PosSystem.App`), ol
 ---
 
 ## Suggested order of attack from today
-**1 → 2 → 3 → 4 → 5**, in that order, without skipping ahead — Checkout and Customers/Debt are the two screens the skincare client actually needs, so everything before them is foundation and everything after them (Dashboard, Inventory, reporting) can wait until those two are solid and in the client's hands.
+**1 → 2 → 3 → 4 → 5**, in that order, without skipping ahead — Checkout and Customers/Debt are the two screens the client actually needs, so everything before them is foundation and everything after them (Dashboard, Inventory, reporting) can wait until those two are solid and in the client's hands.

@@ -133,6 +133,6 @@ The original `rovaShop.db` had 0 rows in `customers`, `bills`, and `sells` — n
 | أميرة سعيد | 500 | 500 | Half paid on a large order |
 | دينا كمال | 1000 | 0 | High-value customer, fully paid |
 
-This covers the states a debt screen needs to visually distinguish: zero balance, partial balance, full balance owed, and a big-spender case. Delete these rows (or swap in real client data) once the skincare seller's actual customer list is available.
+This covers the states a debt screen needs to visually distinguish: zero balance, partial balance, full balance owed, and a big-spender case. Delete these rows (or swap in real client data) once the client's actual pharmacy customer list is available.
 
 Note: ringing up test sales through the new Checkout screen will change `goods.Quantity` for whatever you sell — expected and fine for testing, just don't be surprised if a product's stock number has moved from what's listed above/in earlier commits.
