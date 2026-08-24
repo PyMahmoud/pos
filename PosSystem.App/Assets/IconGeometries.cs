@@ -31,5 +31,13 @@ namespace PosSystem.App.Assets
             "M4,6 L20,6 L20,8 L4,8 Z M12.5,7 A2.5,2.5 0 1 0 17.5,7 A2.5,2.5 0 1 0 12.5,7 Z " +
             "M4,11 L20,11 L20,13 L4,13 Z M6.5,12 A2.5,2.5 0 1 0 11.5,12 A2.5,2.5 0 1 0 6.5,12 Z " +
             "M4,16 L20,16 L20,18 L4,18 Z M12.5,17 A2.5,2.5 0 1 0 17.5,17 A2.5,2.5 0 1 0 12.5,17 Z");
+
+        // Calendar/date glyph — added 2026-08-24 for the Dashboard's themed
+        // DatePicker toggle button (replacing the stock system calendar
+        // icon). Simple flat outline: rounded page with a header band and
+        // two binder-ring tabs, same 24x24 convention as everything above.
+        public static readonly Geometry Calendar = Geometry.Parse(
+            "M6,3 V6 M18,3 V6 M4,8 H20 M4,6 A2,2 0 0 1 6,4 H18 A2,2 0 0 1 20,6 V19 A2,2 0 0 1 18,21 H6 A2,2 0 0 1 4,19 Z " +
+            "M7,11 H10 V14 H7 Z");
     }
 }

@@ -12,7 +12,7 @@
     <ScrollViewer Background="{DynamicResource BackgroundBrush}" VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24">
 
-            <Grid Margin="0,0,0,20">
+            <Grid Margin="0,0,0,4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -28,7 +28,133 @@
                            VerticalAlignment="Bottom" />
             </Grid>
 
-            <!-- KPI cards -->
+            <!-- Every KPI/chart below reflects this range — shown once,
+                 here, so a number is never on screen without saying what
+                 period it covers (Dashboard-Parity-Plan.md Usability rules). -->
+            <TextBlock Text="{Binding ActiveRangeText}"
+                       Style="{StaticResource BodyLarge}"
+                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                       Margin="0,0,0,16" />
+
+            <!-- ================= Filter bar (Stage 2 + Stage 3) ================= -->
+            <!-- Every control here is a plain WPF button/chip/date-picker —
+                 nothing depends on clicking a chart element. See the
+                 class-level comment in DashboardViewModel for why. -->
+            <Border Background="{DynamicResource SurfaceContainerLowBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,20">
+                <StackPanel>
+
+                    <!-- Quick range + custom date pickers -->
+                    <TextBlock Text="{DynamicResource DashboardFilterRangeLabel}"
+                               Style="{StaticResource LabelSmall}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               Margin="0,0,0,6" />
+                    <WrapPanel Orientation="Horizontal" Margin="0,0,0,14">
+                        <Button Content="{DynamicResource DashboardRangeToday}"
+                                Command="{Binding SetQuickRangeCommand}"
+                                CommandParameter="{x:Static vm:DashboardQuickRange.Today}"
+                                Style="{StaticResource RangeTodayButtonStyle}"
+                                Padding="14,8" Margin="0,0,8,8" />
+                        <Button Content="{DynamicResource DashboardRangeThisWeek}"
+                                Command="{Binding SetQuickRangeCommand}"
+                                CommandParameter="{x:Static vm:DashboardQuickRange.ThisWeek}"
+                                Style="{StaticResource RangeWeekButtonStyle}"
+                                Padding="14,8" Margin="0,0,8,8" />
+                        <Button Content="{DynamicResource DashboardRangeThisMonth}"
+                                Command="{Binding SetQuickRangeCommand}"
+                                CommandParameter="{x:Static vm:DashboardQuickRange.ThisMonth}"
+                                Style="{StaticResource RangeMonthButtonStyle}"
+                                Padding="14,8" Margin="0,0,8,8" />
+                        <Button Content="{DynamicResource DashboardRangeLast30}"
+                                Command="{Binding SetQuickRangeCommand}"
+                                CommandParameter="{x:Static vm:DashboardQuickRange.Last30Days}"
+                                Style="{StaticResource RangeLast30ButtonStyle}"
+                                Padding="14,8" Margin="0,0,8,8" />
+                        <Button Content="{DynamicResource DashboardRangeAllTime}"
+                                Command="{Binding SetQuickRangeCommand}"
+                                CommandParameter="{x:Static vm:DashboardQuickRange.AllTime}"
+                                Style="{StaticResource RangeAllTimeButtonStyle}"
+                                Padding="14,8" Margin="0,0,16,8" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,8" VerticalAlignment="Center">
+                            <TextBlock Text="{DynamicResource DashboardFilterFromLabel}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <DatePicker SelectedDate="{Binding FilterStartDate, Mode=TwoWay}" Style="{StaticResource ThemedDatePickerStyle}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,8" VerticalAlignment="Center">
+                            <TextBlock Text="{DynamicResource DashboardFilterToLabel}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <DatePicker SelectedDate="{Binding FilterEndDate, Mode=TwoWay}" Style="{StaticResource ThemedDatePickerStyle}" />
+                        </StackPanel>
+                    </WrapPanel>
+
+                    <!-- Payment method chips -->
+                    <TextBlock Text="{DynamicResource DashboardPaymentFilterLabel}"
+                               Style="{StaticResource LabelSmall}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               Margin="0,0,0,6" />
+                    <ListBox ItemsSource="{Binding PaymentChips}"
+                             SelectedItem="{Binding SelectedPaymentChip, Mode=TwoWay}"
+                             Background="Transparent" BorderThickness="0"
+                             Margin="0,0,0,14"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             ItemContainerStyle="{StaticResource CategoryChipListBoxItemStyle}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayName}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Category chips — built from real data (Checkout's
+                         RebuildCategoryChips pattern), same as Checkout. -->
+                    <TextBlock Text="{DynamicResource DashboardCategoryFilterLabel}"
+                               Style="{StaticResource LabelSmall}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               Margin="0,0,0,6" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ListBox Grid.Column="0"
+                                 ItemsSource="{Binding CategoryChips}"
+                                 SelectedItem="{Binding SelectedCategoryChip, Mode=TwoWay}"
+                                 Background="Transparent" BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                 ItemContainerStyle="{StaticResource CategoryChipListBoxItemStyle}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <!-- Usability rule: every filter needs an obvious
+                             clear/reset affordance. -->
+                        <Button Grid.Column="1"
+                                Content="{DynamicResource DashboardClearFilters}"
+                                Command="{Binding ClearFiltersCommand}"
+                                Style="{StaticResource ThemeToggleButtonStyle}"
+                                Padding="14,8" VerticalAlignment="Top" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ================= KPI cards ================= -->
             <UniformGrid Columns="4" Margin="0,0,0,20">
                 <Border Background="{DynamicResource SurfaceContainerBrush}" CornerRadius="16" Padding="18" Margin="0,0,12,0">
                     <StackPanel>
@@ -36,7 +162,7 @@
                                    Style="{StaticResource LabelSmall}"
                                    Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                    TextWrapping="Wrap" />
-                        <TextBlock Text="{Binding TodayRevenue, StringFormat={}{0:0.00}}"
+                        <TextBlock Text="{Binding FilteredRevenue, StringFormat={}{0:0.00}}"
                                    Style="{StaticResource HeadlineMedium}"
                                    Foreground="{DynamicResource PrimaryBrush}"
                                    Margin="0,4,0,0" />
@@ -48,7 +174,7 @@
                                    Style="{StaticResource LabelSmall}"
                                    Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                    TextWrapping="Wrap" />
-                        <TextBlock Text="{Binding TodayProfit, StringFormat={}{0:0.00}}"
+                        <TextBlock Text="{Binding FilteredProfit, StringFormat={}{0:0.00}}"
                                    Style="{StaticResource HeadlineMedium}"
                                    Foreground="{DynamicResource OnSurfaceBrush}"
                                    Margin="0,4,0,0" />
@@ -60,7 +186,7 @@
                                    Style="{StaticResource LabelSmall}"
                                    Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                    TextWrapping="Wrap" />
-                        <TextBlock Text="{Binding TodayTransactionCount}"
+                        <TextBlock Text="{Binding FilteredTransactionCount}"
                                    Style="{StaticResource HeadlineMedium}"
                                    Foreground="{DynamicResource OnSurfaceBrush}"
                                    Margin="0,4,0,0" />
@@ -80,7 +206,51 @@
                 </Border>
             </UniformGrid>
 
-            <!-- Charts -->
+            <!-- ================= Charts ================= -->
+            <!-- Revenue trend — full width. Same card treatment
+                 (SurfaceContainerBrush, 16px radius, 20px padding,
+                 TitleMedium heading) as every other chart card, per
+                 Dashboard-Parity-Plan.md's design-system rule. -->
+            <Border Background="{DynamicResource SurfaceContainerBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="260" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0"
+                               Text="{DynamicResource DashboardRevenueTrendTitle}"
+                               Style="{StaticResource TitleMedium}"
+                               Foreground="{DynamicResource OnSurfaceBrush}"
+                               Margin="0,0,0,12" />
+                    <lvc:CartesianChart Grid.Row="1"
+                                         Series="{Binding RevenueTrendSeries}"
+                                         XAxes="{Binding RevenueTrendXAxes}"
+                                         YAxes="{Binding RevenueTrendYAxes}" />
+                </Grid>
+            </Border>
+
+            <!-- Revenue by Category — new in Stage 3, matches the reference's
+                 same-named panel. Full width, its own row, so it reads
+                 clearly rather than being squeezed next to two other charts
+                 (Usability rule: don't overcrowd). -->
+            <Border Background="{DynamicResource SurfaceContainerBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="260" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0"
+                               Text="{DynamicResource DashboardCategoryRevenueTitle}"
+                               Style="{StaticResource TitleMedium}"
+                               Foreground="{DynamicResource OnSurfaceBrush}"
+                               Margin="0,0,0,12" />
+                    <lvc:CartesianChart Grid.Row="1"
+                                         Series="{Binding CategoryRevenueSeries}"
+                                         XAxes="{Binding CategoryRevenueXAxes}"
+                                         YAxes="{Binding CategoryRevenueYAxes}" />
+                </Grid>
+            </Border>
+
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
@@ -117,7 +287,10 @@
                                    Style="{StaticResource TitleMedium}"
                                    Foreground="{DynamicResource OnSurfaceBrush}"
                                    Margin="0,0,0,12" />
-                        <lvc:PieChart Grid.Row="1" Series="{Binding PaymentSplitSeries}" />
+                        <lvc:PieChart Grid.Row="1"
+                                      Series="{Binding PaymentSplitSeries}"
+                                      LegendPosition="Right"
+                                      LegendTextPaint="{Binding ChartLegendTextPaint}" />
                     </Grid>
                 </Border>
             </Grid>

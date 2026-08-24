@@ -17,13 +17,26 @@
     <system:String x:Key="NavSettings">الإعدادات</system:String>
 
     <system:String x:Key="DashboardHeading">لوحة التحكم</system:String>
-    <system:String x:Key="DashboardTodayRevenue">إيرادات اليوم</system:String>
-    <system:String x:Key="DashboardTodayProfit">ربح اليوم</system:String>
-    <system:String x:Key="DashboardTodayTransactions">عمليات بيع اليوم</system:String>
+    <system:String x:Key="DashboardTodayRevenue">الإيرادات</system:String>
+    <system:String x:Key="DashboardTodayProfit">الربح</system:String>
+    <system:String x:Key="DashboardTodayTransactions">عمليات البيع</system:String>
     <system:String x:Key="DashboardOutstandingDebt">إجمالي ديون العملاء</system:String>
     <system:String x:Key="DashboardTopItemsTitle">الأكثر مبيعًا (كل الأوقات)</system:String>
-    <system:String x:Key="DashboardPaymentSplitTitle">توزيع طرق الدفع اليوم</system:String>
+    <system:String x:Key="DashboardPaymentSplitTitle">توزيع طرق الدفع</system:String>
+    <system:String x:Key="DashboardRevenueTrendTitle">اتجاه الإيرادات</system:String>
+    <system:String x:Key="DashboardCategoryRevenueTitle">الإيرادات حسب الفئة</system:String>
     <system:String x:Key="DashboardNoDataYet">لا توجد عمليات بيع مسجّلة بعد — أتمم عملية بيع من شاشة الدفع لترى هذه اللوحة تنبض بالحياة.</system:String>
+    <system:String x:Key="DashboardFilterRangeLabel">الفترة الزمنية</system:String>
+    <system:String x:Key="DashboardFilterFromLabel">من</system:String>
+    <system:String x:Key="DashboardFilterToLabel">إلى</system:String>
+    <system:String x:Key="DashboardRangeToday">اليوم</system:String>
+    <system:String x:Key="DashboardRangeThisWeek">هذا الأسبوع</system:String>
+    <system:String x:Key="DashboardRangeThisMonth">هذا الشهر</system:String>
+    <system:String x:Key="DashboardRangeLast30">آخر 30 يومًا</system:String>
+    <system:String x:Key="DashboardRangeAllTime">كل الأوقات</system:String>
+    <system:String x:Key="DashboardPaymentFilterLabel">طريقة الدفع</system:String>
+    <system:String x:Key="DashboardCategoryFilterLabel">الفئة</system:String>
+    <system:String x:Key="DashboardClearFilters">مسح الفلاتر</system:String>
 
     <system:String x:Key="CheckoutHeading">الدفع</system:String>
     <system:String x:Key="CheckoutDescription">الشاشة الأكثر استخدامًا — شبكة المنتجات، الطلب الحالي، وتبديل الدفع نقدًا/بالبطاقة. قادمة في الخطوة التالية.</system:String>

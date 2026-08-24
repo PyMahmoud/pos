@@ -230,4 +230,19 @@
     <Error Condition="!Exists('..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets'))" />
   </Target>
   <Import Project="..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets" Condition="Exists('..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets')" />
+
+  <!--
+      HarfBuzzSharp.NativeAssets.Win32/.macOS ship their copy-native-dll
+      targets under buildTransitive\, not build\ — unlike the SkiaSharp
+      NativeAssets packages above. NuGet's packages.config installer only
+      auto-generates an <Import> for a build\{tfm}\ targets file, so it
+      silently installed these packages without ever wiring this in. Net
+      effect: HarfBuzzSharp.dll (managed) loaded fine, but its native
+      companion (libHarfBuzzSharp.dll) never got copied to the output
+      folder — DllNotFoundException at the first chart render. Importing
+      the real buildTransitive path directly fixes it; nothing to restore,
+      the package files were already on disk.
+  -->
+  <Import Project="..\packages\HarfBuzzSharp.NativeAssets.Win32.8.3.1.1\buildTransitive\net462\HarfBuzzSharp.NativeAssets.Win32.targets" Condition="Exists('..\packages\HarfBuzzSharp.NativeAssets.Win32.8.3.1.1\buildTransitive\net462\HarfBuzzSharp.NativeAssets.Win32.targets')" />
+  <Import Project="..\packages\HarfBuzzSharp.NativeAssets.macOS.8.3.1.1\buildTransitive\net462\HarfBuzzSharp.NativeAssets.macOS.targets" Condition="Exists('..\packages\HarfBuzzSharp.NativeAssets.macOS.8.3.1.1\buildTransitive\net462\HarfBuzzSharp.NativeAssets.macOS.targets')" />
 </Project>

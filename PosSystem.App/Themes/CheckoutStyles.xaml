@@ -109,4 +109,77 @@
         </Style.Triggers>
     </Style>
 
+    <!--
+        Dashboard quick-range buttons (Dashboard-Parity-Plan.md Stage 2).
+        Four dedicated styles rather than one generic Tag-bound style — WPF
+        trigger matching against a boxed bool via Tag is a known-unreliable
+        pattern; binding each DataTrigger directly to its own named bool
+        property (same as CashToggleButtonStyle/CardToggleButtonStyle above)
+        is more verbose but proven to actually work in this codebase.
+    -->
+    <Style x:Key="RangeTodayButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsRangeTodaySelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="RangeWeekButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsRangeWeekSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="RangeMonthButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsRangeMonthSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="RangeLast30ButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsRangeLast30Selected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- All Time — added 2026-08-24. Same DataTrigger pattern as the four
+         above, bound to DashboardViewModel.IsRangeAllTimeSelected. Range
+         start is computed from the earliest real sale on record
+         (DashboardViewModel.GetEarliestDataDate), not a fixed lookback like
+         the others. -->
+    <Style x:Key="RangeAllTimeButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsRangeAllTimeSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
 </ResourceDictionary>

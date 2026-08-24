@@ -66,4 +66,41 @@
         <Setter Property="Padding" Value="10,8" />
     </Style>
 
+    <!--
+        Dashboard date-range pickers (added 2026-08-24, replacing the stock
+        white system DatePicker Mahmoud flagged as visually jarring next to
+        the rest of the app). Same setters-only tradeoff as
+        ThemedComboBoxStyle just above, and for the same reason: a full
+        ControlTemplate override of DatePicker means correctly reproducing
+        its PART_Root/PART_Button/PART_TextBox/PART_Popup contract, which
+        isn't verifiable without a WPF runtime to click through — get one
+        part wrong and the calendar popup silently stops opening. Plain
+        setters carry much lower risk of a broken control, at the cost of
+        not being able to round the corners (Border.CornerRadius isn't a
+        DatePicker property, so this stays square-ish, unlike every other
+        input in the app) — flagged here rather than silently accepted.
+
+        DatePickerTextBox (below) is a genuine subtype of TextBox, not a
+        separate composite control, so an implicit (key-less) style for it
+        applies automatically wherever a DatePicker renders its internal
+        text box — this is what actually removes the plain-white inner box
+        and mismatched text color; ThemedDatePickerStyle above only reaches
+        the outer chrome.
+    -->
+    <Style x:Key="ThemedDatePickerStyle" TargetType="DatePicker">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighestBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariantBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="4" />
+    </Style>
+
+    <Style TargetType="{x:Type DatePickerTextBox}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Padding" Value="6,4" />
+    </Style>
+
 </ResourceDictionary>
