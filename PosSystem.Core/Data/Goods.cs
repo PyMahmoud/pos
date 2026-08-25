@@ -571,7 +571,36 @@ namespace PosSystem.Core.Data
             }
         }
 
-        // Full ID-keyed update for Inventory's Edit Product feature —
+        // Added for Inventory's Delete Product feature (2026-08-25). The
+        // legacy RemoveGoods above is Barcode-keyed, which has the exact
+        // same bug already documented and fixed elsewhere in this class
+        // (UpdateGoodCountById, BarcodeExistsExcludingId, UpdateGoodsById):
+        // it would delete every barcode-less ("") product at once instead
+        // of just the one intended, the moment more than one exists.
+        // ID is the real, always-unique primary key.
+        //
+        // Safe with respect to sales history: Data/Sells.cs's `sells` table
+        // (each sold line item) stores a full denormalized snapshot of the
+        // product at sale time -- Name, Category, Cost, Price, Barcode are
+        // all copied columns there, not a foreign key to goods.ID -- so
+        // deleting a product here has no effect on any past sale's record.
+        public bool RemoveGoodsById(string TableName, int Id)
+        {
+            string RemoveString = "DELETE FROM " + TableName + " WHERE ID = @id";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(RemoveString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", Id);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                    return true;
+                }
+            }
+        }
+
+        // Full ID-keyed update for Inventory's Edit Product feature --
         // UpdateGoods (above, legacy) is Barcode-keyed and would silently
         // update every barcode-less product at once instead of the one
         // intended, the same problem UpdateGoodCountById was already added

@@ -75,49 +75,6 @@
                                TextWrapping="Wrap"
                                Margin="0,0,0,12" />
 
-                    <!-- Category management (added 2026-08-25) — create a
-                         brand-new category, or delete one that no product
-                         is currently using. Kept visually secondary (no
-                         section title, smaller vertical rhythm than the Add
-                         Product fields above) since it's a less-frequent,
-                         supporting action, not the main flow of this panel. -->
-                    <Grid Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="8" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding NewCategoryName, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource ThemedTextBoxStyle}" />
-                        <Button Grid.Column="2"
-                                Content="{DynamicResource InventoryAddCategoryButton}"
-                                Command="{Binding AddCategoryCommand}"
-                                Background="{DynamicResource SurfaceContainerHighBrush}"
-                                Foreground="{DynamicResource OnSurfaceBrush}"
-                                Template="{StaticResource SelectableButtonTemplate}"
-                                Padding="12,10" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="8" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <ComboBox Grid.Column="0"
-                                  ItemsSource="{Binding AllCategoryNames}"
-                                  SelectedItem="{Binding CategoryToDelete, Mode=TwoWay}"
-                                  Style="{StaticResource ThemedComboBoxStyle}" />
-                        <Button Grid.Column="2"
-                                Content="{DynamicResource InventoryDeleteCategoryButton}"
-                                Command="{Binding DeleteCategoryCommand}"
-                                Background="{DynamicResource ErrorContainerBrush}"
-                                Foreground="{DynamicResource OnErrorContainerBrush}"
-                                Template="{StaticResource SelectableButtonTemplate}"
-                                Padding="12,10" />
-                    </Grid>
-
                     <TextBlock Text="{DynamicResource InventoryProductQuantityLabel}"
                                Style="{StaticResource LabelSmall}"
                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
@@ -164,6 +121,59 @@
                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                TextWrapping="Wrap"
                                Margin="0,10,0,0" />
+
+                    <!-- Manage categories (moved 2026-08-25 out from between
+                         the Add Product form's Category field and Quantity
+                         field, where it broke up that form's flow and made
+                         it look like part of adding a product rather than a
+                         separate, less-frequent management action). Now its
+                         own titled section below Add Product, set apart by
+                         a divider line. -->
+                    <Border BorderBrush="{DynamicResource OutlineVariantBrush}"
+                            BorderThickness="0,1,0,0"
+                            Margin="0,24,0,20" />
+
+                    <TextBlock Text="{DynamicResource InventoryManageCategoriesTitle}"
+                               Style="{StaticResource TitleMedium}"
+                               Foreground="{DynamicResource OnSurfaceBrush}"
+                               Margin="0,0,0,12" />
+
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding NewCategoryName, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ThemedTextBoxStyle}" />
+                        <Button Grid.Column="2"
+                                Content="{DynamicResource InventoryAddCategoryButton}"
+                                Command="{Binding AddCategoryCommand}"
+                                Background="{DynamicResource SurfaceContainerHighBrush}"
+                                Foreground="{DynamicResource OnSurfaceBrush}"
+                                Template="{StaticResource SelectableButtonTemplate}"
+                                Padding="12,10" />
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Grid.Column="0"
+                                  ItemsSource="{Binding AllCategoryNames}"
+                                  SelectedItem="{Binding CategoryToDelete, Mode=TwoWay}"
+                                  Style="{StaticResource ThemedComboBoxStyle}" />
+                        <Button Grid.Column="2"
+                                Content="{DynamicResource InventoryDeleteCategoryButton}"
+                                Command="{Binding DeleteCategoryCommand}"
+                                Background="{DynamicResource ErrorContainerBrush}"
+                                Foreground="{DynamicResource OnErrorContainerBrush}"
+                                Template="{StaticResource SelectableButtonTemplate}"
+                                Padding="12,10" />
+                    </Grid>
                 </StackPanel>
             </ScrollViewer>
         </Border>
@@ -217,27 +227,20 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
 
+                        <!-- Category filter — wide dropdown (2026-08-26),
+                             replacing the wrapped chip row: same
+                             ThemedComboBoxStyle used by Add Product's own
+                             category field just to the left of this panel.
+                             Categories/SelectedCategory binding unchanged
+                             from before, only the control swapped. -->
                         <TextBlock Text="{DynamicResource DashboardCategoryFilterLabel}"
                                    Style="{StaticResource LabelSmall}"
                                    Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                    Margin="0,0,0,6" />
-                        <ListBox ItemsSource="{Binding Categories}"
-                                 SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
-                                 Background="Transparent" BorderThickness="0"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                                 ItemContainerStyle="{StaticResource CategoryChipListBoxItemStyle}">
-                            <ListBox.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ListBox.ItemsPanel>
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DisplayName}" />
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                        <ComboBox ItemsSource="{Binding Categories}"
+                                  SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                  DisplayMemberPath="DisplayName"
+                                  Style="{StaticResource ThemedComboBoxStyle}" />
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -264,10 +267,38 @@
                                         CornerRadius="14"
                                         Padding="18"
                                         Background="{DynamicResource SurfaceContainerBrush}">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Category}"
-                                                   Style="{StaticResource LabelSmall}"
-                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                    <Grid>
+
+                                    <!-- ============ VIEW MODE ============
+                                         Everything that was already here,
+                                         unchanged, plus an Edit button added
+                                         to the header row. Hidden (not just
+                                         the Edit button) while this row is
+                                         being edited, via IsNotEditing.
+                                         Same Visible/Collapsed swap pattern
+                                         CustomersView.xaml already uses for
+                                         its list-vs-detail views, applied
+                                         per-card here instead of per-screen. -->
+                                    <StackPanel Visibility="{Binding IsNotEditing, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Grid Margin="0,0,0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Category}"
+                                                       Style="{StaticResource LabelSmall}"
+                                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <Button Grid.Column="1"
+                                                    Content="{DynamicResource InventoryEditButton}"
+                                                    Command="{Binding DataContext.StartEditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="{DynamicResource SurfaceContainerHighBrush}"
+                                                    Foreground="{DynamicResource OnSurfaceBrush}"
+                                                    Template="{StaticResource SelectableButtonTemplate}"
+                                                    Padding="10,4" />
+                                        </Grid>
                                         <TextBlock Text="{Binding Name}"
                                                    Style="{StaticResource TitleMedium}"
                                                    Foreground="{DynamicResource OnSurfaceBrush}"
@@ -366,6 +397,118 @@
                                                     Padding="12,8" />
                                         </Grid>
                                     </StackPanel>
+
+                                    <!-- ============ EDIT MODE ============
+                                         Quantity deliberately has no field
+                                         here, see InventoryRow's class doc
+                                         comment for why the existing Adjust-
+                                         quantity mini-form above already owns
+                                         that field end-to-end and conflating
+                                         the two is a real risk, not just
+                                         redundancy. Category is a selection-
+                                         only ComboBox, same reasoning and
+                                         same AllCategoryNames source as Add
+                                         Product's category field, reached
+                                         here via the ItemsControl's
+                                         DataContext since AllCategoryNames
+                                         lives on InventoryViewModel, not on
+                                         this row. -->
+                                    <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <TextBlock Text="{DynamicResource InventoryProductNameLabel}"
+                                                   Style="{StaticResource LabelSmall}"
+                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                   Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource ThemedTextBoxStyle}"
+                                                 Margin="0,0,0,10" />
+
+                                        <TextBlock Text="{DynamicResource InventoryProductBarcodeLabel}"
+                                                   Style="{StaticResource LabelSmall}"
+                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                   Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding EditBarcode, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource ThemedTextBoxStyle}"
+                                                 Margin="0,0,0,10" />
+
+                                        <TextBlock Text="{DynamicResource InventoryProductCategoryLabel}"
+                                                   Style="{StaticResource LabelSmall}"
+                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                   Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding DataContext.AllCategoryNames, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                  SelectedItem="{Binding EditCategoryInput, Mode=TwoWay}"
+                                                  Style="{StaticResource ThemedComboBoxStyle}"
+                                                  Margin="0,0,0,10" />
+
+                                        <Grid Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="12" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{DynamicResource InventoryProductCostLabel}"
+                                                           Style="{StaticResource LabelSmall}"
+                                                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                           Margin="0,0,0,4" />
+                                                <TextBox Text="{Binding EditCost, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource ThemedTextBoxStyle}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="{DynamicResource InventoryProductPriceLabel}"
+                                                           Style="{StaticResource LabelSmall}"
+                                                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                           Margin="0,0,0,4" />
+                                                <TextBox Text="{Binding EditPrice, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource ThemedTextBoxStyle}" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="8" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Button Grid.Column="0"
+                                                    Content="{DynamicResource InventoryEditCancelButton}"
+                                                    Command="{Binding DataContext.CancelEditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="{DynamicResource SurfaceContainerHighBrush}"
+                                                    Foreground="{DynamicResource OnSurfaceBrush}"
+                                                    Template="{StaticResource SelectableButtonTemplate}"
+                                                    Padding="0,10"
+                                                    HorizontalContentAlignment="Center" />
+                                            <Button Grid.Column="2"
+                                                    Content="{DynamicResource InventoryEditSaveButton}"
+                                                    Command="{Binding DataContext.SaveEditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="{DynamicResource PrimaryBrush}"
+                                                    Foreground="{DynamicResource OnPrimaryBrush}"
+                                                    Template="{StaticResource SelectableButtonTemplate}"
+                                                    Padding="0,10"
+                                                    HorizontalContentAlignment="Center" />
+                                        </Grid>
+
+                                        <!-- Delete Product. Set apart below
+                                             Cancel/Save with extra top margin
+                                             and Error-container coloring
+                                             (same styling as the Delete
+                                             Category button on the left
+                                             panel) so it doesn't sit at the
+                                             same visual weight as Save and
+                                             invite an accidental click. -->
+                                        <Button Content="{DynamicResource InventoryDeleteProductButton}"
+                                                Command="{Binding DataContext.DeleteProductCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Background="{DynamicResource ErrorContainerBrush}"
+                                                Foreground="{DynamicResource OnErrorContainerBrush}"
+                                                Template="{StaticResource SelectableButtonTemplate}"
+                                                Padding="0,10"
+                                                Margin="0,10,0,0"
+                                                HorizontalContentAlignment="Center" />
+                                    </StackPanel>
+
+                                    </Grid>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

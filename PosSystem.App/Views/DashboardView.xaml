@@ -143,8 +143,13 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <!-- Category chips — built from real data (Checkout's
-                         RebuildCategoryChips pattern), same as Checkout. -->
+                    <!-- Category filter — wide dropdown (2026-08-26),
+                         replacing the wrapped chip row: same
+                         ThemedComboBoxStyle used by Inventory's Add Product
+                         category field. CategoryChips/SelectedCategoryChip
+                         binding unchanged from before, only the control
+                         swapped — still built from real data (Checkout's
+                         RebuildCategoryChips pattern). -->
                     <TextBlock Text="{DynamicResource DashboardCategoryFilterLabel}"
                                Style="{StaticResource LabelSmall}"
                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
@@ -154,24 +159,12 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ListBox Grid.Column="0"
-                                 ItemsSource="{Binding CategoryChips}"
-                                 SelectedItem="{Binding SelectedCategoryChip, Mode=TwoWay}"
-                                 Background="Transparent" BorderThickness="0"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                                 ItemContainerStyle="{StaticResource CategoryChipListBoxItemStyle}">
-                            <ListBox.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ListBox.ItemsPanel>
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DisplayName}" />
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                        <ComboBox Grid.Column="0"
+                                  ItemsSource="{Binding CategoryChips}"
+                                  SelectedItem="{Binding SelectedCategoryChip, Mode=TwoWay}"
+                                  DisplayMemberPath="DisplayName"
+                                  Style="{StaticResource ThemedComboBoxStyle}"
+                                  Margin="0,0,10,0" />
 
                         <!-- Usability rule: every filter needs an obvious
                              clear/reset affordance. -->

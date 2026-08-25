@@ -162,8 +162,44 @@ namespace PosSystem.Core.Data
                 {
                     // Pre-existing categories table with a stricter/older
                     // schema (e.g. a NOT NULL Type/Image column with no
-                    // default) — see comment above. Not fatal; the app-level
+                    // default) -- see comment above. Not fatal; the app-level
                     // CategoryExists check is the real guarantee either way.
+                }
+
+                // One-time de-duplication pass (2026-08-25): this database
+                // already had duplicate/case-variant rows in `categories`
+                // before this feature's UNIQUE COLLATE NOCASE constraint
+                // existed (confirmed from a live screenshot showing the same
+                // category name repeated 2-3x in every picker) -- likely
+                // from the backfill above running before that constraint
+                // was added, or from a pre-existing categories table (see
+                // the CREATE TABLE comment above) that never had it at all.
+                // Categories.ReadAllCategoryNames now also folds duplicates
+                // at query time regardless, but leaving the underlying rows
+                // duplicated forever would still be wrong for anything else
+                // that ever reads this table directly, and it means Delete
+                // Category only fully removes a name if this cleanup ran.
+                // Keeps the lowest ID per case-insensitive name and removes
+                // the rest -- safe to re-run every startup (a no-op once
+                // there is nothing left to de-duplicate), and goods.Category
+                // is a plain string column, not a foreign key to a specific
+                // categories.ID, so deleting the extra duplicate ID rows
+                // here has no effect on any product's own Category value.
+                try
+                {
+                    using (var cmd = new SQLiteCommand(
+                        @"DELETE FROM categories
+                          WHERE ID NOT IN (
+                              SELECT MIN(ID) FROM categories GROUP BY Name COLLATE NOCASE
+                          )", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    // Same pre-existing-schema caveat as the two try/catch
+                    // blocks above -- not fatal either way.
                 }
             }
         }

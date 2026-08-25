@@ -170,7 +170,7 @@ namespace PosSystem.App.ViewModels
             set => SetProperty(ref _newProductPrice, value);
         }
 
-        // Category management (added 2026-08-25) — see class doc comment.
+        // Category management (added 2026-08-25) -- see class doc comment.
         private string _newCategoryName = "";
         public string NewCategoryName
         {
@@ -192,6 +192,7 @@ namespace PosSystem.App.ViewModels
         public ICommand StartEditCommand { get; }
         public ICommand CancelEditCommand { get; }
         public ICommand SaveEditCommand { get; }
+        public ICommand DeleteProductCommand { get; }
 
         public InventoryViewModel()
         {
@@ -213,6 +214,10 @@ namespace PosSystem.App.ViewModels
             SaveEditCommand = new RelayCommand(p =>
             {
                 if (p is InventoryRow row) SaveEdit(row);
+            });
+            DeleteProductCommand = new RelayCommand(p =>
+            {
+                if (p is InventoryRow row) DeleteProduct(row);
             });
 
             InventoryDataEvents.GoodsChanged += LoadGoods;
@@ -573,6 +578,45 @@ namespace PosSystem.App.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = LocalizationManager.GetString("InventoryEditError") + " (" + ex.Message + ")";
+            }
+        }
+
+        // Delete Product (added 2026-08-25) -- same directness as
+        // DeleteCategory above: no confirmation modal, since this app has
+        // no modal-dialog system built anywhere yet (every destructive
+        // action so far -- DeleteCategory, and before that RemoveGoods's
+        // original callers -- has relied on the action being an explicit,
+        // deliberate button click plus a status message afterward, not a
+        // confirm-are-you-sure step). Unlike deleting a category, this has
+        // no in-use guard to check first: see Goods.RemoveGoodsById's
+        // comment for why deleting a product is safe with respect to sales
+        // history (Sells.cs's `sells` table is a full snapshot per line
+        // item, not a foreign key to goods.ID) -- there is no equivalent
+        // still-referenced-elsewhere state to block on, the way
+        // CountByCategory blocks an in-use category delete.
+        private void DeleteProduct(InventoryRow row)
+        {
+            try
+            {
+                string name = row.Name;
+                _goodsData.RemoveGoodsById("goods", row.Id);
+
+                _allRows.Remove(row);
+                Rows.Remove(row);
+
+                StatusMessage = string.Format(LocalizationManager.GetString("InventoryDeleteSuccess"), name);
+
+                // Category chips are built from _allRows' distinct
+                // categories (RebuildCategoryChips' own comment) -- a
+                // deleted product may have been the last one in its
+                // category, so that chip needs to disappear too.
+                RebuildCategoryChips();
+
+                InventoryDataEvents.RaiseGoodsChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = LocalizationManager.GetString("InventoryDeleteError") + " (" + ex.Message + ")";
             }
         }
     }

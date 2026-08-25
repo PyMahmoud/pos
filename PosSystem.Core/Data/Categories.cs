@@ -117,10 +117,21 @@ namespace PosSystem.Core.Data
         // schema or a pre-existing richer one from the old app — none of
         // these reference Type or Image at all.
 
+        // Updated 2026-08-25: was a plain "SELECT Name FROM categories",
+        // which surfaced literal duplicate rows in every category picker
+        // across the app (Add/Edit Product's category ComboBox, the
+        // Delete-category picker below) -- the live database has
+        // duplicate/case-variant rows in this table from before this
+        // feature enforced uniqueness (see DatabaseBootstrapper.EnsureSchema
+        // for the one-time cleanup pass that now also runs against the
+        // table itself). GROUP BY ... COLLATE NOCASE folds case-variant
+        // duplicates ('Snacks' / 'snacks') into one row here too, same as
+        // CategoryExists' comparison already does; MIN(Name) picks a single
+        // consistent spelling to display for each group.
         public List<string> ReadAllCategoryNames()
         {
             var names = new List<string>();
-            string readString = "SELECT Name FROM categories ORDER BY Name ASC";
+            string readString = "SELECT MIN(Name) AS Name FROM categories GROUP BY Name COLLATE NOCASE ORDER BY Name ASC";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();

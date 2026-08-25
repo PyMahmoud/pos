@@ -51,6 +51,51 @@ namespace PosSystem.App.ViewModels
 
         public ObservableCollection<GoodsR> FilteredGoods { get; } = new ObservableCollection<GoodsR>();
         public ObservableCollection<CategoryChip> Categories { get; } = new ObservableCollection<CategoryChip>();
+
+        // Type-to-search category dropdown (2026-08-26). FilteredCategoryOptions
+        // is what the ComboBox's ItemsSource actually binds to now — Categories
+        // above stays the full master list, untouched, and is still exactly
+        // what RebuildCategoryChips populates. Typing in the (now-editable)
+        // ComboBox drives CategorySearchText, which narrows
+        // FilteredCategoryOptions to matching DisplayNames; "All" is always
+        // kept reachable even when it doesn't itself match the typed text, so
+        // a search that matches nothing never leaves the dropdown with no way
+        // back to "show everything" (see RebuildFilteredCategories). Selecting
+        // an item goes through the normal SelectedCategory setter below,
+        // which pushes that item's DisplayName into CategorySearchText
+        // WITHOUT re-filtering (_suppressCategoryFilter) — only real typing
+        // re-filters, a selection never does.
+        public ObservableCollection<CategoryChip> FilteredCategoryOptions { get; } = new ObservableCollection<CategoryChip>();
+
+        private bool _suppressCategoryFilter;
+
+        private string _categorySearchText = "";
+        public string CategorySearchText
+        {
+            get => _categorySearchText;
+            set
+            {
+                if (!SetProperty(ref _categorySearchText, value)) return;
+                if (_suppressCategoryFilter) return;
+                RebuildFilteredCategories();
+                IsCategoryDropDownOpen = true;
+            }
+        }
+
+        // Bound TwoWay to the ComboBox's IsDropDownOpen. WPF doesn't open an
+        // editable ComboBox's popup just because its Text changed (that only
+        // happens on a manual click/F4/Alt+Down) — this is set explicitly
+        // from CategorySearchText's setter above whenever the user actually
+        // types, and gets reset back by the ComboBox itself (via the TwoWay
+        // binding) whenever a selection is made or the dropdown closes some
+        // other way.
+        private bool _isCategoryDropDownOpen;
+        public bool IsCategoryDropDownOpen
+        {
+            get => _isCategoryDropDownOpen;
+            set => SetProperty(ref _isCategoryDropDownOpen, value);
+        }
+
         public ObservableCollection<CartLine> CartLines { get; } = new ObservableCollection<CartLine>();
         public ObservableCollection<CustomerOption> Customers { get; } = new ObservableCollection<CustomerOption>();
 
@@ -60,7 +105,15 @@ namespace PosSystem.App.ViewModels
             get => _selectedCategory;
             set
             {
-                if (SetProperty(ref _selectedCategory, value)) ApplyFilter();
+                if (!SetProperty(ref _selectedCategory, value)) return;
+                ApplyFilter();
+
+                // Keep the search box showing the selected category's name
+                // without re-triggering RebuildFilteredCategories — see
+                // CategorySearchText's own comment above.
+                _suppressCategoryFilter = true;
+                CategorySearchText = value?.DisplayName ?? "";
+                _suppressCategoryFilter = false;
             }
         }
 
@@ -212,6 +265,49 @@ namespace PosSystem.App.ViewModels
 
             _selectedCategory = Categories.FirstOrDefault(c => c.Value == previousValue) ?? Categories[0];
             OnPropertyChanged(nameof(SelectedCategory));
+
+            // RebuildCategoryChips sets _selectedCategory directly (not
+            // through the SelectedCategory property setter above), so the
+            // search-box sync that setter normally does has to happen here
+            // too — otherwise the box would keep showing stale text after a
+            // data reload or language change rebuilds the whole Categories
+            // list.
+            _suppressCategoryFilter = true;
+            CategorySearchText = _selectedCategory?.DisplayName ?? "";
+            _suppressCategoryFilter = false;
+            RebuildFilteredCategories();
+        }
+
+        // See FilteredCategoryOptions' doc comment above for the overall
+        // design. "All" (Categories[0], Value == null) is always kept
+        // reachable even when the typed text doesn't match its own label, so
+        // a search that matches nothing still leaves a way back to seeing
+        // everything.
+        private void RebuildFilteredCategories()
+        {
+            FilteredCategoryOptions.Clear();
+            string text = CategorySearchText ?? "";
+            CategoryChip allChip = Categories.Count > 0 ? Categories[0] : null;
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                foreach (var chip in Categories) FilteredCategoryOptions.Add(chip);
+                return;
+            }
+
+            bool allIncluded = false;
+            foreach (var chip in Categories)
+            {
+                if (chip.DisplayName != null &&
+                    chip.DisplayName.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    FilteredCategoryOptions.Add(chip);
+                    if (chip == allChip) allIncluded = true;
+                }
+            }
+
+            if (!allIncluded && allChip != null)
+                FilteredCategoryOptions.Insert(0, allChip);
         }
 
         private void RebuildCustomerOptions()

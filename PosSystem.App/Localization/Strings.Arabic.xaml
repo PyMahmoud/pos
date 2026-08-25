@@ -124,19 +124,44 @@
     <system:String x:Key="InventoryProductNameLabel">الاسم</system:String>
     <system:String x:Key="InventoryProductBarcodeLabel">الباركود (اختياري)</system:String>
     <system:String x:Key="InventoryProductCategoryLabel">الفئة</system:String>
-    <system:String x:Key="InventoryProductCategoryHint">اكتب للبحث، أو أدخل فئة جديدة</system:String>
+    <system:String x:Key="InventoryProductCategoryHint">ابدأ الكتابة للانتقال إلى فئة، ثم اخترها من القائمة.</system:String>
     <system:String x:Key="InventoryProductQuantityLabel">الكمية الابتدائية</system:String>
     <system:String x:Key="InventoryProductCostLabel">التكلفة</system:String>
     <system:String x:Key="InventoryProductPriceLabel">السعر</system:String>
     <system:String x:Key="InventoryAddProductButton">إضافة المنتج</system:String>
     <system:String x:Key="InventoryAddMissingName">أدخل اسم المنتج.</system:String>
-    <system:String x:Key="InventoryAddMissingCategory">اختر فئة أو أدخل فئة جديدة.</system:String>
+    <system:String x:Key="InventoryAddMissingCategory">اختر فئة.</system:String>
     <system:String x:Key="InventoryAddInvalidQuantity">أدخل كمية ابتدائية صحيحة (0 أو أكثر).</system:String>
     <system:String x:Key="InventoryAddInvalidCost">أدخل تكلفة صحيحة (0 أو أكثر).</system:String>
     <system:String x:Key="InventoryAddInvalidPrice">أدخل سعرًا صحيحًا أكبر من 0.</system:String>
     <system:String x:Key="InventoryAddDuplicateBarcode">هذا الباركود مستخدم بالفعل لمنتج آخر.</system:String>
     <system:String x:Key="InventoryAddSuccess">تمت إضافة {0}.</system:String>
     <system:String x:Key="InventoryAddError">حدث خطأ. حاول مرة أخرى.</system:String>
+
+    <system:String x:Key="InventoryAddCategoryButton">إضافة فئة</system:String>
+    <system:String x:Key="InventoryDeleteCategoryButton">حذف فئة</system:String>
+    <system:String x:Key="InventoryCategoryAddMissingName">أدخل اسمًا للفئة الجديدة.</system:String>
+    <system:String x:Key="InventoryCategoryAddDuplicate">هذه الفئة موجودة بالفعل.</system:String>
+    <system:String x:Key="InventoryCategoryAddSuccess">تمت إضافة {0} كفئة.</system:String>
+    <system:String x:Key="InventoryCategoryDeleteMissingSelection">اختر فئة لحذفها.</system:String>
+    <system:String x:Key="InventoryCategoryDeleteInUse">لا يمكن حذف {0} — لا يزال {1} من المنتجات يستخدمها.</system:String>
+    <system:String x:Key="InventoryCategoryDeleteSuccess">تم حذف {0}.</system:String>
+
+    <system:String x:Key="InventoryEditButton">تعديل</system:String>
+    <system:String x:Key="InventoryEditSaveButton">حفظ</system:String>
+    <system:String x:Key="InventoryEditCancelButton">إلغاء</system:String>
+    <system:String x:Key="InventoryEditMissingName">أدخل اسم المنتج.</system:String>
+    <system:String x:Key="InventoryEditMissingCategory">اختر فئة.</system:String>
+    <system:String x:Key="InventoryEditInvalidCost">أدخل تكلفة صحيحة (0 أو أكثر).</system:String>
+    <system:String x:Key="InventoryEditInvalidPrice">أدخل سعرًا صحيحًا أكبر من 0.</system:String>
+    <system:String x:Key="InventoryEditDuplicateBarcode">هذا الباركود مستخدم بالفعل لمنتج آخر.</system:String>
+    <system:String x:Key="InventoryEditSuccess">تم تحديث {0}.</system:String>
+    <system:String x:Key="InventoryEditError">حدث خطأ. حاول مرة أخرى.</system:String>
+    <system:String x:Key="InventoryDeleteProductButton">حذف المنتج</system:String>
+    <system:String x:Key="InventoryDeleteSuccess">تم حذف {0}.</system:String>
+    <system:String x:Key="InventoryDeleteError">حدث خطأ. حاول مرة أخرى.</system:String>
+
+    <system:String x:Key="InventoryManageCategoriesTitle">إدارة الفئات</system:String>
 
     <system:String x:Key="SettingsHeading">الإعدادات</system:String>
     <system:String x:Key="SettingsDescription">تعيش تفضيلات التطبيق العامة هنا. اللغة هي أول تفضيل — سيُضاف إعداد الطابعة، تذييل الإيصال، نسبة الضريبة، وغيرها حسب حاجة العميل.</system:String>

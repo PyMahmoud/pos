@@ -124,19 +124,64 @@
     <system:String x:Key="InventoryProductNameLabel">Name</system:String>
     <system:String x:Key="InventoryProductBarcodeLabel">Barcode (optional)</system:String>
     <system:String x:Key="InventoryProductCategoryLabel">Category</system:String>
-    <system:String x:Key="InventoryProductCategoryHint">Type to search, or enter a new category</system:String>
+    <!-- Updated 2026-08-25: this field is now a selection-only ComboBox
+         (see InventoryViewModel's class doc comment). The old hint text
+         ("Type to search, or enter a new category") described the prior
+         free-typed/auto-create behavior and was never updated when that
+         changed, which is misleading now: typing here can only jump to an
+         existing match, never create one. -->
+    <system:String x:Key="InventoryProductCategoryHint">Start typing to jump to a category, then select it from the list.</system:String>
     <system:String x:Key="InventoryProductQuantityLabel">Starting quantity</system:String>
     <system:String x:Key="InventoryProductCostLabel">Cost</system:String>
     <system:String x:Key="InventoryProductPriceLabel">Price</system:String>
     <system:String x:Key="InventoryAddProductButton">Add product</system:String>
     <system:String x:Key="InventoryAddMissingName">Enter a product name.</system:String>
-    <system:String x:Key="InventoryAddMissingCategory">Choose or enter a category.</system:String>
+    <!-- Updated 2026-08-25, see InventoryProductCategoryHint above; "or
+         enter a new category" no longer applies now that this field is
+         selection-only. -->
+    <system:String x:Key="InventoryAddMissingCategory">Choose a category.</system:String>
     <system:String x:Key="InventoryAddInvalidQuantity">Enter a valid starting quantity (0 or more).</system:String>
     <system:String x:Key="InventoryAddInvalidCost">Enter a valid cost (0 or more).</system:String>
     <system:String x:Key="InventoryAddInvalidPrice">Enter a valid price greater than 0.</system:String>
     <system:String x:Key="InventoryAddDuplicateBarcode">That barcode is already used by another product.</system:String>
     <system:String x:Key="InventoryAddSuccess">{0} added.</system:String>
     <system:String x:Key="InventoryAddError">Something went wrong. Please try again.</system:String>
+
+    <!-- Category management (added 2026-08-25): Add/Delete category
+         buttons on InventoryView.xaml's left panel. -->
+    <system:String x:Key="InventoryAddCategoryButton">Add category</system:String>
+    <system:String x:Key="InventoryDeleteCategoryButton">Delete category</system:String>
+    <system:String x:Key="InventoryCategoryAddMissingName">Enter a name for the new category.</system:String>
+    <system:String x:Key="InventoryCategoryAddDuplicate">That category already exists.</system:String>
+    <system:String x:Key="InventoryCategoryAddSuccess">{0} added as a category.</system:String>
+    <system:String x:Key="InventoryCategoryDeleteMissingSelection">Choose a category to delete.</system:String>
+    <system:String x:Key="InventoryCategoryDeleteInUse">Can't delete {0} — {1} product(s) still use it.</system:String>
+    <system:String x:Key="InventoryCategoryDeleteSuccess">{0} deleted.</system:String>
+
+    <!-- Edit Product (added 2026-08-25): per-card inline edit. Name/
+         Category/Cost/Price/Barcode field labels are shared with the Add
+         Product form above (InventoryProductNameLabel etc.) rather than
+         duplicated under new keys, since it's the same field in both
+         contexts. -->
+    <system:String x:Key="InventoryEditButton">Edit</system:String>
+    <system:String x:Key="InventoryEditSaveButton">Save</system:String>
+    <system:String x:Key="InventoryEditCancelButton">Cancel</system:String>
+    <system:String x:Key="InventoryEditMissingName">Enter a product name.</system:String>
+    <system:String x:Key="InventoryEditMissingCategory">Choose a category.</system:String>
+    <system:String x:Key="InventoryEditInvalidCost">Enter a valid cost (0 or more).</system:String>
+    <system:String x:Key="InventoryEditInvalidPrice">Enter a valid price greater than 0.</system:String>
+    <system:String x:Key="InventoryEditDuplicateBarcode">That barcode is already used by another product.</system:String>
+    <system:String x:Key="InventoryEditSuccess">{0} updated.</system:String>
+    <system:String x:Key="InventoryEditError">Something went wrong. Please try again.</system:String>
+    <system:String x:Key="InventoryDeleteProductButton">Delete product</system:String>
+    <system:String x:Key="InventoryDeleteSuccess">{0} deleted.</system:String>
+    <system:String x:Key="InventoryDeleteError">Something went wrong. Please try again.</system:String>
+
+    <!-- Manage categories (moved 2026-08-25 out from between the Add
+         Product form's Category field and Quantity field, where it broke
+         up that form's flow). Now its own separately-titled section
+         after Add Product, not interleaved with it. -->
+    <system:String x:Key="InventoryManageCategoriesTitle">Manage categories</system:String>
 
     <system:String x:Key="SettingsHeading">Settings</system:String>
     <system:String x:Key="SettingsDescription">App-wide preferences live here. Language is the first one — printer setup, receipt footer, tax rate, etc. get added as the client needs them.</system:String>
