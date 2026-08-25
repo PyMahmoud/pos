@@ -466,5 +466,62 @@ namespace PosSystem.Core.Data
                 }
             }
         }
+
+        // Added for Inventory's Add Product feature (barcode is now
+        // optional on new products). Every existing write path in this
+        // class — UpdateGoods, UpdateGoodCount, RemoveGoods above — keys
+        // off Barcode in its WHERE clause, which silently breaks the
+        // instant two products can legitimately share the same Barcode
+        // value (namely "", once barcode-less products exist): a
+        // Barcode-keyed UPDATE/DELETE would match every barcode-less
+        // product at once instead of the one intended. ID is the real
+        // primary key (INTEGER PRIMARY KEY AUTOINCREMENT) and always
+        // unique regardless of Barcode — UpdateGoodCountById is the
+        // correct replacement for any caller whose product might not have
+        // a barcode. InventoryViewModel.AdjustQuantity and
+        // CheckoutViewModel.CompleteSale both switched to this for exactly
+        // that reason; the Barcode-keyed methods above are left as-is
+        // (unused by those two call sites now, but not deleted — no
+        // evidence anything else depends on removing them, and this
+        // session has no way to verify a wider removal is safe).
+        public bool UpdateGoodCountById(string TableName, int Id, double Quantity)
+        {
+            string UpdateString = "UPDATE " + TableName + " SET Quantity = @quantity WHERE ID = @id";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(UpdateString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@quantity", Quantity);
+                    cmd.Parameters.AddWithValue("@id", Id);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                    return true;
+                }
+            }
+        }
+
+        // App-layer duplicate-barcode check before an insert (Inventory's
+        // Add Product form) — belt-and-suspenders alongside the partial
+        // UNIQUE index DatabaseBootstrapper.EnsureSchema() adds on
+        // goods.Barcode (unique only when non-empty, so any number of
+        // barcode-less products can coexist). Checking here first lets the
+        // ViewModel show a clean, specific "that barcode is already used"
+        // message instead of surfacing a raw SQLite constraint-violation
+        // exception to the user.
+        public bool BarcodeExists(string TableName, string Barcode)
+        {
+            string readString = "SELECT COUNT(*) FROM " + TableName + " WHERE Barcode = @barcode";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(readString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@barcode", Barcode);
+                    long count = (long)cmd.ExecuteScalar();
+                    return count > 0;
+                }
+            }
+        }
     }
 }

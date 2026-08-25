@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:behaviors="clr-namespace:PosSystem.App.Behaviors">
 
     <!--
         Shared form-control styles used by more than one screen (currently
@@ -229,11 +230,18 @@
         Style wiring shown below — this is the standard, widely-reused
         "thin themed scrollbar" shape, not unusual API surface.
     -->
+    <!--
+        Confirmed root cause (2026-08-25): the real ScrollBar template below
+        now uses behaviors:MinLengthTrack instead of the stock Track — that
+        was the actual fix. This diagnostic Border WAS the thing rendering
+        every scrollbar (that question is answered), so reverted here to the
+        real themed appearance rather than left red.
+    -->
     <Style x:Key="ThemedScrollBarThumb" TargetType="Thumb">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Thumb">
-                    <Border Background="{DynamicResource OutlineVariantBrush}" CornerRadius="4" />
+                    <Border Background="{DynamicResource OutlineVariantBrush}" CornerRadius="7" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -259,8 +267,9 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ScrollBar">
                     <Grid Background="Transparent">
-                        <Track x:Name="PART_Track"
+                        <behaviors:MinLengthTrack x:Name="PART_Track"
                                IsDirectionReversed="True"
+                               MinThumbLength="80"
                                Width="14"
                                HorizontalAlignment="Center">
                             <Track.DecreaseRepeatButton>
@@ -270,13 +279,39 @@
                                 <RepeatButton Style="{StaticResource ThemedScrollBarPageButton}" Command="ScrollBar.PageDownCommand" />
                             </Track.IncreaseRepeatButton>
                             <Track.Thumb>
-                                <Thumb Style="{StaticResource ThemedScrollBarThumb}" Width="14" MinHeight="32" />
+                                <Thumb Style="{StaticResource ThemedScrollBarThumb}" Width="14" />
                             </Track.Thumb>
-                        </Track>
+                        </behaviors:MinLengthTrack>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <!--
+            Neither this Setter nor Track.Thumb's old MinHeight="260" (the
+            2026-08-24 attempt this replaced) ever actually controlled the
+            rendered thumb size, for the same underlying reason: stock
+            Track.ArrangeOverride computes the Thumb's Arrange rect itself
+            from Minimum/Maximum/ViewportSize and calls Thumb.Arrange()
+            with that rect directly — it does not read Height/MinHeight/
+            MinWidth/Width off the Thumb at all when deciding what to
+            Arrange it to, so setting any of them (via a Setter here, or via
+            ScrollBarThumbBehavior's Thumb.Height sets, confirmed running
+            correctly via its own Debug.WriteLine output) had zero effect on
+            what actually rendered. Confirmed 2026-08-25 by checking the
+            actual PART_Track type in this file's ScrollBar ControlTemplate:
+            it was a plain stock Track, never MinLengthTrack (Behaviors\
+            MinLengthTrack.cs), despite MinLengthTrack existing in the repo
+            since 2026-08-24 and being exactly the correct fix — it works
+            because it calls Thumb.Arrange() itself, AFTER base Track
+            layout, which genuinely is authoritative (Arrange always wins
+            over a mere Height/MinHeight property). The real fix is that
+            PART_Track is now behaviors:MinLengthTrack (see the vertical and
+            horizontal ControlTemplates below), not this Setter — removed
+            since ScrollBarThumbBehavior.cs is confirmed to do nothing
+            through this path. That file should be deleted; left in place
+            only because this session has no file-delete capability, not
+            because it's still useful — don't re-attach it to anything.
+        -->
         <Style.Triggers>
             <Trigger Property="Orientation" Value="Horizontal">
                 <Setter Property="Width" Value="Auto" />
@@ -285,7 +320,8 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="ScrollBar">
                             <Grid Background="Transparent">
-                                <Track x:Name="PART_Track"
+                                <behaviors:MinLengthTrack x:Name="PART_Track"
+                                       MinThumbLength="80"
                                        Height="14"
                                        VerticalAlignment="Center">
                                     <Track.DecreaseRepeatButton>
@@ -295,15 +331,39 @@
                                         <RepeatButton Style="{StaticResource ThemedScrollBarPageButton}" Command="ScrollBar.PageRightCommand" />
                                     </Track.IncreaseRepeatButton>
                                     <Track.Thumb>
-                                        <Thumb Style="{StaticResource ThemedScrollBarThumb}" Height="14" MinWidth="32" />
+                                        <Thumb Style="{StaticResource ThemedScrollBarThumb}" Height="14" />
                                     </Track.Thumb>
-                                </Track>
+                                </behaviors:MinLengthTrack>
                             </Grid>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
             </Trigger>
         </Style.Triggers>
+    </Style>
+
+    <!--
+        Implicit (key-less) ScrollViewer style, added 2026-08-24 alongside
+        the bigger thumb above — "make its sensitivity higher" when there's
+        a lot to scroll needs actual behavior code, not just a bigger
+        visual, since WPF's default mouse-wheel scroll is a flat amount
+        (~48px/notch) no matter how long the content is. ScrollBehavior
+        .AdaptiveWheel (Behaviors\ScrollBehavior.cs) scales that per-notch
+        distance up when the scrollable content is much taller than the
+        viewport, so Inventory's product grid (and any other long list)
+        scrolls faster per notch than a short one — capped both ends so a
+        short list still feels like a normal scroll. Set here as a plain
+        attached-property Setter (not an EventSetter, which would need
+        code-behind on this ResourceDictionary itself — real, avoidable
+        complexity for an old-style .csproj), so it reaches every
+        ScrollViewer in the app the same way the ScrollBar style above
+        does, including ones nested inside other controls' templates
+        (ThemedComboBoxStyle's dropdown ScrollViewer, a multi-line
+        TextBox's PART_ContentHost) — harmless there, since short content
+        just means the scale factor stays at its 1.0 floor.
+    -->
+    <Style TargetType="{x:Type ScrollViewer}">
+        <Setter Property="behaviors:ScrollBehavior.AdaptiveWheel" Value="True" />
     </Style>
 
     <!--

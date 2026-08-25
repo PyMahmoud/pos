@@ -137,6 +137,23 @@ Current state: skeleton solution exists (`PosSystem.Core` + `PosSystem.App`), ol
   plain elements (a `DynamicResource`-bound label `TextBlock` next to a
   data-bound value `TextBlock`) — the same two-element shape every other
   screen already uses for this, not a new pattern.
+  **Scrollbar thumb size fix (2026-08-25).** Mahmoud reported Inventory's
+  product-grid scrollbar thumb staying tiny regardless of how much content
+  there was. Traced (with his own diagnostic build steps — a hardcoded-red
+  Thumb template, then ruling out an orientation mismatch) to
+  `CommonStyles.xaml`'s themed `ScrollBar` style: its `Track.Thumb`
+  `MinHeight="260"`/`MinWidth="260"` turned out not to be the actual lever
+  controlling rendered size, for reasons not verifiable without a WPF
+  runtime to step through. Replaced with `ScrollBarThumbBehavior`
+  (`Behaviors\ScrollBarThumbBehavior.cs`), which computes the thumb's
+  rendered length directly from viewport/extent/track-length after layout
+  instead of relying on `Track`'s own Arrange pass to respect `MinHeight`.
+  This is an app-wide theming change (same implicit `ScrollBar` style every
+  screen's scrollbars use), not Inventory-specific, even though Inventory's
+  grid is what surfaced it. **Not yet build-tested** — the diagnostic red
+  thumb color is deliberately still in place pending Mahmoud's next build
+  confirming the real fix works, then reverting to the themed
+  `OutlineVariantBrush`.
 - [ ] **Monthly report — not started.** This is genuinely a different piece of
   infrastructure from everything built so far: a separate scheduled
   process (Windows Task Scheduler-triggered console app or background
