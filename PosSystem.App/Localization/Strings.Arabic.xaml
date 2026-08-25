@@ -119,6 +119,25 @@
     <system:String x:Key="InventoryAdjustError">حدث خطأ. حاول مرة أخرى.</system:String>
     <system:String x:Key="InventoryNoResults">لا توجد منتجات مطابقة للفلاتر المحددة.</system:String>
 
+    <system:String x:Key="InventoryListTitle">كل المنتجات</system:String>
+    <system:String x:Key="InventoryAddSectionTitle">إضافة منتج</system:String>
+    <system:String x:Key="InventoryProductNameLabel">الاسم</system:String>
+    <system:String x:Key="InventoryProductBarcodeLabel">الباركود (اختياري)</system:String>
+    <system:String x:Key="InventoryProductCategoryLabel">الفئة</system:String>
+    <system:String x:Key="InventoryProductCategoryHint">اكتب للبحث، أو أدخل فئة جديدة</system:String>
+    <system:String x:Key="InventoryProductQuantityLabel">الكمية الابتدائية</system:String>
+    <system:String x:Key="InventoryProductCostLabel">التكلفة</system:String>
+    <system:String x:Key="InventoryProductPriceLabel">السعر</system:String>
+    <system:String x:Key="InventoryAddProductButton">إضافة المنتج</system:String>
+    <system:String x:Key="InventoryAddMissingName">أدخل اسم المنتج.</system:String>
+    <system:String x:Key="InventoryAddMissingCategory">اختر فئة أو أدخل فئة جديدة.</system:String>
+    <system:String x:Key="InventoryAddInvalidQuantity">أدخل كمية ابتدائية صحيحة (0 أو أكثر).</system:String>
+    <system:String x:Key="InventoryAddInvalidCost">أدخل تكلفة صحيحة (0 أو أكثر).</system:String>
+    <system:String x:Key="InventoryAddInvalidPrice">أدخل سعرًا صحيحًا أكبر من 0.</system:String>
+    <system:String x:Key="InventoryAddDuplicateBarcode">هذا الباركود مستخدم بالفعل لمنتج آخر.</system:String>
+    <system:String x:Key="InventoryAddSuccess">تمت إضافة {0}.</system:String>
+    <system:String x:Key="InventoryAddError">حدث خطأ. حاول مرة أخرى.</system:String>
+
     <system:String x:Key="SettingsHeading">الإعدادات</system:String>
     <system:String x:Key="SettingsDescription">تعيش تفضيلات التطبيق العامة هنا. اللغة هي أول تفضيل — سيُضاف إعداد الطابعة، تذييل الإيصال، نسبة الضريبة، وغيرها حسب حاجة العميل.</system:String>
     <system:String x:Key="LanguageToggleLabel">Toggle Language / تبديل اللغة</system:String>

@@ -102,6 +102,34 @@
                                                   Margin="{TemplateBinding Padding}"
                                                   VerticalAlignment="Center"
                                                   HorizontalAlignment="Left" />
+                                <!--
+                                    Only reached when IsEditable=True (Inventory's
+                                    category ComboBox, added for Add Product's
+                                    type-to-search category field — see
+                                    InventoryViewModel's class doc comment).
+                                    Standard WPF part-contract name for this:
+                                    ComboBox looks up "PART_EditableTextBox" by
+                                    name and, if present, wires it up as the
+                                    in-place text-entry surface when editable;
+                                    if IsEditable is left False (every other
+                                    ComboBox in the app today — Checkout's
+                                    customer picker, CustomerDetail's medication
+                                    picker), the trigger below never fires, this
+                                    stays Collapsed, and rendering is pixel-for-
+                                    pixel identical to before this was added.
+                                -->
+                                <TextBox x:Name="PART_EditableTextBox"
+                                         Grid.Column="0"
+                                         Visibility="Collapsed"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Foreground="{TemplateBinding Foreground}"
+                                         CaretBrush="{TemplateBinding Foreground}"
+                                         Focusable="True"
+                                         IsReadOnly="{TemplateBinding IsReadOnly}"
+                                         Margin="{TemplateBinding Padding}"
+                                         VerticalAlignment="Center"
+                                         VerticalContentAlignment="Center" />
                                 <ToggleButton x:Name="ToggleButton"
                                               Grid.Column="1"
                                               Width="34" Height="28"
@@ -164,6 +192,14 @@
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Chrome" Property="Opacity" Value="0.6" />
+                        </Trigger>
+                        <!-- Swap ContentSite → PART_EditableTextBox when this
+                             ComboBox is editable — see the TextBox comment
+                             above for why this only ever affects Inventory's
+                             category field, not any existing ComboBox. -->
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="ContentSite" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

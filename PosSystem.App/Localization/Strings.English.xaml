@@ -119,6 +119,25 @@
     <system:String x:Key="InventoryAdjustError">Something went wrong. Please try again.</system:String>
     <system:String x:Key="InventoryNoResults">No products match your filters.</system:String>
 
+    <system:String x:Key="InventoryListTitle">All products</system:String>
+    <system:String x:Key="InventoryAddSectionTitle">Add a product</system:String>
+    <system:String x:Key="InventoryProductNameLabel">Name</system:String>
+    <system:String x:Key="InventoryProductBarcodeLabel">Barcode (optional)</system:String>
+    <system:String x:Key="InventoryProductCategoryLabel">Category</system:String>
+    <system:String x:Key="InventoryProductCategoryHint">Type to search, or enter a new category</system:String>
+    <system:String x:Key="InventoryProductQuantityLabel">Starting quantity</system:String>
+    <system:String x:Key="InventoryProductCostLabel">Cost</system:String>
+    <system:String x:Key="InventoryProductPriceLabel">Price</system:String>
+    <system:String x:Key="InventoryAddProductButton">Add product</system:String>
+    <system:String x:Key="InventoryAddMissingName">Enter a product name.</system:String>
+    <system:String x:Key="InventoryAddMissingCategory">Choose or enter a category.</system:String>
+    <system:String x:Key="InventoryAddInvalidQuantity">Enter a valid starting quantity (0 or more).</system:String>
+    <system:String x:Key="InventoryAddInvalidCost">Enter a valid cost (0 or more).</system:String>
+    <system:String x:Key="InventoryAddInvalidPrice">Enter a valid price greater than 0.</system:String>
+    <system:String x:Key="InventoryAddDuplicateBarcode">That barcode is already used by another product.</system:String>
+    <system:String x:Key="InventoryAddSuccess">{0} added.</system:String>
+    <system:String x:Key="InventoryAddError">Something went wrong. Please try again.</system:String>
+
     <system:String x:Key="SettingsHeading">Settings</system:String>
     <system:String x:Key="SettingsDescription">App-wide preferences live here. Language is the first one — printer setup, receipt footer, tax rate, etc. get added as the client needs them.</system:String>
     <system:String x:Key="LanguageToggleLabel">Toggle Language / تبديل اللغة</system:String>

@@ -9,214 +9,369 @@
     </UserControl.DataContext>
 
     <Grid Background="{DynamicResource BackgroundBrush}">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <!-- Header + filter bar. Same card treatment (SurfaceContainerLow,
-             16px radius, 20px padding) as Dashboard's filter bar, and the
-             same chip pattern (ListBox + CategoryChipListBoxItemStyle) as
-             Checkout's category filter / Dashboard's payment+category
-             chips — nothing new introduced here, just reused. -->
-        <StackPanel Grid.Row="0" Margin="24,20,24,0">
-            <TextBlock Text="{DynamicResource InventoryHeading}"
-                       Style="{StaticResource HeadlineMedium}"
-                       Foreground="{DynamicResource OnSurfaceBrush}"
-                       Margin="0,0,0,16" />
+        <!-- Add-product panel — same shape as CustomersView's add-customer
+             panel: fixed 320px, SurfaceContainerLow background, single
+             trailing border, heading + section title + fields + button +
+             status message. -->
+        <Border Grid.Column="0"
+                Background="{DynamicResource SurfaceContainerLowBrush}"
+                BorderBrush="{DynamicResource OutlineVariantBrush}"
+                BorderThickness="0,0,1,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="24,28,24,20">
+                    <TextBlock Text="{DynamicResource InventoryHeading}"
+                               Style="{StaticResource HeadlineMedium}"
+                               Foreground="{DynamicResource OnSurfaceBrush}"
+                               Margin="0,0,0,20" />
 
-            <Border Background="{DynamicResource SurfaceContainerLowBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
-                <StackPanel>
-                    <TextBlock Text="{DynamicResource InventorySearchLabel}"
+                    <TextBlock Text="{DynamicResource InventoryAddSectionTitle}"
+                               Style="{StaticResource TitleMedium}"
+                               Foreground="{DynamicResource OnSurfaceBrush}"
+                               Margin="0,0,0,12" />
+
+                    <TextBlock Text="{DynamicResource InventoryProductNameLabel}"
                                Style="{StaticResource LabelSmall}"
                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                Margin="0,0,0,4" />
-                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                    <TextBox Text="{Binding NewProductName, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource ThemedTextBoxStyle}"
-                             Margin="0,0,0,14" />
+                             Margin="0,0,0,12" />
 
-                    <TextBlock Text="{DynamicResource InventoryStockFilterLabel}"
+                    <TextBlock Text="{DynamicResource InventoryProductBarcodeLabel}"
                                Style="{StaticResource LabelSmall}"
                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                               Margin="0,0,0,6" />
-                    <ListBox ItemsSource="{Binding StockFilters}"
-                             SelectedItem="{Binding SelectedStockFilter, Mode=TwoWay}"
-                             Background="Transparent" BorderThickness="0"
-                             Margin="0,0,0,14"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                             ItemContainerStyle="{StaticResource CategoryChipListBoxItemStyle}">
-                        <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ListBox.ItemsPanel>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding DisplayName}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                               Margin="0,0,0,4" />
+                    <TextBox Text="{Binding NewProductBarcode, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource ThemedTextBoxStyle}"
+                             Margin="0,0,0,12" />
 
-                    <TextBlock Text="{DynamicResource DashboardCategoryFilterLabel}"
+                    <TextBlock Text="{DynamicResource InventoryProductCategoryLabel}"
                                Style="{StaticResource LabelSmall}"
                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                               Margin="0,0,0,6" />
-                    <ListBox ItemsSource="{Binding Categories}"
-                             SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
-                             Background="Transparent" BorderThickness="0"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                             ItemContainerStyle="{StaticResource CategoryChipListBoxItemStyle}">
-                        <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ListBox.ItemsPanel>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding DisplayName}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                               Margin="0,0,0,4" />
+                    <!-- Selection-only picker (2026-08-25, replacing the
+                         prior free-typed "type a new name to create it"
+                         ComboBox) — IsEditable left at its default False,
+                         ItemsSource is the real category list
+                         (AllCategoryNames), SelectedItem instead of Text.
+                         WPF's built-in IsTextSearchEnabled (default True on
+                         a non-editable ComboBox) still gives type-ahead
+                         jump-to-match "search" for free — no custom
+                         filtering code needed for that. A product can only
+                         ever be saved with a category actually in this
+                         list; see InventoryViewModel's class doc comment. -->
+                    <ComboBox ItemsSource="{Binding AllCategoryNames}"
+                              SelectedItem="{Binding NewProductCategoryInput, Mode=TwoWay}"
+                              Style="{StaticResource ThemedComboBoxStyle}"
+                              Margin="0,0,0,4" />
+                    <TextBlock Text="{DynamicResource InventoryProductCategoryHint}"
+                               Style="{StaticResource LabelSmall}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,12" />
+
+                    <!-- Category management (added 2026-08-25) — create a
+                         brand-new category, or delete one that no product
+                         is currently using. Kept visually secondary (no
+                         section title, smaller vertical rhythm than the Add
+                         Product fields above) since it's a less-frequent,
+                         supporting action, not the main flow of this panel. -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding NewCategoryName, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ThemedTextBoxStyle}" />
+                        <Button Grid.Column="2"
+                                Content="{DynamicResource InventoryAddCategoryButton}"
+                                Command="{Binding AddCategoryCommand}"
+                                Background="{DynamicResource SurfaceContainerHighBrush}"
+                                Foreground="{DynamicResource OnSurfaceBrush}"
+                                Template="{StaticResource SelectableButtonTemplate}"
+                                Padding="12,10" />
+                    </Grid>
+
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Grid.Column="0"
+                                  ItemsSource="{Binding AllCategoryNames}"
+                                  SelectedItem="{Binding CategoryToDelete, Mode=TwoWay}"
+                                  Style="{StaticResource ThemedComboBoxStyle}" />
+                        <Button Grid.Column="2"
+                                Content="{DynamicResource InventoryDeleteCategoryButton}"
+                                Command="{Binding DeleteCategoryCommand}"
+                                Background="{DynamicResource ErrorContainerBrush}"
+                                Foreground="{DynamicResource OnErrorContainerBrush}"
+                                Template="{StaticResource SelectableButtonTemplate}"
+                                Padding="12,10" />
+                    </Grid>
+
+                    <TextBlock Text="{DynamicResource InventoryProductQuantityLabel}"
+                               Style="{StaticResource LabelSmall}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               Margin="0,0,0,4" />
+                    <TextBox Text="{Binding NewProductQuantity, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource ThemedTextBoxStyle}"
+                             Margin="0,0,0,12" />
+
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource InventoryProductCostLabel}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       Margin="0,0,0,4" />
+                            <TextBox Text="{Binding NewProductCost, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource ThemedTextBoxStyle}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{DynamicResource InventoryProductPriceLabel}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       Margin="0,0,0,4" />
+                            <TextBox Text="{Binding NewProductPrice, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource ThemedTextBoxStyle}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Button Content="{DynamicResource InventoryAddProductButton}"
+                            Command="{Binding AddProductCommand}"
+                            Background="{DynamicResource PrimaryBrush}"
+                            Foreground="{DynamicResource OnPrimaryBrush}"
+                            Template="{StaticResource SelectableButtonTemplate}"
+                            Padding="0,12"
+                            HorizontalContentAlignment="Center" />
+
+                    <TextBlock Text="{Binding StatusMessage}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,10,0,0" />
                 </StackPanel>
-            </Border>
+            </ScrollViewer>
+        </Border>
 
-            <TextBlock Text="{Binding StatusMessage}"
-                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                       TextWrapping="Wrap"
-                       Margin="0,0,0,12" />
-        </StackPanel>
+        <!-- Right side: search/filter card + product grid — unchanged from
+             before, just moved under this column instead of stacked above
+             a full-width grid, matching the Customers screen's two-column
+             shape. -->
+        <Grid Grid.Column="1" Margin="24,28,24,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <!-- Product grid -->
-        <Grid Grid.Row="1" Margin="24,0,24,20">
-            <TextBlock Text="{DynamicResource InventoryNoResults}"
-                       Style="{StaticResource BodyLarge}"
-                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                       TextWrapping="Wrap"
-                       VerticalAlignment="Top"
-                       Visibility="{Binding Rows.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+            <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                <TextBlock Text="{DynamicResource InventoryListTitle}"
+                           Style="{StaticResource TitleMedium}"
+                           Foreground="{DynamicResource OnSurfaceBrush}"
+                           Margin="0,0,0,12" />
 
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding Rows}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Width="260" Margin="0,0,16,16"
-                                    CornerRadius="14"
-                                    Padding="18"
-                                    Background="{DynamicResource SurfaceContainerBrush}">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Category}"
-                                               Style="{StaticResource LabelSmall}"
-                                               Foreground="{DynamicResource OnSurfaceVariantBrush}" />
-                                    <TextBlock Text="{Binding Name}"
-                                               Style="{StaticResource TitleMedium}"
-                                               Foreground="{DynamicResource OnSurfaceBrush}"
-                                               TextWrapping="Wrap"
-                                               Margin="0,2,0,10" />
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}" CornerRadius="16" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource InventorySearchLabel}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   Margin="0,0,0,4" />
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ThemedTextBoxStyle}"
+                                 Margin="0,0,0,14" />
 
-                                    <Grid Margin="0,0,0,10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0"
-                                                   Text="{Binding Price, StringFormat={}{0:0.00}}"
+                        <TextBlock Text="{DynamicResource InventoryStockFilterLabel}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   Margin="0,0,0,6" />
+                        <ListBox ItemsSource="{Binding StockFilters}"
+                                 SelectedItem="{Binding SelectedStockFilter, Mode=TwoWay}"
+                                 Background="Transparent" BorderThickness="0"
+                                 Margin="0,0,0,14"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                 ItemContainerStyle="{StaticResource CategoryChipListBoxItemStyle}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <TextBlock Text="{DynamicResource DashboardCategoryFilterLabel}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   Margin="0,0,0,6" />
+                        <ListBox ItemsSource="{Binding Categories}"
+                                 SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                 Background="Transparent" BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                 ItemContainerStyle="{StaticResource CategoryChipListBoxItemStyle}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Product grid -->
+            <Grid Grid.Row="1">
+                <TextBlock Text="{DynamicResource InventoryNoResults}"
+                           Style="{StaticResource BodyLarge}"
+                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Top"
+                           Visibility="{Binding Rows.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Rows}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="260" Margin="0,0,16,16"
+                                        CornerRadius="14"
+                                        Padding="18"
+                                        Background="{DynamicResource SurfaceContainerBrush}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Category}"
+                                                   Style="{StaticResource LabelSmall}"
+                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                        <TextBlock Text="{Binding Name}"
                                                    Style="{StaticResource TitleMedium}"
-                                                   Foreground="{DynamicResource PrimaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <!-- Two elements, not one MultiBinding-with-a-
-                                             localized-label-as-Source: Binding.Source
-                                             can't take a DynamicResource (Binding isn't a
-                                             DependencyObject, so it would resolve once at
-                                             load and never update on a language toggle) —
-                                             a real bug caught before it shipped, not a
-                                             style preference. -->
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="{DynamicResource InventoryQuantityLabel}"
-                                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                                       Margin="0,0,4,0" />
-                                            <TextBlock Text="{Binding Quantity, StringFormat={}{0:0.##}}"
-                                                       Foreground="{DynamicResource OnSurfaceVariantBrush}" />
-                                        </StackPanel>
-                                    </Grid>
+                                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,2,0,10" />
 
-                                    <!-- Stock-status badge. Same
-                                         Border+DataTrigger pattern as
-                                         Customers' debt badge — Tertiary for
-                                         low stock (matches Colors.Light.xaml's
-                                         own documented "discount badges,
-                                         low-stock flags" role for that
-                                         token), Error for out of stock. -->
-                                    <Border CornerRadius="8" Padding="10,6" Margin="0,0,0,12"
-                                            HorizontalAlignment="Left"
-                                            Background="{DynamicResource SurfaceContainerHighBrush}">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsLowStock}" Value="True">
-                                                        <Setter Property="Background" Value="{DynamicResource TertiaryContainerBrush}" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding IsOutOfStock}" Value="True">
-                                                        <Setter Property="Background" Value="{DynamicResource ErrorContainerBrush}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <TextBlock FontWeight="SemiBold">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock" BasedOn="{StaticResource LabelSmall}">
-                                                    <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariantBrush}" />
-                                                    <Setter Property="Text" Value="{DynamicResource InventoryStatusInStock}" />
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Price, StringFormat={}{0:0.00}}"
+                                                       Style="{StaticResource TitleMedium}"
+                                                       Foreground="{DynamicResource PrimaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <!-- Two elements, not one MultiBinding-with-a-
+                                                 localized-label-as-Source: Binding.Source
+                                                 can't take a DynamicResource (Binding isn't a
+                                                 DependencyObject, so it would resolve once at
+                                                 load and never update on a language toggle) —
+                                                 a real bug caught before it shipped, not a
+                                                 style preference. -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{DynamicResource InventoryQuantityLabel}"
+                                                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                           Margin="0,0,4,0" />
+                                                <TextBlock Text="{Binding Quantity, StringFormat={}{0:0.##}}"
+                                                           Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Stock-status badge. Same
+                                             Border+DataTrigger pattern as
+                                             Customers' debt badge — Tertiary for
+                                             low stock (matches Colors.Light.xaml's
+                                             own documented "discount badges,
+                                             low-stock flags" role for that
+                                             token), Error for out of stock. -->
+                                        <Border CornerRadius="8" Padding="10,6" Margin="0,0,0,12"
+                                                HorizontalAlignment="Left"
+                                                Background="{DynamicResource SurfaceContainerHighBrush}">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsLowStock}" Value="True">
-                                                            <Setter Property="Foreground" Value="{DynamicResource OnTertiaryContainerBrush}" />
-                                                            <Setter Property="Text" Value="{DynamicResource InventoryStatusLowStock}" />
+                                                            <Setter Property="Background" Value="{DynamicResource TertiaryContainerBrush}" />
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding IsOutOfStock}" Value="True">
-                                                            <Setter Property="Foreground" Value="{DynamicResource OnErrorContainerBrush}" />
-                                                            <Setter Property="Text" Value="{DynamicResource InventoryStatusOutOfStock}" />
+                                                            <Setter Property="Background" Value="{DynamicResource ErrorContainerBrush}" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </Border>
+                                            </Border.Style>
+                                            <TextBlock FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource LabelSmall}">
+                                                        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariantBrush}" />
+                                                        <Setter Property="Text" Value="{DynamicResource InventoryStatusInStock}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsLowStock}" Value="True">
+                                                                <Setter Property="Foreground" Value="{DynamicResource OnTertiaryContainerBrush}" />
+                                                                <Setter Property="Text" Value="{DynamicResource InventoryStatusLowStock}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsOutOfStock}" Value="True">
+                                                                <Setter Property="Foreground" Value="{DynamicResource OnErrorContainerBrush}" />
+                                                                <Setter Property="Text" Value="{DynamicResource InventoryStatusOutOfStock}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
 
-                                    <!-- Inline quantity adjustment -->
-                                    <TextBlock Text="{DynamicResource InventoryAdjustLabel}"
-                                               Style="{StaticResource LabelSmall}"
-                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                               Margin="0,0,0,4" />
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBox Grid.Column="0"
-                                                 Text="{Binding AdjustInput, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource ThemedTextBoxStyle}"
-                                                 Margin="0,0,8,0" />
-                                        <Button Grid.Column="1"
-                                                Content="{DynamicResource InventoryAdjustButton}"
-                                                Command="{Binding DataContext.AdjustQuantityCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}"
-                                                Background="{DynamicResource PrimaryBrush}"
-                                                Foreground="{DynamicResource OnPrimaryBrush}"
-                                                Template="{StaticResource SelectableButtonTemplate}"
-                                                Padding="12,8" />
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                                        <!-- Inline quantity adjustment -->
+                                        <TextBlock Text="{DynamicResource InventoryAdjustLabel}"
+                                                   Style="{StaticResource LabelSmall}"
+                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                   Margin="0,0,0,4" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0"
+                                                     Text="{Binding AdjustInput, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ThemedTextBoxStyle}"
+                                                     Margin="0,0,8,0" />
+                                            <Button Grid.Column="1"
+                                                    Content="{DynamicResource InventoryAdjustButton}"
+                                                    Command="{Binding DataContext.AdjustQuantityCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="{DynamicResource PrimaryBrush}"
+                                                    Foreground="{DynamicResource OnPrimaryBrush}"
+                                                    Template="{StaticResource SelectableButtonTemplate}"
+                                                    Padding="12,8" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

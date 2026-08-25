@@ -106,5 +106,98 @@ namespace PosSystem.Core.Data
                 }
             }
         }
+
+        // Everything below was added for Inventory's category management
+        // feature (2026-08-25) — see DatabaseBootstrapper.EnsureSchema for
+        // the `categories` table itself and why these are separate from
+        // the legacy methods above rather than a replacement for them.
+        // Deliberately name-only (no Type/Image parameters): this app has
+        // no use for those legacy columns, and every method here works
+        // whether the underlying table is this file's intended minimal
+        // schema or a pre-existing richer one from the old app — none of
+        // these reference Type or Image at all.
+
+        public List<string> ReadAllCategoryNames()
+        {
+            var names = new List<string>();
+            string readString = "SELECT Name FROM categories ORDER BY Name ASC";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(readString, conn))
+                {
+                    IDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        names.Add(reader["Name"].ToString());
+                    }
+                    return names;
+                }
+            }
+        }
+
+        // Case-insensitive on purpose — matches the COLLATE NOCASE unique
+        // constraint DatabaseBootstrapper defines (when it's the one that
+        // actually created the table) and every other category comparison
+        // already in this app.
+        public bool CategoryExists(string name)
+        {
+            string readString = "SELECT COUNT(*) FROM categories WHERE Name = @name COLLATE NOCASE";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(readString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", name);
+                    long count = (long)cmd.ExecuteScalar();
+                    return count > 0;
+                }
+            }
+        }
+
+        // Caller (InventoryViewModel.AddCategory) is expected to call
+        // CategoryExists first for a clean "already exists" message — this
+        // just does the insert. Not wrapped in try/catch here the way
+        // DatabaseBootstrapper's backfill is: a failure on an explicit,
+        // user-initiated "add this category" click should surface as an
+        // error to that user, not be silently swallowed.
+        public void InsertCategoryName(string name)
+        {
+            string insertString = "INSERT INTO categories (Name) VALUES (@name)";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(insertString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", name);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                }
+            }
+        }
+
+        // Caller (InventoryViewModel.DeleteCategory) is expected to check
+        // Goods.CountByCategory first and refuse the delete with a clear
+        // message if any product still uses this category — deleting it
+        // out from under existing products would leave their Category
+        // field pointing at a name that no longer appears anywhere in the
+        // picker, with no UI path back to it. This method itself has no
+        // such guard, so it must not be called directly from XAML/without
+        // that check.
+        public bool DeleteCategoryByName(string name)
+        {
+            string deleteString = "DELETE FROM categories WHERE Name = @name COLLATE NOCASE";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(deleteString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", name);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                    return true;
+                }
+            }
+        }
     }
 }

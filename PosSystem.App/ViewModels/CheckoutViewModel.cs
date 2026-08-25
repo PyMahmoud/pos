@@ -339,8 +339,12 @@ namespace PosSystem.App.ViewModels
                         line.Type, time, date, line.Barcode, nextBillNumber,
                         (line.Price - line.Cost) * line.Quantity, "No", "");
 
+                    // ID-based, not Barcode-based (Phase 7): a product's
+                    // Barcode can now be "" (no barcode), which is no
+                    // longer guaranteed unique — see
+                    // Data.Goods.UpdateGoodCountById's doc comment.
                     double newQuantity = line.MaxAvailable - line.Quantity;
-                    _goodsData.UpdateGoodCount("goods", line.Barcode, newQuantity);
+                    _goodsData.UpdateGoodCountById("goods", line.GoodId, newQuantity);
                 }
 
                 // Linked customer's running totals: Paid grows by whatever

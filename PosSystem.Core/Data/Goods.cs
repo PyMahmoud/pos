@@ -523,5 +523,85 @@ namespace PosSystem.Core.Data
                 }
             }
         }
+
+        // Everything below was added for Inventory's Edit Product /
+        // category management features (2026-08-25).
+
+        // Barcode-uniqueness check for editing an EXISTING product —
+        // BarcodeExists above would always report "true" when a product's
+        // own unchanged barcode is checked against itself, wrongly
+        // blocking every edit of a product that already has a barcode.
+        // Excludes the row being edited by ID, the same real primary key
+        // UpdateGoodCountById already switched to and for the same reason
+        // (see that method's comment) — Barcode itself is not reliably
+        // unique once any barcode-less ("") product exists.
+        public bool BarcodeExistsExcludingId(string TableName, string Barcode, int ExcludeId)
+        {
+            string readString = "SELECT COUNT(*) FROM " + TableName + " WHERE Barcode = @barcode AND ID <> @excludeid";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(readString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@barcode", Barcode);
+                    cmd.Parameters.AddWithValue("@excludeid", ExcludeId);
+                    long count = (long)cmd.ExecuteScalar();
+                    return count > 0;
+                }
+            }
+        }
+
+        // How many products currently sit in a given category — used to
+        // block deleting a category still in use (InventoryViewModel.
+        // DeleteCategory) rather than silently orphaning those products'
+        // Category field to a name that no longer exists anywhere in the
+        // picker.
+        public int CountByCategory(string TableName, string Category)
+        {
+            string readString = "SELECT COUNT(*) FROM " + TableName + " WHERE Category = @category COLLATE NOCASE";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(readString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@category", Category);
+                    long count = (long)cmd.ExecuteScalar();
+                    return (int)count;
+                }
+            }
+        }
+
+        // Full ID-keyed update for Inventory's Edit Product feature —
+        // UpdateGoods (above, legacy) is Barcode-keyed and would silently
+        // update every barcode-less product at once instead of the one
+        // intended, the same problem UpdateGoodCountById was already added
+        // to solve for quantity-only updates (see that method's comment).
+        // Quantity is deliberately NOT a parameter here: the dedicated
+        // Adjust-quantity flow (UpdateGoodCountById) already owns that
+        // field with its own tested UI and event-raising, and conflating
+        // the two risks a stale-buffer bug (Edit's own quantity snapshot
+        // going out of date if an Adjust happens while an Edit is open) for
+        // no real benefit — Type and Earned are left alone for the same
+        // "don't touch a field this feature has no UI for" reasoning.
+        public bool UpdateGoodsById(string TableName, int Id, string Name, string Category, double Cost, double Price, string Barcode)
+        {
+            string UpdateString = "UPDATE " + TableName + " SET Name = @name, Category = @category, Cost = @cost, Price = @price, Barcode = @barcode WHERE ID = @id";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(UpdateString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", Name);
+                    cmd.Parameters.AddWithValue("@category", Category);
+                    cmd.Parameters.AddWithValue("@cost", Cost);
+                    cmd.Parameters.AddWithValue("@price", Price);
+                    cmd.Parameters.AddWithValue("@barcode", Barcode);
+                    cmd.Parameters.AddWithValue("@id", Id);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                    return true;
+                }
+            }
+        }
     }
 }
