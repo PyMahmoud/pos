@@ -252,6 +252,39 @@ namespace PosSystem.App.ViewModels
 
         public ObservableCollection<CategoryChip> CategoryChips { get; } = new ObservableCollection<CategoryChip>();
 
+        // Type-to-search category dropdown (2026-08-26) — same design as
+        // CheckoutViewModel's own FilteredCategoryOptions/CategorySearchText
+        // (see that class's doc comment for the full reasoning), ported here
+        // for Dashboard's cross-filter category chip. CategoryChips above
+        // stays the full master list, still rebuilt by RebuildCategoryChips
+        // from the real (filtered-set-independent) category data each
+        // RefreshDashboard; FilteredCategoryChipOptions is what the ComboBox
+        // actually shows, narrowed by CategoryChipSearchText as the user
+        // types.
+        public ObservableCollection<CategoryChip> FilteredCategoryChipOptions { get; } = new ObservableCollection<CategoryChip>();
+
+        private bool _suppressCategoryChipFilter;
+
+        private string _categoryChipSearchText = "";
+        public string CategoryChipSearchText
+        {
+            get => _categoryChipSearchText;
+            set
+            {
+                if (!SetProperty(ref _categoryChipSearchText, value)) return;
+                if (_suppressCategoryChipFilter) return;
+                RebuildFilteredCategoryChips();
+                IsCategoryChipDropDownOpen = true;
+            }
+        }
+
+        private bool _isCategoryChipDropDownOpen;
+        public bool IsCategoryChipDropDownOpen
+        {
+            get => _isCategoryChipDropDownOpen;
+            set => SetProperty(ref _isCategoryChipDropDownOpen, value);
+        }
+
         private CategoryChip _selectedCategoryChip;
         public CategoryChip SelectedCategoryChip
         {
@@ -261,6 +294,10 @@ namespace PosSystem.App.ViewModels
                 if (!SetProperty(ref _selectedCategoryChip, value)) return;
                 OnPropertyChanged(nameof(HasActiveCrossFilter));
                 RecomputeAndRedraw();
+
+                _suppressCategoryChipFilter = true;
+                CategoryChipSearchText = value?.DisplayName ?? "";
+                _suppressCategoryChipFilter = false;
             }
         }
 
@@ -458,6 +495,47 @@ namespace PosSystem.App.ViewModels
 
             _selectedCategoryChip = CategoryChips.FirstOrDefault(c => c.Value == previousValue) ?? CategoryChips[0];
             OnPropertyChanged(nameof(SelectedCategoryChip));
+
+            // See CheckoutViewModel.RebuildCategoryChips' matching comment —
+            // this bypasses the SelectedCategoryChip setter (direct field
+            // assignment above), so the search-box sync has to happen here
+            // too.
+            _suppressCategoryChipFilter = true;
+            CategoryChipSearchText = _selectedCategoryChip?.DisplayName ?? "";
+            _suppressCategoryChipFilter = false;
+            RebuildFilteredCategoryChips();
+        }
+
+        // See CheckoutViewModel.RebuildFilteredCategories for the full
+        // reasoning (same design, ported here for Dashboard's category
+        // cross-filter chip). "All" (CategoryChips[0], Value == null) is
+        // always kept reachable even when the typed text doesn't match its
+        // own label.
+        private void RebuildFilteredCategoryChips()
+        {
+            FilteredCategoryChipOptions.Clear();
+            string text = CategoryChipSearchText ?? "";
+            CategoryChip allChip = CategoryChips.Count > 0 ? CategoryChips[0] : null;
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                foreach (var chip in CategoryChips) FilteredCategoryChipOptions.Add(chip);
+                return;
+            }
+
+            bool allIncluded = false;
+            foreach (var chip in CategoryChips)
+            {
+                if (chip.DisplayName != null &&
+                    chip.DisplayName.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    FilteredCategoryChipOptions.Add(chip);
+                    if (chip == allChip) allIncluded = true;
+                }
+            }
+
+            if (!allIncluded && allChip != null)
+                FilteredCategoryChipOptions.Insert(0, allChip);
         }
 
         /// <summary>

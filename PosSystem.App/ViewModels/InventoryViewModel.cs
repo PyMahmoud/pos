@@ -94,11 +94,106 @@ namespace PosSystem.App.ViewModels
         // Delete-category ComboBox below.
         public ObservableCollection<string> AllCategoryNames { get; } = new ObservableCollection<string>();
 
+        // Type-to-search variants of the Add Product category picker and
+        // the Delete-category picker (2026-08-26) — same live-narrowing
+        // pattern as CategorySearchText/FilteredCategoryOptions above,
+        // ported to these two plain-string pickers instead of CategoryChip.
+        // AllCategoryNames stays the untouched master list; these two
+        // Filtered* collections are what each ComboBox actually shows,
+        // narrowed as the user types into that picker's own search text.
+        // Kept as two independent sets of state (not shared with the
+        // filter picker's, and not with each other) since all three
+        // ComboBoxes can be mid-edit independently.
+        public ObservableCollection<string> FilteredNewProductCategoryOptions { get; } = new ObservableCollection<string>();
+        public ObservableCollection<string> FilteredCategoryToDeleteOptions { get; } = new ObservableCollection<string>();
+
+        private bool _suppressNewProductCategoryFilter;
+        private bool _suppressCategoryToDeleteFilter;
+
+        private string _newProductCategorySearchText = "";
+        public string NewProductCategorySearchText
+        {
+            get => _newProductCategorySearchText;
+            set
+            {
+                if (!SetProperty(ref _newProductCategorySearchText, value)) return;
+                if (_suppressNewProductCategoryFilter) return;
+                RebuildFilteredNewProductCategories();
+                IsNewProductCategoryDropDownOpen = true;
+            }
+        }
+
+        private bool _isNewProductCategoryDropDownOpen;
+        public bool IsNewProductCategoryDropDownOpen
+        {
+            get => _isNewProductCategoryDropDownOpen;
+            set => SetProperty(ref _isNewProductCategoryDropDownOpen, value);
+        }
+
+        private string _categoryToDeleteSearchText = "";
+        public string CategoryToDeleteSearchText
+        {
+            get => _categoryToDeleteSearchText;
+            set
+            {
+                if (!SetProperty(ref _categoryToDeleteSearchText, value)) return;
+                if (_suppressCategoryToDeleteFilter) return;
+                RebuildFilteredCategoryToDeleteOptions();
+                IsCategoryToDeleteDropDownOpen = true;
+            }
+        }
+
+        private bool _isCategoryToDeleteDropDownOpen;
+        public bool IsCategoryToDeleteDropDownOpen
+        {
+            get => _isCategoryToDeleteDropDownOpen;
+            set => SetProperty(ref _isCategoryToDeleteDropDownOpen, value);
+        }
+
+        // Type-to-search category dropdown (2026-08-26) — same design as
+        // CheckoutViewModel's own FilteredCategoryOptions/CategorySearchText;
+        // see that class's doc comment on FilteredCategoryOptions for the
+        // full reasoning. Categories above stays the full master list
+        // (unchanged, still built by RebuildCategoryChips from _allRows'
+        // distinct categories); FilteredCategoryOptions is what the ComboBox
+        // actually shows, narrowed by CategorySearchText as the user types.
+        public ObservableCollection<CategoryChip> FilteredCategoryOptions { get; } = new ObservableCollection<CategoryChip>();
+
+        private bool _suppressCategoryFilter;
+
+        private string _categorySearchText = "";
+        public string CategorySearchText
+        {
+            get => _categorySearchText;
+            set
+            {
+                if (!SetProperty(ref _categorySearchText, value)) return;
+                if (_suppressCategoryFilter) return;
+                RebuildFilteredCategories();
+                IsCategoryDropDownOpen = true;
+            }
+        }
+
+        private bool _isCategoryDropDownOpen;
+        public bool IsCategoryDropDownOpen
+        {
+            get => _isCategoryDropDownOpen;
+            set => SetProperty(ref _isCategoryDropDownOpen, value);
+        }
+
         private CategoryChip _selectedCategory;
         public CategoryChip SelectedCategory
         {
             get => _selectedCategory;
-            set { if (SetProperty(ref _selectedCategory, value)) ApplyFilter(); }
+            set
+            {
+                if (!SetProperty(ref _selectedCategory, value)) return;
+                ApplyFilter();
+
+                _suppressCategoryFilter = true;
+                CategorySearchText = value?.DisplayName ?? "";
+                _suppressCategoryFilter = false;
+            }
         }
 
         private CategoryChip _selectedStockFilter;
@@ -136,17 +231,27 @@ namespace PosSystem.App.ViewModels
             set => SetProperty(ref _newProductBarcode, value);
         }
 
-        // Selection-only now (SelectedItem of a non-editable ComboBox,
-        // ItemsSource=AllCategoryNames) — see class doc comment. No longer
-        // drives a live-filtered suggestion list on every keystroke the way
-        // it did when the field was free-typed, so there's nothing extra to
-        // do in this setter beyond the plain SetProperty every other field
-        // here already uses.
+        // Editable again as of 2026-08-26 (SelectedItem of an IsEditable
+        // ComboBox whose ItemsSource is FilteredNewProductCategoryOptions,
+        // narrowed live by NewProductCategorySearchText) — see class doc
+        // comment on AllCategoryNames. Still selection-only where it
+        // matters: AddProduct() below still rejects anything not actually
+        // present in AllCategoryNames, so typing narrows the list but can't
+        // silently create a new category the way the pre-2026-08-25 design
+        // did. Setting this (i.e. picking an item) syncs the search text to
+        // match, same two-way sync SelectedCategory/CategorySearchText use
+        // above.
         private string _newProductCategoryInput = "";
         public string NewProductCategoryInput
         {
             get => _newProductCategoryInput;
-            set => SetProperty(ref _newProductCategoryInput, value);
+            set
+            {
+                if (!SetProperty(ref _newProductCategoryInput, value)) return;
+                _suppressNewProductCategoryFilter = true;
+                NewProductCategorySearchText = value ?? "";
+                _suppressNewProductCategoryFilter = false;
+            }
         }
 
         private string _newProductQuantity = "";
@@ -178,11 +283,24 @@ namespace PosSystem.App.ViewModels
             set => SetProperty(ref _newCategoryName, value);
         }
 
+        // Editable as of 2026-08-26, same live-narrowing treatment as
+        // NewProductCategoryInput above (FilteredCategoryToDeleteOptions /
+        // CategoryToDeleteSearchText). DeleteCategory() below already
+        // treats a value not found in AllCategoryNames as "nothing
+        // selected" via CategoryExists-style lookups, so an unmatched
+        // typed string just can't be deleted rather than needing a new
+        // guard here.
         private string _categoryToDelete;
         public string CategoryToDelete
         {
             get => _categoryToDelete;
-            set => SetProperty(ref _categoryToDelete, value);
+            set
+            {
+                if (!SetProperty(ref _categoryToDelete, value)) return;
+                _suppressCategoryToDeleteFilter = true;
+                CategoryToDeleteSearchText = value ?? "";
+                _suppressCategoryToDeleteFilter = false;
+            }
         }
 
         public ICommand AdjustQuantityCommand { get; }
@@ -258,6 +376,37 @@ namespace PosSystem.App.ViewModels
                 AllCategoryNames.Add(name);
 
             CategoryToDelete = AllCategoryNames.Contains(previousSelection) ? previousSelection : null;
+
+            // Both live-narrowed lists are keyed off AllCategoryNames, so a
+            // category being added/removed here has to re-run both filters
+            // (against whatever's currently typed in each box) or they'd
+            // keep showing a stale snapshot until the next keystroke.
+            RebuildFilteredNewProductCategories();
+            RebuildFilteredCategoryToDeleteOptions();
+        }
+
+        // See CategorySearchText/RebuildFilteredCategories' comments above
+        // for the shared reasoning; these two are the same idea against a
+        // plain List<string> instead of a List<CategoryChip>, and neither
+        // needs an always-reachable "All" entry the way that one does.
+        private void RebuildFilteredNewProductCategories()
+        {
+            FilteredNewProductCategoryOptions.Clear();
+            string text = NewProductCategorySearchText ?? "";
+            IEnumerable<string> source = string.IsNullOrWhiteSpace(text)
+                ? AllCategoryNames
+                : AllCategoryNames.Where(c => c.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0);
+            foreach (var name in source) FilteredNewProductCategoryOptions.Add(name);
+        }
+
+        private void RebuildFilteredCategoryToDeleteOptions()
+        {
+            FilteredCategoryToDeleteOptions.Clear();
+            string text = CategoryToDeleteSearchText ?? "";
+            IEnumerable<string> source = string.IsNullOrWhiteSpace(text)
+                ? AllCategoryNames
+                : AllCategoryNames.Where(c => c.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0);
+            foreach (var name in source) FilteredCategoryToDeleteOptions.Add(name);
         }
 
         // Filter chips (the horizontal row above the product grid) still
@@ -287,6 +436,46 @@ namespace PosSystem.App.ViewModels
 
             _selectedCategory = Categories.FirstOrDefault(c => c.Value == previousValue) ?? Categories[0];
             OnPropertyChanged(nameof(SelectedCategory));
+
+            // See CheckoutViewModel.RebuildCategoryChips' matching comment —
+            // this bypasses the SelectedCategory setter (direct field
+            // assignment above), so the search-box sync has to happen here
+            // too.
+            _suppressCategoryFilter = true;
+            CategorySearchText = _selectedCategory?.DisplayName ?? "";
+            _suppressCategoryFilter = false;
+            RebuildFilteredCategories();
+        }
+
+        // See CheckoutViewModel.RebuildFilteredCategories for the full
+        // reasoning (same design, ported here for Inventory's own category
+        // filter). "All" (Categories[0], Value == null) is always kept
+        // reachable even when the typed text doesn't match its own label.
+        private void RebuildFilteredCategories()
+        {
+            FilteredCategoryOptions.Clear();
+            string text = CategorySearchText ?? "";
+            CategoryChip allChip = Categories.Count > 0 ? Categories[0] : null;
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                foreach (var chip in Categories) FilteredCategoryOptions.Add(chip);
+                return;
+            }
+
+            bool allIncluded = false;
+            foreach (var chip in Categories)
+            {
+                if (chip.DisplayName != null &&
+                    chip.DisplayName.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    FilteredCategoryOptions.Add(chip);
+                    if (chip == allChip) allIncluded = true;
+                }
+            }
+
+            if (!allIncluded && allChip != null)
+                FilteredCategoryOptions.Insert(0, allChip);
         }
 
         private void RebuildStockFilterChips()
@@ -421,6 +610,7 @@ namespace PosSystem.App.ViewModels
                 NewProductName = "";
                 NewProductBarcode = "";
                 NewProductCategoryInput = "";
+                RebuildFilteredNewProductCategories(); // reset the narrowed list back to full after the field clears
                 NewProductQuantity = "";
                 NewProductCost = "";
                 NewProductPrice = "";
@@ -477,6 +667,18 @@ namespace PosSystem.App.ViewModels
                 return;
             }
 
+            // The picker became free-typed on 2026-08-26 (live-narrowed
+            // ComboBox, see AllCategoryNames' doc comment) instead of
+            // selection-only, so "looks like a category" no longer implies
+            // "is one" the way a plain SelectedItem guaranteed. Same check
+            // AddProduct/SaveEdit already run against AllCategoryNames for
+            // their own now-editable category fields.
+            if (!AllCategoryNames.Any(c => string.Equals(c, name, StringComparison.OrdinalIgnoreCase)))
+            {
+                StatusMessage = LocalizationManager.GetString("InventoryCategoryDeleteMissingSelection");
+                return;
+            }
+
             // Refuse rather than silently orphan every product still in
             // this category — see Core.Data.Categories.DeleteCategoryByName's
             // comment. The only way to clear this block right now is
@@ -494,7 +696,7 @@ namespace PosSystem.App.ViewModels
                 _categoriesData.DeleteCategoryByName(name);
                 StatusMessage = string.Format(LocalizationManager.GetString("InventoryCategoryDeleteSuccess"), name);
                 CategoryToDelete = null;
-                LoadCategories();
+                LoadCategories(); // also re-runs both Rebuild*Options against the now-updated AllCategoryNames
             }
             catch (Exception ex)
             {

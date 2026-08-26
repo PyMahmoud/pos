@@ -143,13 +143,13 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <!-- Category filter — wide dropdown (2026-08-26),
-                         replacing the wrapped chip row: same
-                         ThemedComboBoxStyle used by Inventory's Add Product
-                         category field. CategoryChips/SelectedCategoryChip
-                         binding unchanged from before, only the control
-                         swapped — still built from real data (Checkout's
-                         RebuildCategoryChips pattern). -->
+                    <!-- Category filter — wide, type-to-search dropdown
+                         (2026-08-26): editable ComboBox bound to
+                         CategoryChipSearchText, with ItemsSource pointed at
+                         FilteredCategoryChipOptions (narrowed live as the
+                         user types) instead of the full CategoryChips list.
+                         See DashboardViewModel.RebuildFilteredCategoryChips
+                         for the filtering logic. -->
                     <TextBlock Text="{DynamicResource DashboardCategoryFilterLabel}"
                                Style="{StaticResource LabelSmall}"
                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
@@ -160,9 +160,14 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <ComboBox Grid.Column="0"
-                                  ItemsSource="{Binding CategoryChips}"
+                                  ItemsSource="{Binding FilteredCategoryChipOptions}"
                                   SelectedItem="{Binding SelectedCategoryChip, Mode=TwoWay}"
+                                  Text="{Binding CategoryChipSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                  IsDropDownOpen="{Binding IsCategoryChipDropDownOpen, Mode=TwoWay}"
                                   DisplayMemberPath="DisplayName"
+                                  IsEditable="True"
+                                  IsTextSearchEnabled="False"
+                                  StaysOpenOnEdit="True"
                                   Style="{StaticResource ThemedComboBoxStyle}"
                                   Margin="0,0,10,0" />
 

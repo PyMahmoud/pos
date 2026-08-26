@@ -54,26 +54,29 @@
                                Style="{StaticResource LabelSmall}"
                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                Margin="0,0,0,4" />
-                    <!-- Selection-only picker (2026-08-25, replacing the
-                         prior free-typed "type a new name to create it"
-                         ComboBox) — IsEditable left at its default False,
-                         ItemsSource is the real category list
-                         (AllCategoryNames), SelectedItem instead of Text.
-                         WPF's built-in IsTextSearchEnabled (default True on
-                         a non-editable ComboBox) still gives type-ahead
-                         jump-to-match "search" for free — no custom
-                         filtering code needed for that. A product can only
-                         ever be saved with a category actually in this
-                         list; see InventoryViewModel's class doc comment. -->
-                    <ComboBox ItemsSource="{Binding AllCategoryNames}"
+                    <!-- Editable, live-narrowing picker (2026-08-26,
+                         replacing the 2026-08-25 selection-only version) —
+                         same IsEditable/Text/FilteredOptions/IsDropDownOpen
+                         shape as the Category filter ComboBox on the right
+                         side of this screen. ItemsSource points at
+                         FilteredNewProductCategoryOptions (narrowed live by
+                         NewProductCategorySearchText) instead of the full
+                         AllCategoryNames, but SelectedItem still only ever
+                         gets set by actually picking an item from that
+                         narrowed list — typing alone doesn't set it, so a
+                         product still can only be saved with a category
+                         actually in AllCategoryNames; see
+                         InventoryViewModel's class doc comment and
+                         AddProduct's validation. -->
+                    <ComboBox ItemsSource="{Binding FilteredNewProductCategoryOptions}"
                               SelectedItem="{Binding NewProductCategoryInput, Mode=TwoWay}"
+                              Text="{Binding NewProductCategorySearchText, UpdateSourceTrigger=PropertyChanged}"
+                              IsDropDownOpen="{Binding IsNewProductCategoryDropDownOpen, Mode=TwoWay}"
+                              IsEditable="True"
+                              IsTextSearchEnabled="False"
+                              StaysOpenOnEdit="True"
                               Style="{StaticResource ThemedComboBoxStyle}"
-                              Margin="0,0,0,4" />
-                    <TextBlock Text="{DynamicResource InventoryProductCategoryHint}"
-                               Style="{StaticResource LabelSmall}"
-                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,0,0,12" />
+                              Margin="0,0,0,12" />
 
                     <TextBlock Text="{DynamicResource InventoryProductQuantityLabel}"
                                Style="{StaticResource LabelSmall}"
@@ -162,9 +165,21 @@
                             <ColumnDefinition Width="8" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <!-- Editable, live-narrowing picker (2026-08-26) —
+                             same pattern as Add Product's category field
+                             just above; see InventoryViewModel's
+                             FilteredCategoryToDeleteOptions/
+                             CategoryToDeleteSearchText and DeleteCategory's
+                             existence guard (typing text that doesn't match
+                             a real category can't delete anything). -->
                         <ComboBox Grid.Column="0"
-                                  ItemsSource="{Binding AllCategoryNames}"
+                                  ItemsSource="{Binding FilteredCategoryToDeleteOptions}"
                                   SelectedItem="{Binding CategoryToDelete, Mode=TwoWay}"
+                                  Text="{Binding CategoryToDeleteSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                  IsDropDownOpen="{Binding IsCategoryToDeleteDropDownOpen, Mode=TwoWay}"
+                                  IsEditable="True"
+                                  IsTextSearchEnabled="False"
+                                  StaysOpenOnEdit="True"
                                   Style="{StaticResource ThemedComboBoxStyle}" />
                         <Button Grid.Column="2"
                                 Content="{DynamicResource InventoryDeleteCategoryButton}"
@@ -227,19 +242,25 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
 
-                        <!-- Category filter — wide dropdown (2026-08-26),
-                             replacing the wrapped chip row: same
-                             ThemedComboBoxStyle used by Add Product's own
-                             category field just to the left of this panel.
-                             Categories/SelectedCategory binding unchanged
-                             from before, only the control swapped. -->
+                        <!-- Category filter — wide, type-to-search dropdown
+                             (2026-08-26): editable ComboBox bound to
+                             CategorySearchText, with ItemsSource pointed at
+                             FilteredCategoryOptions (narrowed live as the
+                             user types) instead of the full Categories list.
+                             See InventoryViewModel.RebuildFilteredCategories
+                             for the filtering logic. -->
                         <TextBlock Text="{DynamicResource DashboardCategoryFilterLabel}"
                                    Style="{StaticResource LabelSmall}"
                                    Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                    Margin="0,0,0,6" />
-                        <ComboBox ItemsSource="{Binding Categories}"
+                        <ComboBox ItemsSource="{Binding FilteredCategoryOptions}"
                                   SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                  Text="{Binding CategorySearchText, UpdateSourceTrigger=PropertyChanged}"
+                                  IsDropDownOpen="{Binding IsCategoryDropDownOpen, Mode=TwoWay}"
                                   DisplayMemberPath="DisplayName"
+                                  IsEditable="True"
+                                  IsTextSearchEnabled="False"
+                                  StaysOpenOnEdit="True"
                                   Style="{StaticResource ThemedComboBoxStyle}" />
                     </StackPanel>
                 </Border>
