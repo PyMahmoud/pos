@@ -29,7 +29,7 @@
                                Foreground="{DynamicResource OnSurfaceBrush}"
                                Margin="0,0,0,20" />
 
-                    <!-- Admin gate (#7, 2026-08-27 extension) -- inline,
+                    <!-- Admin gate (#7, 2026-08-27 extension) — inline,
                          not a full-screen overlay like Dashboard's: browsing
                          and adjusting stock stay open to any staff member,
                          only Add Product / Manage Categories / per-row Edit
@@ -38,7 +38,7 @@
                          gated method's RequireAdminUnlocked() check). Shown
                          only while locked; disappears the moment AdminSession
                          unlocks (from here, Dashboard, or the eventual Excel
-                         export -- one shared session, see AdminSession). -->
+                         export — one shared session, see AdminSession). -->
                     <Border Background="{DynamicResource SurfaceContainerHighBrush}"
                             CornerRadius="12"
                             Padding="16"

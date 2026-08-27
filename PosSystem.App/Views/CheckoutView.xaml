@@ -380,12 +380,11 @@
                                 Padding="14,8" />
                     </Grid>
 
-                    <!-- Admin-locked notice — browsing/viewing stays open to
-                         anyone (same as Inventory), only Remove/Delete
-                         actions are actually gated (RequireAdminUnlocked in
-                         BillsBrowserViewModel). Shown inline, not blocking
-                         the rest of the screen, same directness as
-                         Inventory's own inline unlock box. -->
+                    <!-- Admin-locked notice — as of 2026-08-28, viewing the
+                         bill list/detail itself is gated too (see the
+                         wrapper Grid below), not just Remove/Delete
+                         actions. This box is what lets someone unlock from
+                         right here without leaving the Bills screen. -->
                     <Border Grid.Row="1"
                             Background="{DynamicResource SurfaceContainerLowBrush}"
                             CornerRadius="14" Padding="16" Margin="0,0,0,16"
@@ -424,8 +423,17 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Browsing area (list + detail) — gated behind admin
+                         unlock (2026-08-28, per explicit request): the whole
+                         Bills screen, not just the delete actions, now
+                         requires the admin password before any bill data is
+                         shown at all. Both inner Grids below keep their own
+                         SelectedBill-based list/detail toggle unchanged;
+                         this wrapper just adds the outer lock. -->
+                    <Grid Grid.Row="2" Visibility="{Binding IsAdminUnlocked, Converter={StaticResource BoolToVisibilityConverter}}">
+
                     <!-- ============ BILL LIST ============ -->
-                    <Grid Grid.Row="2">
+                    <Grid>
                         <Grid.Style>
                             <Style TargetType="Grid">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -484,8 +492,7 @@
                                                             </MultiBinding>
                                                         </TextBlock.Text>
                                                     </TextBlock>
-                                                    <TextBlock Style="{StaticResource LabelSmall}"
-                                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                    <TextBlock Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                                                Margin="0,2,0,0"
                                                                TextWrapping="Wrap">
                                                         <TextBlock.Style>
@@ -522,7 +529,7 @@
                     </Grid>
 
                     <!-- ============ BILL DETAIL ============ -->
-                    <Grid Grid.Row="2">
+                    <Grid>
                         <Grid.Style>
                             <Style TargetType="Grid">
                                 <Setter Property="Visibility" Value="Visible" />
@@ -664,6 +671,7 @@
                                            Margin="0,12,0,0" />
                             </StackPanel>
                         </ScrollViewer>
+                    </Grid>
                     </Grid>
                 </Grid>
             </Border>

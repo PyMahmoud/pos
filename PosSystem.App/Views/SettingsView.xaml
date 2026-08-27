@@ -248,8 +248,7 @@
                         <Border CornerRadius="8" Padding="10,6" Margin="0,0,0,16"
                                 HorizontalAlignment="Left"
                                 Background="{DynamicResource SurfaceContainerHighBrush}">
-                            <TextBlock Style="{StaticResource LabelSmall}"
-                                       Foreground="{DynamicResource OnSurfaceVariantBrush}">
+                            <TextBlock Foreground="{DynamicResource OnSurfaceVariantBrush}">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource LabelSmall}">
                                         <Setter Property="Text" Value="{DynamicResource SettingsAdminPasswordCurrentStatusNotSet}" />
