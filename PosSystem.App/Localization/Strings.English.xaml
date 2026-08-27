@@ -62,6 +62,31 @@
     <system:String x:Key="CheckoutPayLaterRequiresCustomer">Select a customer before choosing Pay Later.</system:String>
     <system:String x:Key="CheckoutSaleSuccessCredit">Sale completed — Bill #{0}, added to {1}'s tab.</system:String>
 
+    <!-- Bills browser (#6, 2026-08-27/28) — opened from a button above the
+         customer picker on Checkout. List of saved bills, drill into one
+         to see its line items, delete a single line or the whole bill
+         (both reverse inventory + linked-customer balances, and both
+         require the admin password — see BillsBrowserViewModel's class doc
+         comment for the full reversal design). -->
+    <system:String x:Key="CheckoutBillsButton">Bills</system:String>
+    <system:String x:Key="BillsBrowserTitle">Bills</system:String>
+    <system:String x:Key="BillsBrowserCloseButton">✕</system:String>
+    <system:String x:Key="BillsBrowserSearchLabel">Search by bill number or customer</system:String>
+    <system:String x:Key="BillsBrowserNoResults">No bills yet — completed sales will show up here.</system:String>
+    <system:String x:Key="BillsBrowserViewButton">View</system:String>
+    <system:String x:Key="BillsBrowserWalkInLabel">Walk-in</system:String>
+    <system:String x:Key="BillsDetailBackButton">← Back to Bills</system:String>
+    <system:String x:Key="BillsDetailItemsTitle">Items</system:String>
+    <system:String x:Key="BillsDetailRemoveLineButton">Remove</system:String>
+    <system:String x:Key="BillsDetailDeleteWholeBillButton">Delete Whole Bill</system:String>
+    <system:String x:Key="BillsAdminLockedTitle">Owner/Manager Access Required</system:String>
+    <system:String x:Key="BillsAdminLockedSubtitle">Deleting a bill or a line from it requires the admin password.</system:String>
+    <system:String x:Key="BillsAdminRequired">Enter the admin password below to make this change.</system:String>
+    <system:String x:Key="BillsDeleteLineSuccess">{0} removed from Bill #{1}.</system:String>
+    <system:String x:Key="BillsDeleteLineError">Something went wrong. Please try again.</system:String>
+    <system:String x:Key="BillsDeleteWholeBillSuccess">Bill #{0} deleted.</system:String>
+    <system:String x:Key="BillsDeleteWholeBillError">Something went wrong. Please try again.</system:String>
+
     <system:String x:Key="CustomersHeading">Customers</system:String>
     <system:String x:Key="CustomersAddSectionTitle">Add a customer</system:String>
     <system:String x:Key="CustomersNameField">Name</system:String>

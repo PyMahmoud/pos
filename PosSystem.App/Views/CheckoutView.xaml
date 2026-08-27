@@ -213,6 +213,21 @@
 
                 <StackPanel Grid.Row="2" Margin="0,12,0,0">
 
+                    <!-- Bills browser entry point (#6, 2026-08-27/28) —
+                         above the customer picker per Mahmoud's explicit
+                         placement request. Opens BillsBrowserViewModel as a
+                         full-screen overlay (see the Grid at the bottom of
+                         this file) rather than trying to fit a bill list
+                         into this 360px cart panel. -->
+                    <Button Content="{DynamicResource CheckoutBillsButton}"
+                            Command="{Binding OpenBillsCommand}"
+                            Background="{DynamicResource SurfaceContainerHighBrush}"
+                            Foreground="{DynamicResource OnSurfaceBrush}"
+                            Template="{StaticResource SelectableButtonTemplate}"
+                            Padding="0,10"
+                            HorizontalContentAlignment="Center"
+                            Margin="0,0,0,12" />
+
                     <!-- Customer link — Phase 5. Walk-in (the default, first
                          entry) keeps every existing behavior unchanged;
                          picking a real customer here is what unlocks Pay
@@ -315,5 +330,343 @@
                 </StackPanel>
             </Grid>
         </Border>
+
+        <!-- ================= Bills browser overlay (#6, 2026-08-27/28) =================
+             Covers the whole screen (both columns) while a bill browser is
+             open — same "always Visible, collapse on {x:Null}" trick
+             CustomersView's detail panel uses, here driven by whether
+             CheckoutViewModel.SelectedBillsBrowser is null. DataContext is
+             set to that BillsBrowserViewModel once, at the Grid level, so
+             every binding below is against it, not CheckoutViewModel. -->
+        <Grid Grid.Column="0" Grid.ColumnSpan="2"
+              DataContext="{Binding SelectedBillsBrowser}"
+              Panel.ZIndex="20"
+              FlowDirection="{DynamicResource AppFlowDirection}">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <Border Background="{DynamicResource BackgroundBrush}">
+                <Grid Margin="24">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Header: title + close -->
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource BillsBrowserTitle}"
+                                   Style="{StaticResource HeadlineMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}" />
+                        <Button Grid.Column="1"
+                                Content="{DynamicResource BillsBrowserCloseButton}"
+                                Command="{Binding CloseCommand}"
+                                Background="{DynamicResource SurfaceContainerHighBrush}"
+                                Foreground="{DynamicResource OnSurfaceBrush}"
+                                Template="{StaticResource SelectableButtonTemplate}"
+                                Padding="14,8" />
+                    </Grid>
+
+                    <!-- Admin-locked notice — browsing/viewing stays open to
+                         anyone (same as Inventory), only Remove/Delete
+                         actions are actually gated (RequireAdminUnlocked in
+                         BillsBrowserViewModel). Shown inline, not blocking
+                         the rest of the screen, same directness as
+                         Inventory's own inline unlock box. -->
+                    <Border Grid.Row="1"
+                            Background="{DynamicResource SurfaceContainerLowBrush}"
+                            CornerRadius="14" Padding="16" Margin="0,0,0,16"
+                            Visibility="{Binding IsAdminLocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource BillsAdminLockedTitle}"
+                                       Style="{StaticResource TitleMedium}"
+                                       Foreground="{DynamicResource OnSurfaceBrush}"
+                                       Margin="0,0,0,4" />
+                            <TextBlock Text="{DynamicResource BillsAdminLockedSubtitle}"
+                                       Style="{StaticResource BodyLarge}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="260" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <PasswordBox Grid.Column="0"
+                                             Style="{StaticResource ThemedPasswordBoxStyle}"
+                                             PasswordChanged="BillsAdminUnlockPasswordBox_PasswordChanged" />
+                                <Button Grid.Column="2"
+                                        Content="{DynamicResource DashboardUnlockButton}"
+                                        Command="{Binding AdminUnlockCommand}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Foreground="{DynamicResource OnPrimaryBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="16,8" />
+                            </Grid>
+                            <TextBlock Text="{Binding AdminUnlockError}"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ============ BILL LIST ============ -->
+                    <Grid Grid.Row="2">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedBill}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Margin="0,0,0,16" MaxWidth="420" HorizontalAlignment="Left">
+                            <TextBlock Text="{DynamicResource BillsBrowserSearchLabel}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       Margin="0,0,0,4" />
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource ThemedTextBoxStyle}" />
+                        </StackPanel>
+
+                        <Grid Grid.Row="1">
+                            <TextBlock Text="{DynamicResource BillsBrowserNoResults}"
+                                       Style="{StaticResource BodyLarge}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       VerticalAlignment="Top"
+                                       Visibility="{Binding Bills.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding Bills}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Width="260" Margin="0,0,16,16"
+                                                    CornerRadius="14" Padding="18"
+                                                    Background="{DynamicResource SurfaceContainerBrush}">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Billnumber, StringFormat={}Bill #{0}}"
+                                                               Style="{StaticResource TitleMedium}"
+                                                               Foreground="{DynamicResource OnSurfaceBrush}" />
+                                                    <TextBlock Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                               Style="{StaticResource LabelSmall}"
+                                                               Margin="0,2,0,0">
+                                                        <TextBlock.Text>
+                                                            <MultiBinding StringFormat="{}{0}   {1}">
+                                                                <Binding Path="Datex" />
+                                                                <Binding Path="Time" />
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
+                                                    </TextBlock>
+                                                    <TextBlock Style="{StaticResource LabelSmall}"
+                                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                               Margin="0,2,0,0"
+                                                               TextWrapping="Wrap">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource LabelSmall}">
+                                                                <Setter Property="Text" Value="{Binding Ownername}" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Ownername}" Value="">
+                                                                        <Setter Property="Text" Value="{DynamicResource BillsBrowserWalkInLabel}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding Billcost, StringFormat={}{0:0.00}}"
+                                                               Style="{StaticResource TitleMedium}"
+                                                               Foreground="{DynamicResource PrimaryBrush}"
+                                                               Margin="0,10,0,0" />
+                                                    <Button Content="{DynamicResource BillsBrowserViewButton}"
+                                                            Command="{Binding DataContext.ViewBillCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Background="{DynamicResource SurfaceContainerHighBrush}"
+                                                            Foreground="{DynamicResource OnSurfaceBrush}"
+                                                            Template="{StaticResource SelectableButtonTemplate}"
+                                                            Padding="0,10"
+                                                            Margin="0,10,0,0"
+                                                            HorizontalContentAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+
+                    <!-- ============ BILL DETAIL ============ -->
+                    <Grid Grid.Row="2">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedBill}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel MaxWidth="640" HorizontalAlignment="Left">
+
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding SelectedBill.Billnumber, StringFormat={}Bill #{0}}"
+                                                   Style="{StaticResource HeadlineMedium}"
+                                                   Foreground="{DynamicResource OnSurfaceBrush}" />
+                                        <TextBlock Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                   Style="{StaticResource BodyLarge}"
+                                                   Margin="0,4,0,0">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0}   {1}">
+                                                    <Binding Path="SelectedBill.Datex" />
+                                                    <Binding Path="SelectedBill.Time" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Content="{DynamicResource BillsDetailBackButton}"
+                                            Command="{Binding BackToListCommand}"
+                                            Background="{DynamicResource SurfaceContainerHighBrush}"
+                                            Foreground="{DynamicResource OnSurfaceBrush}"
+                                            Template="{StaticResource SelectableButtonTemplate}"
+                                            Padding="14,10"
+                                            VerticalAlignment="Top" />
+                                </Grid>
+
+                                <!-- Bill totals -->
+                                <Border Background="{DynamicResource SurfaceContainerBrush}"
+                                        CornerRadius="14" Padding="18" Margin="0,0,0,20">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{DynamicResource CheckoutTax}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedBill.Tax, StringFormat={}{0:0.00}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{DynamicResource CheckoutTotal}" Style="{StaticResource TitleMedium}" Foreground="{DynamicResource OnSurfaceBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedBill.Billcost, StringFormat={}{0:0.00}}" Style="{StaticResource TitleMedium}" Foreground="{DynamicResource PrimaryBrush}" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{DynamicResource CustomersBalancePaidUp}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedBill.Paid, StringFormat={}{0:0.00}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{DynamicResource CustomersPaymentAmountLabel}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedBill.Remain, StringFormat={}{0:0.00}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource TertiaryBrush}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Line items -->
+                                <TextBlock Text="{DynamicResource BillsDetailItemsTitle}"
+                                           Style="{StaticResource TitleMedium}"
+                                           Foreground="{DynamicResource OnSurfaceBrush}"
+                                           Margin="0,0,0,10" />
+                                <ItemsControl ItemsSource="{Binding BillLines}" Margin="0,0,0,20">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{DynamicResource SurfaceContainerBrush}"
+                                                    CornerRadius="12" Padding="14" Margin="0,0,0,10">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="80" />
+                                                        <ColumnDefinition Width="90" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                                               Style="{StaticResource BodyLarge}"
+                                                               Foreground="{DynamicResource OnSurfaceBrush}"
+                                                               TextWrapping="Wrap"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat={}{0:0.##}}"
+                                                               Style="{StaticResource BodyLarge}"
+                                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding Price, StringFormat={}{0:0.00}}"
+                                                               Style="{StaticResource BodyLarge}"
+                                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                               VerticalAlignment="Center" />
+                                                    <Button Grid.Column="3"
+                                                            Content="{DynamicResource BillsDetailRemoveLineButton}"
+                                                            Command="{Binding DataContext.DeleteLineCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Background="{DynamicResource ErrorContainerBrush}"
+                                                            Foreground="{DynamicResource OnErrorContainerBrush}"
+                                                            Template="{StaticResource SelectableButtonTemplate}"
+                                                            Padding="12,8" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Button Content="{DynamicResource BillsDetailDeleteWholeBillButton}"
+                                        Command="{Binding DeleteWholeBillCommand}"
+                                        Background="{DynamicResource ErrorBrush}"
+                                        Foreground="{DynamicResource OnErrorBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="0,14"
+                                        HorizontalContentAlignment="Center" />
+
+                                <TextBlock Text="{Binding StatusMessage}"
+                                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,12,0,0" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

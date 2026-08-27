@@ -59,6 +59,25 @@
     <system:String x:Key="CheckoutPayLaterRequiresCustomer">اختر عميلاً قبل اختيار الدفع لاحقًا.</system:String>
     <system:String x:Key="CheckoutSaleSuccessCredit">تمت عملية البيع — فاتورة رقم {0}، أُضيفت إلى حساب {1}.</system:String>
 
+    <system:String x:Key="CheckoutBillsButton">الفواتير</system:String>
+    <system:String x:Key="BillsBrowserTitle">الفواتير</system:String>
+    <system:String x:Key="BillsBrowserCloseButton">✕</system:String>
+    <system:String x:Key="BillsBrowserSearchLabel">ابحث برقم الفاتورة أو اسم العميل</system:String>
+    <system:String x:Key="BillsBrowserNoResults">لا توجد فواتير بعد — ستظهر هنا عمليات البيع المكتملة.</system:String>
+    <system:String x:Key="BillsBrowserViewButton">عرض</system:String>
+    <system:String x:Key="BillsBrowserWalkInLabel">زبون عابر</system:String>
+    <system:String x:Key="BillsDetailBackButton">→ العودة إلى الفواتير</system:String>
+    <system:String x:Key="BillsDetailItemsTitle">المنتجات</system:String>
+    <system:String x:Key="BillsDetailRemoveLineButton">إزالة</system:String>
+    <system:String x:Key="BillsDetailDeleteWholeBillButton">حذف الفاتورة بالكامل</system:String>
+    <system:String x:Key="BillsAdminLockedTitle">مطلوب صلاحية المالك أو المدير</system:String>
+    <system:String x:Key="BillsAdminLockedSubtitle">حذف فاتورة أو منتج منها يتطلب كلمة مرور المسؤول.</system:String>
+    <system:String x:Key="BillsAdminRequired">أدخل كلمة مرور المسؤول أدناه لإجراء هذا التغيير.</system:String>
+    <system:String x:Key="BillsDeleteLineSuccess">تمت إزالة {0} من الفاتورة رقم {1}.</system:String>
+    <system:String x:Key="BillsDeleteLineError">حدث خطأ. حاول مرة أخرى.</system:String>
+    <system:String x:Key="BillsDeleteWholeBillSuccess">تم حذف الفاتورة رقم {0}.</system:String>
+    <system:String x:Key="BillsDeleteWholeBillError">حدث خطأ. حاول مرة أخرى.</system:String>
+
     <system:String x:Key="CustomersHeading">العملاء</system:String>
     <system:String x:Key="CustomersAddSectionTitle">إضافة عميل</system:String>
     <system:String x:Key="CustomersNameField">الاسم</system:String>

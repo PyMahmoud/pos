@@ -192,6 +192,24 @@ namespace PosSystem.App.ViewModels
         public ICommand DecrementLineCommand { get; }
         public ICommand RemoveLineCommand { get; }
         public ICommand CompleteSaleCommand { get; }
+        public ICommand OpenBillsCommand { get; }
+
+        // Bills browser (#6, 2026-08-27/28) — same null-toggle overlay
+        // pattern as CustomersViewModel.SelectedDetail: null means the
+        // normal Checkout screen shows, non-null means BillsBrowserViewModel's
+        // own list/detail overlay covers it instead. A fresh instance is
+        // created each time Bills is opened and dropped on close (see
+        // BillsBrowserViewModel's own class doc comment for why), not
+        // cached — this screen otherwise caches nothing per MainViewModel's
+        // usual rule, but a bills browser's loaded list going stale between
+        // visits would be a real correctness problem, not just a missed
+        // optimization.
+        private BillsBrowserViewModel _selectedBillsBrowser;
+        public BillsBrowserViewModel SelectedBillsBrowser
+        {
+            get => _selectedBillsBrowser;
+            private set => SetProperty(ref _selectedBillsBrowser, value);
+        }
 
         public CheckoutViewModel()
         {
@@ -218,6 +236,12 @@ namespace PosSystem.App.ViewModels
                 RaiseTotals();
             });
             CompleteSaleCommand = new RelayCommand(_ => CompleteSale());
+            OpenBillsCommand = new RelayCommand(_ =>
+            {
+                var browser = new BillsBrowserViewModel();
+                browser.CloseRequested += () => SelectedBillsBrowser = null;
+                SelectedBillsBrowser = browser;
+            });
 
             CartLines.CollectionChanged += (s, e) => RaiseTotals();
             LocalizationManager.LanguageChanged += _ =>

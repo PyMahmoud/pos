@@ -262,18 +262,41 @@ build/test pass eventually, same standing caveat as everything since Phase 4.
   following the same Strings.*.xaml pattern every other screen's text
   already uses, rather than a separate document — keeps it inside the app
   the way the client will actually use it.
-- [ ] **#6 Bills view + delete-with-reversal in Checkout — not started,
-  the largest remaining item.** New "Bills" button above the customer
-  dropdown → list of saved bills → drill into one → see its line items
-  (from `sells.Billnumber`) → delete a single product from the bill or the
-  whole bill. Per Mahmoud (2026-08-27): deleting must reverse effects, not
-  just remove the row — restore the product's `Goods.Quantity`, and if the
-  bill was linked to a customer (`bills.CustomerId`), reduce their `Paid`/
-  `Remain` by whatever that line item (or the whole bill) contributed.
-  Real risk here: getting the reversal math wrong corrupts Inventory
-  quantities or a customer's balance silently, so this needs a careful,
-  explicit pass — not a quick bolt-on — and a real build/run test before
-  it's trusted with actual data.
+- [x] **#6 Bills view + delete-with-reversal in Checkout — code-complete
+  (2026-08-28), not yet build/run tested.** "Bills" button added above the
+  customer dropdown in `CheckoutView.xaml`, opening `BillsBrowserViewModel`
+  as a full-screen overlay: list of saved bills (search by bill number or
+  customer) → drill into one → its line items via `Sells.
+  ReadSellsByBillnumber` → remove a single line or delete the whole bill.
+  Both actions require the admin password (shared `AdminSession`, same
+  `RequireAdminUnlocked()` pattern as Inventory) — deleting a bill is at
+  least as sensitive as deleting a product, which was already gated.
+
+  Reversal math (per Mahmoud's explicit requirement, 2026-08-27): restores
+  `Goods.Quantity` via `Goods.FindGoodByBarcode`/`FindGoodByName` (best-
+  effort — `sells` stores a denormalized snapshot per line, not a foreign
+  key to `goods.ID`, so an exact match isn't always possible if the product
+  was since renamed/deleted — flagged, not silently assumed). For a
+  single-line delete: the bill's effective tax RATE is recovered as
+  `bill.Tax / oldSubtotal` (Bills has no stored rate, only an absolute
+  amount, and the Settings tax rate could have changed since the sale) and
+  reapplied to the new subtotal; `Earned` is resummed exactly from the
+  remaining lines (each already carries its own correct value, no
+  approximation needed); Paid/Remain are split by the ratio `bill.Paid /
+  bill.Billcost` — exact and stable because `Bills.Paid`/`Remain` are set
+  once at `InsertBills` and never touched again anywhere else in this app
+  (`CustomersViewModel.RecordPayment` only ever updates the CUSTOMER's
+  running totals, never a specific bill row), so this ratio always comes
+  out to a clean 1.0 or 0.0 in practice, not a fuzzy estimate. The linked
+  customer's Paid/Remain are adjusted by the DELTA between old and new bill
+  values, not overwritten outright, since that customer may carry balances
+  from other bills too. Deleting a bill's last remaining line converges
+  with the explicit "delete whole bill" path rather than leaving an empty
+  bill shell.
+
+  Not yet build/run tested by Mahmoud — same standing caveat as everything
+  since Phase 4, but doubly worth a careful first test here given the
+  financial reversal math involved.
 - [x] **#7 Admin password — Dashboard gated, then extended (2026-08-27,
   round 2) to also cover Inventory's product/category CRUD, per Mahmoud's
   explicit confirmation this pass.** `AppSettings.AdminPasswordHash`
@@ -300,6 +323,19 @@ build/test pass eventually, same standing caveat as everything since Phase 4.
   wanted before the client's build ships with a password never set. Excel
   export (#3, once built) is meant to share this same gate — flagged there,
   not yet wired since that feature doesn't exist yet.
+  
+  **Correction (2026-08-28):** the `AdminSession` class described above was
+  never actually created — every caller (`DashboardViewModel`,
+  `InventoryViewModel`, `SettingsViewModel`) referenced a type that didn't
+  exist in the repo, which meant the app could not compile at all. The
+  `<Compile Include="AdminSession.cs" />` entry was already sitting in
+  `PosSystem.App.csproj`, confirming the wiring was built expecting this
+  file — it just never got written. Created now, matching the exact API
+  the three callers already assume (`IsUnlocked`, `Changed`,
+  `TryUnlock(string)`, `ResetForPasswordChange()`), including the
+  "unlocked by default when no password is set" rule from
+  `DashboardViewModel`'s own comment. Not yet build/run tested by Mahmoud —
+  same standing caveat as everything since Phase 4.
 
 ## Suggested order of attack from today
 **1 → 2 → 3 → 4 → 5**, in that order, without skipping ahead — Checkout and Customers/Debt are the two screens the client actually needs, so everything before them is foundation and everything after them (Dashboard, Inventory, reporting) can wait until those two are solid and in the client's hands.
