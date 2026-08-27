@@ -78,6 +78,12 @@
     <system:String x:Key="BillsDeleteWholeBillSuccess">تم حذف الفاتورة رقم {0}.</system:String>
     <system:String x:Key="BillsDeleteWholeBillError">حدث خطأ. حاول مرة أخرى.</system:String>
 
+    <!-- Per-line +/- quantity adjustment (2026-08-28) -->
+    <system:String x:Key="BillsLineQuantityIncreased">تمت زيادة {0} في الفاتورة رقم {1}.</system:String>
+    <system:String x:Key="BillsLineQuantityDecreased">تم تقليل {0} في الفاتورة رقم {1}.</system:String>
+    <system:String x:Key="BillsLineOutOfStock">لا توجد كمية كافية من {0} لإضافتها.</system:String>
+    <system:String x:Key="BillsAdjustLineError">حدث خطأ. حاول مرة أخرى.</system:String>
+
     <system:String x:Key="CustomersHeading">العملاء</system:String>
     <system:String x:Key="CustomersAddSectionTitle">إضافة عميل</system:String>
     <system:String x:Key="CustomersNameField">الاسم</system:String>

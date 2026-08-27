@@ -48,7 +48,42 @@ namespace PosSystem.Core.Data
             "PosSystem");
         public static string fileName = "rovaShop.db";
         public static string fullpath = Path.Combine(Location, fileName);
-        public string connectionString = String.Format("Data Source = {0}", fullpath);
+        // BusyTimeout added 2026-08-28 (bug report: deleting a bill line
+        // freezes the whole app, then shows "database is locked"). Root
+        // cause: a single delete-line action opens ~15-20 short-lived
+        // connections back to back (read lines, look up the product,
+        // update its quantity, delete the sold line, re-total the bill,
+        // adjust the customer balance, then Dashboard/Inventory's
+        // event-driven refreshes each open several more) -- every one of
+        // them correctly closed via `using`, but with no BusyTimeout set,
+        // System.Data.SQLite's default is 0: the instant any single
+        // connection finds the file still settling from the one before it
+        // (a real risk on Windows -- antivirus scanning a just-closed
+        // handle, or the file being under OneDrive sync now that it lives
+        // in Documents, see Server's own class comment on that move), it
+        // doesn't wait at all -- it fails immediately. What actually
+        // caused the FREEZE specifically (not just an instant error) is
+        // System.Data.SQLite's own internal retry loop for a SQLITE_BUSY
+        // hit, which runs on the calling thread (the UI thread here, since
+        // every Data/*.cs call in this app is synchronous) for its default
+        // command timeout before finally giving up and throwing -- that's
+        // the multi-second freeze immediately before the error message
+        // appeared in the report.
+        //
+        // 5000ms here means: if a connection ever does find the file
+        // briefly locked by something else, it waits up to 5 seconds
+        // (SQLite polls/retries internally during that window, not one
+        // long single wait) before giving up -- long enough to ride out a
+        // transient AV/sync hiccup, short enough that a genuine problem
+        // still surfaces in a few seconds rather than the driver's much
+        // longer default. Paired with `PRAGMA journal_mode=WAL` in
+        // DatabaseBootstrapper.EnsureSchema() (run once at startup) -- WAL
+        // lets readers and a writer proceed concurrently without blocking
+        // each other in the first place, which should eliminate the
+        // vast majority of these lock conflicts outright; BusyTimeout is
+        // the safety net for whatever WAL doesn't cover (e.g. two writers
+        // landing at literally the same instant).
+        public string connectionString = String.Format("Data Source = {0};BusyTimeout=5000", fullpath);
 
         static Server()
         {

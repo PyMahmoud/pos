@@ -226,5 +226,35 @@ namespace PosSystem.Core.Data
                 }
             }
         }
+
+        // Added 2026-08-28 for the Bills browser's per-line +/- quantity
+        // adjustment (Mahmoud asked for a way to remove/add back a specific
+        // amount of a line instead of only being able to delete it
+        // outright). Quantity and Earned are the only two fields that
+        // actually shift when a line's quantity changes -- Name/Category/
+        // Cost/Price/Barcode/Time/Datex/Billnumber describe what was sold
+        // and at what per-unit terms, none of which change just because the
+        // quantity sold on this one line did. Earned is passed in rather
+        // than recomputed here so the caller (BillsBrowserViewModel) stays
+        // the single place that knows the (Price - Cost) * Quantity formula
+        // -- same division of responsibility DeleteLine's own bill-recompute
+        // math already follows.
+        public bool UpdateSellQuantity(string TableName, int Id, double Quantity, double Earned)
+        {
+            string updateString = "UPDATE " + TableName + " SET Quantity = @quantity, Earned = @earned WHERE ID = @id";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(updateString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@quantity", Quantity);
+                    cmd.Parameters.AddWithValue("@earned", Earned);
+                    cmd.Parameters.AddWithValue("@id", Id);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                    return true;
+                }
+            }
+        }
     }
 }

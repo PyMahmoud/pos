@@ -337,5 +337,142 @@ build/test pass eventually, same standing caveat as everything since Phase 4.
   `DashboardViewModel`'s own comment. Not yet build/run tested by Mahmoud —
   same standing caveat as everything since Phase 4.
 
+## Bug fix (2026-08-28) — "database is locked" freeze when removing a bill line
+
+Mahmoud reported: opening Bills → a bill → tapping Remove on a line item
+froze the whole app for several seconds, then showed "Something went
+wrong. Please try again. (database is locked)".
+
+**Root cause:** `BillsBrowserViewModel.DeleteLine` (and `DeleteWholeBill`)
+open roughly 10-15 short-lived SQLite connections back to back for one
+button tap — read the bill's lines, look up the sold product, update its
+quantity, delete the sold line, re-total the bill, adjust the linked
+customer's balance — then `InventoryDataEvents.RaiseGoodsChanged()` and
+`OrderEvents.RaiseOrderCompleted()` fire synchronously and trigger
+Dashboard/Inventory's own event-driven refreshes on top of that, each
+opening several more. Every single connection was already correctly
+closed via `using` (verified — this was not a leaked-connection bug), but
+two things combined to produce exactly this symptom:
+
+1. **No `BusyTimeout` was set** on the connection string, so
+   `System.Data.SQLite` defaults to 0 — the instant any one of those many
+   connections finds the file still settling from the connection right
+   before it (a real risk on Windows: antivirus scanning a just-closed
+   handle, or the file being under OneDrive sync now that it lives in
+   Documents per item #2 above), it fails immediately with no retry.
+2. **The freeze itself** (not just an instant error) is
+   `System.Data.SQLite`'s own internal retry loop for a `SQLITE_BUSY` hit,
+   which runs synchronously on the calling thread — the UI thread, since
+   every `Data/*.cs` call in this app is synchronous — for its default
+   command timeout before finally giving up and throwing. That's the
+   multi-second freeze reported immediately before the error message
+   appeared.
+
+**Fix, in `PosSystem.Core/Data`:**
+- `Server.connectionString` now includes `BusyTimeout=5000` — if a
+  connection ever does hit a momentary lock, it retries for up to 5
+  seconds instead of failing instantly or hanging for the driver's much
+  longer default.
+- `DatabaseBootstrapper.EnsureSchema()` now runs `PRAGMA journal_mode=WAL;`
+  once at startup (persistent, stored in the .db file itself — not a
+  per-connection setting). WAL lets readers and a writer proceed
+  concurrently instead of blocking each other, which should eliminate the
+  large majority of these lock conflicts outright, given how chatty this
+  app's single-action-does-many-connections pattern is. `BusyTimeout` is
+  the remaining safety net for whatever WAL doesn't cover.
+
+Both changes are app-wide (every `Data/*.cs` class shares `Server`'s one
+`connectionString`), not Bills-specific — any other screen doing several
+rapid reads/writes gets the same protection.
+
+**Not yet build/run tested by Mahmoud** — same standing caveat as
+everything since Phase 4. Worth specifically re-testing the exact repro
+(open Bills, drill into a bill, Remove a line) a few times in a row, plus
+Delete Whole Bill, since that's the other heavy multi-connection path in
+`BillsBrowserViewModel`.
+
+**If this doesn't fully resolve it:** the deeper (and objectively more
+correct) fix would be wrapping `DeleteLine`/`DeleteWholeBill`'s entire
+read-modify-write sequence in a single SQLite transaction on one
+connection, instead of ~10 separate auto-committing connections — that
+would also close a real (if narrow) atomicity gap that exists today: if
+one of those calls throws partway through (including from a lock
+conflict), earlier writes in the same delete are not rolled back. Flagged
+rather than done now, since WAL + BusyTimeout should resolve the reported
+symptom directly and a transaction refactor touches every `Data/*.cs`
+class's method signatures — a bigger, separate change worth doing
+deliberately rather than folded into a freeze fix, if the freeze recurs
+after this.
+
+---
+
+## Feature (2026-08-28) — per-line +/- quantity on the Bills detail view
+
+Mahmoud asked for a way to remove a SPECIFIC amount of a bill line
+("I want plus and minus button for every product so I can remove specific
+amount of it instead of all of it") — previously the only option on a
+line was the Remove button, which deleted the whole line regardless of
+how many units were on it.
+
+**What changed:** each line in the Bills detail view (`CheckoutView.xaml`,
+the Bills browser overlay) now shows a − / quantity / + control identical
+in layout to Checkout's own cart lines, alongside the existing Remove
+button (kept as-is, for removing the whole line in one tap regardless of
+quantity).
+
+- **Minus** (`BillsBrowserViewModel.DecrementLineQuantity`): removes one
+  unit from the line, restores one unit to `Goods.Quantity`. If the line
+  is down to its last unit, this converges with the existing Remove-button
+  path (deletes the row outright — a zero-quantity line serves no
+  purpose), same convergence DeleteLine already had with
+  DeleteWholeBill's row-removal step.
+- **Plus** (`BillsBrowserViewModel.IncrementLineQuantity`): adds one more
+  unit to the line — a real additional sale against inventory, not just
+  an accounting adjustment, so it looks up the source product
+  (`Goods.FindGoodByBarcode`/`FindGoodByName`, same best-effort lookup
+  `RestoreInventoryFor` already used) and refuses with a clear message if
+  there isn't at least 1 unit of real stock on hand, the same cap
+  Checkout's own `AddToCart`/`CartLine.MaxAvailable` already enforces.
+
+**Refactor alongside this:** the bill-recompute math (recovering the
+bill's effective tax rate from `bill.Tax / oldSubtotal`, re-deriving
+Paid/Remain by ratio, adjusting the linked customer's balance by the
+delta — see `BillsBrowserViewModel`'s class doc comment for the full
+reasoning) was previously written inline inside `DeleteLine` only. Pulled
+out into a shared `RecomputeBillAfterLineChange(bill, oldSubtotal)` used
+by all three actions (Remove, minus, plus) plus a shared
+`ReloadAfterLineChange` for the "reload the list, re-select the fresh
+copy of the bill" tail every one of them needs — so Remove/minus/plus
+can never drift into disagreeing with each other on how a bill's totals
+get recalculated, and `DeleteLine`'s own behavior is unchanged (same
+method calls, just relocated, not rewritten).
+
+**New in `Data/Sells.cs`:** `UpdateSellQuantity(TableName, Id, Quantity,
+Earned)` — updates just those two fields on a `sells` row (the only two
+that actually shift when a line's quantity changes; Name/Category/Cost/
+Price/Barcode describe the sale's per-unit terms and don't change). Earned
+is computed by the caller as `(Price - Cost) * newQuantity`, same formula
+`CompleteSale` already uses when a line is first sold.
+
+No schema change, no new localization concept — four new string keys
+(`BillsLineQuantityIncreased`/`Decreased`/`OutOfStock`,
+`BillsAdjustLineError`) added to both `Strings.English.xaml` and
+`Strings.Arabic.xaml`.
+
+**Not yet build/run tested by Mahmoud** — same standing caveat as
+everything since Phase 4, and this one specifically touches the same
+financial-reversal code path the 2026-08-28 freeze fix (just above) also
+touches, so worth testing both together: open a bill, tap minus a few
+times on a multi-unit line (confirm inventory goes back up and the bill's
+Total/Paid/Remain shrink correctly), tap plus back up (confirm inventory
+goes back down and totals grow back), tap minus down to the line's last
+unit (confirm it disappears the same way Remove would), and try plus on a
+line whose product has 0 stock elsewhere in Inventory (confirm the
+out-of-stock message shows and nothing is written). Also worth a light
+check under Arabic/RTL, since this is new UI surface in a screen that
+already mirrors layout via `AppFlowDirection`.
+
+---
+
 ## Suggested order of attack from today
 **1 → 2 → 3 → 4 → 5**, in that order, without skipping ahead — Checkout and Customers/Debt are the two screens the client actually needs, so everything before them is foundation and everything after them (Dashboard, Inventory, reporting) can wait until those two are solid and in the client's hands.

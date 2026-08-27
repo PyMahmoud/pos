@@ -87,6 +87,16 @@
     <system:String x:Key="BillsDeleteWholeBillSuccess">Bill #{0} deleted.</system:String>
     <system:String x:Key="BillsDeleteWholeBillError">Something went wrong. Please try again.</system:String>
 
+    <!-- Per-line +/- quantity adjustment (2026-08-28) -- lets Mahmoud
+         remove or add back a SPECIFIC amount of a line instead of only
+         being able to delete the whole line via the Remove button above.
+         See BillsBrowserViewModel.IncrementLineQuantity/
+         DecrementLineQuantity for the reversal/stock-check logic. -->
+    <system:String x:Key="BillsLineQuantityIncreased">{0} increased on Bill #{1}.</system:String>
+    <system:String x:Key="BillsLineQuantityDecreased">{0} reduced on Bill #{1}.</system:String>
+    <system:String x:Key="BillsLineOutOfStock">Not enough stock left to add another {0}.</system:String>
+    <system:String x:Key="BillsAdjustLineError">Something went wrong. Please try again.</system:String>
+
     <system:String x:Key="CustomersHeading">Customers</system:String>
     <system:String x:Key="CustomersAddSectionTitle">Add a customer</system:String>
     <system:String x:Key="CustomersNameField">Name</system:String>

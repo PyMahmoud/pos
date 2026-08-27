@@ -153,6 +153,8 @@ namespace PosSystem.App.ViewModels
         public ICommand ViewBillCommand { get; }
         public ICommand BackToListCommand { get; }
         public ICommand DeleteLineCommand { get; }
+        public ICommand IncrementLineQuantityCommand { get; }
+        public ICommand DecrementLineQuantityCommand { get; }
         public ICommand DeleteWholeBillCommand { get; }
         public ICommand CloseCommand { get; }
 
@@ -178,6 +180,26 @@ namespace PosSystem.App.ViewModels
             DeleteLineCommand = new RelayCommand(p =>
             {
                 if (p is Core.Models.Sells line) DeleteLine(line);
+            });
+            // Added 2026-08-28: +/- per line (Mahmoud asked for a way to
+            // remove or add back a SPECIFIC amount of a line instead of
+            // only being able to delete the whole line) -- same button
+            // pair, same naming, and same ±1-per-tap step as Checkout's own
+            // cart already uses (IncrementLineCommand/DecrementLineCommand
+            // on CheckoutViewModel), just operating on a saved Sells row
+            // instead of an in-memory CartLine. See
+            // IncrementLineQuantity/DecrementLineQuantity below for the
+            // reversal math -- both share the same bill-recompute helper
+            // DeleteLine below uses (RecomputeBillAfterLineChange), so all
+            // three actions keep the bill's Tax/Paid/Remain/customer balance
+            // correct the same way.
+            IncrementLineQuantityCommand = new RelayCommand(p =>
+            {
+                if (p is Core.Models.Sells line) IncrementLineQuantity(line);
+            });
+            DecrementLineQuantityCommand = new RelayCommand(p =>
+            {
+                if (p is Core.Models.Sells line) DecrementLineQuantity(line);
             });
             DeleteWholeBillCommand = new RelayCommand(_ =>
             {
@@ -298,32 +320,7 @@ namespace PosSystem.App.ViewModels
                 RestoreInventoryFor(line);
                 _sellsData.DeleteSellById("sells", line.Id);
 
-                var remainingLines = _sellsData.ReadSellsByBillnumber("sells", bill.Billnumber);
-
-                if (remainingLines.Count == 0)
-                {
-                    // Last line gone — an empty bill shell serves no
-                    // purpose, so this converges with DeleteWholeBill's own
-                    // row-removal step (using the bill's own still-current
-                    // Paid/Remain, exactly as that method does).
-                    RemoveBillRow(bill);
-                    SelectedBill = null;
-                }
-                else
-                {
-                    double newSubtotal = remainingLines.Sum(l => l.Price * l.Quantity);
-                    double taxRatio = oldSubtotal > 0 ? bill.Tax / oldSubtotal : 0;
-                    double newTax = Math.Round(newSubtotal * taxRatio, 2);
-                    double newBillcost = newSubtotal + newTax;
-                    double newEarned = remainingLines.Sum(l => l.Earned);
-
-                    double ratioPaid = bill.Billcost > 0 ? bill.Paid / bill.Billcost : 0;
-                    double newPaid = Math.Round(newBillcost * ratioPaid, 2);
-                    double newRemain = newBillcost - newPaid;
-
-                    _billsData.UpdateBillAmounts("bills", bill.Id, newBillcost, newPaid, newRemain, newEarned);
-                    AdjustLinkedCustomer(bill.CustomerId, bill.Paid - newPaid, bill.Remain - newRemain);
-                }
+                RecomputeBillAfterLineChange(bill, oldSubtotal);
 
                 InventoryDataEvents.RaiseGoodsChanged();
                 // Reuses the "sales data changed, re-derive KPIs" signal —
@@ -334,19 +331,186 @@ namespace PosSystem.App.ViewModels
 
                 StatusMessage = string.Format(LocalizationManager.GetString("BillsDeleteLineSuccess"), line.Name, bill.Billnumber);
 
-                LoadBills();
-                if (SelectedBill != null)
-                {
-                    // Re-select the freshly-reloaded copy of the same bill
-                    // (by Id) rather than hand-patching the old in-memory
-                    // instance — see class doc comment on why.
-                    var refreshed = _allBills.FirstOrDefault(b => b.Id == bill.Id);
-                    OpenBill(refreshed ?? bill);
-                }
+                ReloadAfterLineChange(bill.Id);
             }
             catch (Exception ex)
             {
                 StatusMessage = LocalizationManager.GetString("BillsDeleteLineError") + " (" + ex.Message + ")";
+            }
+        }
+
+        /// <summary>
+        /// Adds one more unit of this line to the bill (2026-08-28) — the
+        /// mirror of DecrementLineQuantity below. Requires the source good
+        /// still be findable (see FindSourceGood's doc comment on why that
+        /// isn't guaranteed) AND have at least 1 unit of real stock on
+        /// hand — this is a real additional sale against inventory, not
+        /// just an accounting adjustment, so it must respect stock the same
+        /// way Checkout's own AddToCart does (capped at MaxAvailable).
+        /// </summary>
+        private void IncrementLineQuantity(Core.Models.Sells line)
+        {
+            if (!RequireAdminUnlocked()) return;
+            var bill = SelectedBill;
+            if (bill == null) return;
+
+            try
+            {
+                var good = FindSourceGood(line);
+                if (good == null || good.Quantity < 1)
+                {
+                    StatusMessage = string.Format(LocalizationManager.GetString("BillsLineOutOfStock"), line.Name);
+                    return;
+                }
+
+                var originalLines = _sellsData.ReadSellsByBillnumber("sells", bill.Billnumber);
+                double oldSubtotal = originalLines.Sum(l => l.Price * l.Quantity);
+
+                _goodsData.UpdateGoodCountById("goods", good.Id, good.Quantity - 1);
+
+                double newQuantity = line.Quantity + 1;
+                double newEarned = (line.Price - line.Cost) * newQuantity;
+                _sellsData.UpdateSellQuantity("sells", line.Id, newQuantity, newEarned);
+
+                RecomputeBillAfterLineChange(bill, oldSubtotal);
+
+                InventoryDataEvents.RaiseGoodsChanged();
+                OrderEvents.RaiseOrderCompleted();
+
+                StatusMessage = string.Format(LocalizationManager.GetString("BillsLineQuantityIncreased"), line.Name, bill.Billnumber);
+
+                ReloadAfterLineChange(bill.Id);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = LocalizationManager.GetString("BillsAdjustLineError") + " (" + ex.Message + ")";
+            }
+        }
+
+        /// <summary>
+        /// Removes one unit of this line from the bill (2026-08-28) —
+        /// restores that single unit to inventory and shrinks the line's
+        /// Quantity/Earned by exactly one unit's worth, rather than
+        /// deleting the whole line the way DeleteLine/the Remove button
+        /// does. If this was the line's last remaining unit, it converges
+        /// with DeleteLine's own full-removal path (an empty line serves
+        /// no purpose) — same reasoning DeleteLine already applies when
+        /// removing a line empties the whole bill.
+        /// </summary>
+        private void DecrementLineQuantity(Core.Models.Sells line)
+        {
+            if (!RequireAdminUnlocked()) return;
+            var bill = SelectedBill;
+            if (bill == null) return;
+
+            try
+            {
+                var originalLines = _sellsData.ReadSellsByBillnumber("sells", bill.Billnumber);
+                double oldSubtotal = originalLines.Sum(l => l.Price * l.Quantity);
+
+                double newQuantity = line.Quantity - 1;
+                if (newQuantity <= 0)
+                {
+                    // Last unit on this line — same path as the Remove
+                    // button (DeleteLine): restore full inventory, delete
+                    // the row outright rather than leaving a zero-quantity
+                    // line behind.
+                    RestoreInventoryFor(line);
+                    _sellsData.DeleteSellById("sells", line.Id);
+                }
+                else
+                {
+                    var good = FindSourceGood(line);
+                    // Best-effort, same as RestoreInventoryFor — if the
+                    // product was renamed/deleted since the sale, there's
+                    // nothing to restore against; flagged, not solved (see
+                    // FindSourceGood's own doc comment).
+                    if (good != null)
+                        _goodsData.UpdateGoodCountById("goods", good.Id, good.Quantity + 1);
+
+                    double newEarned = (line.Price - line.Cost) * newQuantity;
+                    _sellsData.UpdateSellQuantity("sells", line.Id, newQuantity, newEarned);
+                }
+
+                RecomputeBillAfterLineChange(bill, oldSubtotal);
+
+                InventoryDataEvents.RaiseGoodsChanged();
+                OrderEvents.RaiseOrderCompleted();
+
+                StatusMessage = string.Format(LocalizationManager.GetString("BillsLineQuantityDecreased"), line.Name, bill.Billnumber);
+
+                ReloadAfterLineChange(bill.Id);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = LocalizationManager.GetString("BillsAdjustLineError") + " (" + ex.Message + ")";
+            }
+        }
+
+        /// <summary>
+        /// Shared by DeleteLine, IncrementLineQuantity, and
+        /// DecrementLineQuantity (2026-08-28) — the bill-level side effect
+        /// of any change to one of its lines' quantity, whether that line
+        /// was fully removed or just adjusted by one unit. Re-reads the
+        /// bill's current lines fresh from the DB (reflecting whatever the
+        /// caller just wrote) rather than trusting an in-memory list, same
+        /// reasoning as the rest of this class (see class doc comment).
+        ///
+        /// oldSubtotal is the bill's line-item subtotal from BEFORE the
+        /// caller's change, captured by the caller — needed to recover the
+        /// bill's effective tax RATE (bill.Tax / oldSubtotal), since Bills
+        /// only stores an absolute Tax amount, not a rate, and the Settings
+        /// tax rate could have changed since the original sale. Paid/Remain
+        /// are similarly recovered as a ratio of the bill's own
+        /// still-current Paid/Billcost — see the class doc comment's
+        /// "Reversal math" section for why that ratio is exact (always a
+        /// clean 1.0 or 0.0 in practice), not an estimate.
+        /// </summary>
+        private void RecomputeBillAfterLineChange(Core.Models.Bills bill, double oldSubtotal)
+        {
+            var remainingLines = _sellsData.ReadSellsByBillnumber("sells", bill.Billnumber);
+
+            if (remainingLines.Count == 0)
+            {
+                // Last line gone — an empty bill shell serves no purpose,
+                // so this converges with DeleteWholeBill's own row-removal
+                // step (using the bill's own still-current Paid/Remain,
+                // exactly as that method does).
+                RemoveBillRow(bill);
+                SelectedBill = null;
+                return;
+            }
+
+            double newSubtotal = remainingLines.Sum(l => l.Price * l.Quantity);
+            double taxRatio = oldSubtotal > 0 ? bill.Tax / oldSubtotal : 0;
+            double newTax = Math.Round(newSubtotal * taxRatio, 2);
+            double newBillcost = newSubtotal + newTax;
+            double newEarned = remainingLines.Sum(l => l.Earned);
+
+            double ratioPaid = bill.Billcost > 0 ? bill.Paid / bill.Billcost : 0;
+            double newPaid = Math.Round(newBillcost * ratioPaid, 2);
+            double newRemain = newBillcost - newPaid;
+
+            _billsData.UpdateBillAmounts("bills", bill.Id, newBillcost, newPaid, newRemain, newEarned);
+            AdjustLinkedCustomer(bill.CustomerId, bill.Paid - newPaid, bill.Remain - newRemain);
+        }
+
+        /// <summary>
+        /// Re-reads the bill list (so the browser's list view reflects the
+        /// change) and, if a bill is still open, re-selects the freshly-
+        /// reloaded copy of it (by Id) rather than hand-patching the old
+        /// in-memory instance — see class doc comment on why. Shared tail
+        /// of DeleteLine/IncrementLineQuantity/DecrementLineQuantity
+        /// (2026-08-28) — previously duplicated at the end of DeleteLine
+        /// alone.
+        /// </summary>
+        private void ReloadAfterLineChange(int billId)
+        {
+            LoadBills();
+            if (SelectedBill != null)
+            {
+                var refreshed = _allBills.FirstOrDefault(b => b.Id == billId);
+                if (refreshed != null) OpenBill(refreshed);
             }
         }
 

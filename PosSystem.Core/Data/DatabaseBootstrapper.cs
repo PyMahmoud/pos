@@ -35,6 +35,46 @@ namespace PosSystem.Core.Data
             {
                 conn.Open();
 
+                // WAL journal mode added 2026-08-28 (bug report: deleting a
+                // bill line freezes the app, then shows "database is
+                // locked") -- see Server.connectionString's own comment for
+                // the full diagnosis. SQLite's default rollback-journal mode
+                // requires a writer to briefly hold an exclusive lock that
+                // blocks every reader; this app opens many short-lived
+                // connections in quick succession for a single user action
+                // (BillsBrowserViewModel.DeleteLine alone is ~10, plus
+                // whatever Dashboard/Inventory's event-driven refreshes add
+                // on top), which is exactly the access pattern rollback-mode
+                // locking fights against. WAL lets readers and a writer
+                // proceed concurrently instead of blocking each other, which
+                // should eliminate the vast majority of these conflicts
+                // outright -- BusyTimeout on the connection string is the
+                // remaining safety net for whatever WAL doesn't cover (e.g.
+                // two writers landing at the same instant).
+                //
+                // journal_mode=WAL is a PERSISTENT, one-time setting stored
+                // in the database file itself (not a per-connection PRAGMA
+                // like busy_timeout would be) -- once set, every future
+                // connection from any process uses WAL automatically, so
+                // running this on every startup is belt-and-suspenders, not
+                // repeated work. Query the result rather than assume success:
+                // WAL can fail to engage on some network/exotic filesystems,
+                // and if that ever happens here, EnsureSchema must not throw
+                // over it -- the app still works in the default journal
+                // mode, just with more of the original lock-contention risk.
+                try
+                {
+                    using (var cmd = new SQLiteCommand("PRAGMA journal_mode=WAL;", conn))
+                    {
+                        cmd.ExecuteScalar();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    // Not fatal -- see comment above. Falls back to
+                    // whichever journal mode the file already had.
+                }
+
                 using (var cmd = new SQLiteCommand(
                     @"CREATE TABLE IF NOT EXISTS stockchecks (
                         ID INTEGER PRIMARY KEY AUTOINCREMENT,

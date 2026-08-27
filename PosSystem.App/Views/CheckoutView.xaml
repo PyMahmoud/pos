@@ -626,7 +626,7 @@
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="80" />
+                                                        <ColumnDefinition Width="116" />
                                                         <ColumnDefinition Width="90" />
                                                         <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
@@ -635,10 +635,37 @@
                                                                Foreground="{DynamicResource OnSurfaceBrush}"
                                                                TextWrapping="Wrap"
                                                                VerticalAlignment="Center" />
-                                                    <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat={}{0:0.##}}"
-                                                               Style="{StaticResource BodyLarge}"
-                                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                                               VerticalAlignment="Center" />
+
+                                                    <!-- +/- quantity adjustment (2026-08-28) — same
+                                                         −/qty/+ layout as Checkout's own cart lines
+                                                         (CartLine's Increment/DecrementLineCommand),
+                                                         reused here for a saved Sells row instead of
+                                                         an in-memory cart line. Minus restores one
+                                                         unit to inventory (or removes the line
+                                                         outright if it's the last unit); plus sells
+                                                         one more, capped by real stock on hand — see
+                                                         BillsBrowserViewModel.IncrementLineQuantity/
+                                                         DecrementLineQuantity for the reversal math. -->
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                                VerticalAlignment="Center">
+                                                        <Button Content="−"
+                                                                Command="{Binding DataContext.DecrementLineQuantityCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Width="28" Height="28" Padding="0"
+                                                                Style="{StaticResource ThemeToggleButtonStyle}" />
+                                                        <TextBlock Text="{Binding Quantity, StringFormat={}{0:0.##}}"
+                                                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   MinWidth="28"
+                                                                   TextAlignment="Center"
+                                                                   Margin="8,0" />
+                                                        <Button Content="+"
+                                                                Command="{Binding DataContext.IncrementLineQuantityCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Width="28" Height="28" Padding="0"
+                                                                Style="{StaticResource ThemeToggleButtonStyle}" />
+                                                    </StackPanel>
+
                                                     <TextBlock Grid.Column="2" Text="{Binding Price, StringFormat={}{0:0.00}}"
                                                                Style="{StaticResource BodyLarge}"
                                                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
