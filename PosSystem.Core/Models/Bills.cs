@@ -25,6 +25,14 @@ namespace PosSystem.Core.Models
         private double discount;
         private string details;
 
+        // Added 2026-08-27 for item #6 (Bills view + delete/reversal) --
+        // needed to find and reverse a linked customer's Paid/Remain when a
+        // bill or a line within it is deleted. Mirrors the same column
+        // Data.Bills.InsertBills already writes (bills.CustomerId, see that
+        // method) -- this model class just never had a property for reading
+        // it back until now, since nothing needed to read it before.
+        private int? customerId;
+
         public int Id { get => id; set => id = value; }
         public int Billnumber { get => billnumber; set => billnumber = value; }
         public double Billcost { get => billcost; set => billcost = value; }
@@ -39,6 +47,7 @@ namespace PosSystem.Core.Models
         public double Tax { get => tax; set => tax = value; }
         public double Discount { get => discount; set => discount = value; }
         public string Details { get => details; set => details = value; }
+        public int? CustomerId { get => customerId; set => customerId = value; }
 
         public event PropertyChangedEventHandler PropertyChanged;
         public void NotifyPropertyChanged(string property)

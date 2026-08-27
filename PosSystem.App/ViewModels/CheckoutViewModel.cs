@@ -167,9 +167,17 @@ namespace PosSystem.App.ViewModels
 
         public double Subtotal => CartLines.Sum(l => l.LineTotal);
 
-        // Tax/discount are Settings-driven, per the README's note that tax
-        // rate gets added there when the client needs it — not invented here.
-        public double Total => Subtotal;
+        // Settings-driven as of 2026-08-26 (AppSettings.TaxRatePercent) —
+        // this is the "gets added there when the client needs it" this
+        // property's own comment used to point at; see AppSettings' class
+        // doc comment for the full history. 0% (AppSettings' default)
+        // reproduces the exact old behavior, so a shop that never touches
+        // the new Settings field sees no change at all.
+        public double TaxAmount => Math.Round(Subtotal * AppSettings.TaxRatePercent / 100.0, 2);
+
+        // Discount is still genuinely unimplemented (no UI anywhere sets
+        // one) — only Tax moved off the placeholder above.
+        public double Total => Subtotal + TaxAmount;
 
         private string _statusMessage = "";
         public string StatusMessage
@@ -227,6 +235,15 @@ namespace PosSystem.App.ViewModels
             // same as CustomersViewModel/RecordPayment already does today.
             InventoryDataEvents.GoodsChanged += LoadGoods;
 
+            // Settings screen (2026-08-26): a saved Tax Rate change needs
+            // to repaint the Total a mid-shift cashier is currently looking
+            // at, not just apply to sales rung up after the next app
+            // restart. RaiseTotals just re-raises PropertyChanged for
+            // Subtotal/TaxAmount/Total against the current cart -- no data
+            // reload needed, same reasoning as why CartLines.CollectionChanged
+            // already calls it above.
+            AppSettings.Changed += RaiseTotals;
+
             LoadGoods();
             RebuildCustomerOptions();
         }
@@ -234,6 +251,7 @@ namespace PosSystem.App.ViewModels
         private void RaiseTotals()
         {
             OnPropertyChanged(nameof(Subtotal));
+            OnPropertyChanged(nameof(TaxAmount));
             OnPropertyChanged(nameof(Total));
         }
 
@@ -422,10 +440,14 @@ namespace PosSystem.App.ViewModels
                                    : SelectedPaymentMethod == PaymentMethod.Card ? "Card"
                                    : "Credit";
 
+                // Tax (Settings-driven as of 2026-08-26, see TaxAmount's
+                // doc comment) is the actual amount collected as tax on
+                // this bill; Discount stays 0 — still genuinely
+                // unimplemented, no UI anywhere sets one yet.
                 _billsData.InsertBills(
                     "bills", nextId, nextBillNumber, totalCost, time, date,
                     ownername, ownerid, ownernumber,
-                    billPaid, billRemain, totalEarned, 0, 0, paymentTag,
+                    billPaid, billRemain, totalEarned, TaxAmount, 0, paymentTag,
                     linkedCustomer?.Id);
 
                 foreach (var line in CartLines)

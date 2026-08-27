@@ -45,6 +45,11 @@
     <system:String x:Key="CheckoutAllCategory">All</system:String>
     <system:String x:Key="CheckoutCartTitle">Current Order</system:String>
     <system:String x:Key="CheckoutCartEmpty">Cart is empty — tap an item to add it.</system:String>
+    <system:String x:Key="CheckoutSubtotal">Subtotal</system:String>
+    <!-- Added 2026-08-26 alongside Settings' Tax Rate field actually doing
+         something — see CheckoutViewModel.TaxAmount's doc comment. Only
+         shown on screen when the rate is above 0. -->
+    <system:String x:Key="CheckoutTax">Tax</system:String>
     <system:String x:Key="CheckoutTotal">Total</system:String>
     <system:String x:Key="CheckoutCash">Cash</system:String>
     <system:String x:Key="CheckoutCard">Card</system:String>
@@ -183,8 +188,80 @@
          after Add Product, not interleaved with it. -->
     <system:String x:Key="InventoryManageCategoriesTitle">Manage categories</system:String>
 
+    <!-- Admin gate (#7, 2026-08-27 extension) — shown as a small inline
+         unlock box above Add Product/Manage Categories when AdminSession
+         is locked, and as the status message if someone somehow reaches a
+         gated action (Edit/Delete buttons stay visible either way, same
+         directness as this app's other destructive actions) while still
+         locked. -->
+    <system:String x:Key="InventoryAdminLockedTitle">Owner/Manager Access Required</system:String>
+    <system:String x:Key="InventoryAdminLockedSubtitle">Adding, editing, or deleting products and categories requires the admin password.</system:String>
+    <system:String x:Key="InventoryAdminRequired">Enter the admin password below to make this change.</system:String>
+
     <system:String x:Key="SettingsHeading">Settings</system:String>
-    <system:String x:Key="SettingsDescription">App-wide preferences live here. Language is the first one — printer setup, receipt footer, tax rate, etc. get added as the client needs them.</system:String>
-    <system:String x:Key="LanguageToggleLabel">Toggle Language / تبديل اللغة</system:String>
+    <system:String x:Key="SettingsDescription">App-wide preferences, appearance, and data backup — everything that isn't specific to a single screen lives here.</system:String>
+
+    <!-- Appearance (rewritten 2026-08-26) — Language and Theme, both
+         previously only reachable as bare toggle buttons elsewhere.
+         SettingsLanguageEnglish/SettingsLanguageArabic are deliberately
+         the SAME literal text in this file and Strings.Arabic.xaml — see
+         SettingsView.xaml's comment on that button pair for why. -->
+    <system:String x:Key="SettingsAppearanceTitle">Appearance</system:String>
+    <system:String x:Key="SettingsLanguageLabel">Language</system:String>
+    <system:String x:Key="SettingsLanguageEnglish">English</system:String>
+    <system:String x:Key="SettingsLanguageArabic">العربية</system:String>
+    <system:String x:Key="SettingsThemeLabel">Theme</system:String>
+    <system:String x:Key="SettingsThemeLight">Light</system:String>
+    <system:String x:Key="SettingsThemeDark">Dark</system:String>
+
+    <!-- Preferences (added 2026-08-26): Tax Rate and Low Stock Threshold,
+         both filling in a gap this codebase had explicitly flagged
+         elsewhere rather than guessed at fresh — see AppSettings' class doc
+         comment for the full history of each. -->
+    <system:String x:Key="SettingsPreferencesTitle">Preferences</system:String>
+    <system:String x:Key="SettingsTaxRateLabel">Tax rate (%)</system:String>
+    <system:String x:Key="SettingsTaxRateHint">Applied to every sale's subtotal on Checkout. Leave at 0 if this shop doesn't charge tax.</system:String>
+    <system:String x:Key="SettingsLowStockThresholdLabel">Low stock threshold</system:String>
+    <system:String x:Key="SettingsLowStockThresholdHint">A product's stock badge on Inventory switches to "Low stock" at or below this quantity.</system:String>
+    <system:String x:Key="SettingsSaveButton">Save preferences</system:String>
+    <system:String x:Key="SettingsSaveSuccess">Preferences saved.</system:String>
+    <system:String x:Key="SettingsSaveError">Something went wrong. Please try again.</system:String>
+    <system:String x:Key="SettingsTaxRateInvalid">Enter a valid tax rate between 0 and 100.</system:String>
+    <system:String x:Key="SettingsLowStockThresholdInvalid">Enter a valid threshold (0 or more).</system:String>
+
+    <!-- Data & Backup (new, 2026-08-26) — see SettingsViewModel's class doc
+         comment for why this is backup-only, no restore. -->
+    <system:String x:Key="SettingsDataBackupTitle">Data &amp; Backup</system:String>
+    <system:String x:Key="SettingsDatabaseLocationLabel">Database file</system:String>
+    <system:String x:Key="SettingsDatabaseSizeLabel">Size</system:String>
+    <system:String x:Key="SettingsBackupNowButton">Back up now</system:String>
+    <system:String x:Key="SettingsOpenBackupsFolderButton">Open backups folder</system:String>
+    <system:String x:Key="SettingsBackupSuccess">Backup saved as {0}.</system:String>
+    <system:String x:Key="SettingsBackupError">Backup failed. Please try again.</system:String>
+    <system:String x:Key="SettingsDatabaseNotFound">Database file not found.</system:String>
+
+    <!-- About (new, 2026-08-26) — static, read-only. -->
+    <system:String x:Key="SettingsAboutTitle">About</system:String>
+    <system:String x:Key="SettingsAboutDescription">PosSystem — point of sale for pharmaceutical distribution.</system:String>
+
+    <!-- Admin password (#7, 2026-08-27) — Dashboard unlock screen and
+         Settings' set/change-password section. -->
+    <system:String x:Key="DashboardLockedTitle">Owner/Manager Access Only</system:String>
+    <system:String x:Key="DashboardLockedSubtitle">This screen shows the shop's revenue. Enter the admin password to continue.</system:String>
+    <system:String x:Key="DashboardUnlockButton">Unlock</system:String>
+    <system:String x:Key="DashboardUnlockIncorrect">Incorrect password.</system:String>
+    <system:String x:Key="SettingsAdminPasswordSectionTitle">Admin Password</system:String>
+    <!-- Wording widened 2026-08-27 (round 2) — this password now also gates
+         Inventory's add/edit/delete-product and delete-category actions,
+         and the upcoming Excel export, not just Dashboard. -->
+    <system:String x:Key="SettingsAdminPasswordDescription">Protects the Dashboard's revenue numbers, adding/editing/deleting products and categories, and exporting data. Leave both fields blank and save to remove the password.</system:String>
+    <system:String x:Key="SettingsAdminPasswordCurrentStatusSet">A password is currently set.</system:String>
+    <system:String x:Key="SettingsAdminPasswordCurrentStatusNotSet">No password is currently set — Dashboard, Inventory's admin actions, and exports are open to anyone.</system:String>
+    <system:String x:Key="SettingsAdminPasswordNewLabel">New password</system:String>
+    <system:String x:Key="SettingsAdminPasswordConfirmLabel">Confirm new password</system:String>
+    <system:String x:Key="SettingsAdminPasswordSaveButton">Save Admin Password</system:String>
+    <system:String x:Key="SettingsAdminPasswordMismatch">Passwords don't match.</system:String>
+    <system:String x:Key="SettingsAdminPasswordSaveSuccess">Admin password updated.</system:String>
+    <system:String x:Key="SettingsAdminPasswordCleared">Admin password removed — Dashboard is now open to anyone.</system:String>
 
 </ResourceDictionary>

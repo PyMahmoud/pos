@@ -99,6 +99,48 @@ namespace PosSystem.App.ViewModels
     /// </summary>
     public class DashboardViewModel : ViewModelBase
     {
+        // Admin gate (#7, 2026-08-27; moved onto the shared AdminSession
+        // 2026-08-27 round 2) — revenue is business-sensitive, so the
+        // business owner/manager decided only someone who knows the admin
+        // password should see this screen's numbers. Unlocking here (or on
+        // Inventory, or the eventual Excel export) now unlocks all of them
+        // for the rest of the app session — see AdminSession's class doc
+        // comment for why this moved off a per-ViewModel private field. If
+        // no admin password has ever been set (AppSettings.HasAdminPassword
+        // is false), AdminSession starts unlocked, so the Dashboard stays
+        // open exactly as it always has on a fresh install.
+        public bool IsUnlocked => AdminSession.IsUnlocked;
+        public bool IsLocked => !IsUnlocked;
+
+        private string _unlockPasswordInput = "";
+        public string UnlockPasswordInput
+        {
+            get => _unlockPasswordInput;
+            set => SetProperty(ref _unlockPasswordInput, value);
+        }
+
+        private string _unlockError = "";
+        public string UnlockError
+        {
+            get => _unlockError;
+            set => SetProperty(ref _unlockError, value);
+        }
+
+        public ICommand UnlockCommand { get; }
+
+        private void Unlock()
+        {
+            if (AdminSession.TryUnlock(UnlockPasswordInput))
+            {
+                UnlockError = "";
+                UnlockPasswordInput = "";
+            }
+            else
+            {
+                UnlockError = LocalizationManager.GetString("DashboardUnlockIncorrect");
+            }
+        }
+
         private readonly Core.Data.Bills _billsData = new Core.Data.Bills();
         private readonly Core.Data.Sells _sellsData = new Core.Data.Sells();
         private readonly Core.Data.Customers _customersData = new Core.Data.Customers();
@@ -367,6 +409,12 @@ namespace PosSystem.App.ViewModels
 
         public DashboardViewModel()
         {
+            UnlockCommand = new RelayCommand(_ => Unlock());
+            AdminSession.Changed += () =>
+            {
+                OnPropertyChanged(nameof(IsUnlocked));
+                OnPropertyChanged(nameof(IsLocked));
+            };
             SetQuickRangeCommand = new RelayCommand(p =>
             {
                 if (p is DashboardQuickRange range) ApplyQuickRange(range);

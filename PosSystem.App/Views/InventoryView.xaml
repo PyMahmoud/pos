@@ -29,6 +29,49 @@
                                Foreground="{DynamicResource OnSurfaceBrush}"
                                Margin="0,0,0,20" />
 
+                    <!-- Admin gate (#7, 2026-08-27 extension) -- inline,
+                         not a full-screen overlay like Dashboard's: browsing
+                         and adjusting stock stay open to any staff member,
+                         only Add Product / Manage Categories / per-row Edit
+                         and Delete are actually gated (see
+                         InventoryViewModel's class doc comment and each
+                         gated method's RequireAdminUnlocked() check). Shown
+                         only while locked; disappears the moment AdminSession
+                         unlocks (from here, Dashboard, or the eventual Excel
+                         export -- one shared session, see AdminSession). -->
+                    <Border Background="{DynamicResource SurfaceContainerHighBrush}"
+                            CornerRadius="12"
+                            Padding="16"
+                            Margin="0,0,0,20"
+                            Visibility="{Binding IsAdminLocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource InventoryAdminLockedTitle}"
+                                       Style="{StaticResource TitleMedium}"
+                                       Foreground="{DynamicResource OnSurfaceBrush}"
+                                       Margin="0,0,0,4" />
+                            <TextBlock Text="{DynamicResource InventoryAdminLockedSubtitle}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12" />
+                            <PasswordBox x:Name="AdminUnlockPasswordBox"
+                                         Style="{StaticResource ThemedPasswordBoxStyle}"
+                                         PasswordChanged="AdminUnlockPasswordBox_PasswordChanged"
+                                         Margin="0,0,0,10" />
+                            <Button Content="{DynamicResource DashboardUnlockButton}"
+                                    Command="{Binding AdminUnlockCommand}"
+                                    Background="{DynamicResource PrimaryBrush}"
+                                    Foreground="{DynamicResource OnPrimaryBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="0,10"
+                                    HorizontalContentAlignment="Center" />
+                            <TextBlock Text="{Binding AdminUnlockError}"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+
                     <TextBlock Text="{DynamicResource InventoryAddSectionTitle}"
                                Style="{StaticResource TitleMedium}"
                                Foreground="{DynamicResource OnSurfaceBrush}"
@@ -360,10 +403,10 @@
                                              low-stock flags" role for that
                                              token), Error for out of stock. -->
                                         <Border CornerRadius="8" Padding="10,6" Margin="0,0,0,12"
-                                                HorizontalAlignment="Left"
-                                                Background="{DynamicResource SurfaceContainerHighBrush}">
+                                                HorizontalAlignment="Left">
                                             <Border.Style>
                                                 <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighBrush}" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsLowStock}" Value="True">
                                                             <Setter Property="Background" Value="{DynamicResource TertiaryContainerBrush}" />

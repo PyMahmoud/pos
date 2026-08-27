@@ -80,6 +80,64 @@ namespace PosSystem.App.ViewModels
     /// </summary>
     public class InventoryViewModel : ViewModelBase
     {
+        // Admin gate (#7, 2026-08-27 batch, item #7's extension beyond just
+        // Dashboard) -- Mahmoud confirmed the admin password should also
+        // cover add/edit/delete product and delete category, not just
+        // viewing Dashboard. Shares AdminSession with Dashboard (and the
+        // upcoming Excel export) -- see that class's doc comment for why
+        // unlocking once now covers every gated screen for the rest of the
+        // session, not a separate password prompt per screen. Browsing,
+        // searching, filtering, and the existing inline quantity-adjust (a
+        // routine restock-count task, not a structural change) stay open to
+        // any staff member -- only the actions Mahmoud actually named are
+        // gated: AddProduct, StartEdit (which blocks reaching SaveEdit),
+        // DeleteProduct, AddCategory, DeleteCategory.
+        public bool IsAdminUnlocked => AdminSession.IsUnlocked;
+        public bool IsAdminLocked => !IsAdminUnlocked;
+
+        private string _adminUnlockPasswordInput = "";
+        public string AdminUnlockPasswordInput
+        {
+            get => _adminUnlockPasswordInput;
+            set => SetProperty(ref _adminUnlockPasswordInput, value);
+        }
+
+        private string _adminUnlockError = "";
+        public string AdminUnlockError
+        {
+            get => _adminUnlockError;
+            set => SetProperty(ref _adminUnlockError, value);
+        }
+
+        public ICommand AdminUnlockCommand { get; }
+
+        private void AdminUnlock()
+        {
+            if (AdminSession.TryUnlock(AdminUnlockPasswordInput))
+            {
+                AdminUnlockError = "";
+                AdminUnlockPasswordInput = "";
+            }
+            else
+            {
+                AdminUnlockError = LocalizationManager.GetString("DashboardUnlockIncorrect");
+            }
+        }
+
+        /// <summary>
+        /// Shared guard for every gated action below -- sets the usual
+        /// StatusMessage (same field every other validation failure in this
+        /// class already uses) and returns false so the caller can bail out
+        /// exactly like a validation failure, rather than a separate
+        /// error-reporting path just for this one check.
+        /// </summary>
+        private bool RequireAdminUnlocked()
+        {
+            if (IsAdminUnlocked) return true;
+            StatusMessage = LocalizationManager.GetString("InventoryAdminRequired");
+            return false;
+        }
+
         private readonly Core.Data.Goods _goodsData = new Core.Data.Goods();
         private readonly Core.Data.Categories _categoriesData = new Core.Data.Categories();
 
@@ -337,9 +395,29 @@ namespace PosSystem.App.ViewModels
             {
                 if (p is InventoryRow row) DeleteProduct(row);
             });
+            AdminUnlockCommand = new RelayCommand(_ => AdminUnlock());
+            AdminSession.Changed += () =>
+            {
+                OnPropertyChanged(nameof(IsAdminUnlocked));
+                OnPropertyChanged(nameof(IsAdminLocked));
+            };
 
             InventoryDataEvents.GoodsChanged += LoadGoods;
             LocalizationManager.LanguageChanged += _ => RebuildStockFilterChips();
+
+            // Settings screen (2026-08-26): a saved Low Stock Threshold
+            // change needs every already-rendered card's badge to
+            // re-evaluate IsLowStock/IsInStock against the new value, not
+            // just the next product added. InventoryRow reads the live
+            // AppSettings value already (see that class), but WPF only
+            // repaints a binding when PropertyChanged actually fires for
+            // that property -- LoadGoods() rebuilds every InventoryRow from
+            // scratch, which does. No unsubscribe: same lifetime rule every
+            // other cross-screen event subscription in this app already
+            // follows (see CheckoutViewModel's InventoryDataEvents.GoodsChanged
+            // comment) -- each screen's ViewModel lives for the app's
+            // lifetime once MainViewModel caches its View.
+            AppSettings.Changed += LoadGoods;
 
             LoadCategories();
             LoadGoods();
@@ -541,6 +619,8 @@ namespace PosSystem.App.ViewModels
 
         private void AddProduct()
         {
+            if (!RequireAdminUnlocked()) return;
+
             string name = NewProductName?.Trim() ?? "";
             string category = NewProductCategoryInput?.Trim() ?? "";
             string barcode = NewProductBarcode?.Trim() ?? "";
@@ -630,6 +710,8 @@ namespace PosSystem.App.ViewModels
 
         private void AddCategory()
         {
+            if (!RequireAdminUnlocked()) return;
+
             string name = NewCategoryName?.Trim() ?? "";
 
             if (string.IsNullOrWhiteSpace(name))
@@ -659,6 +741,8 @@ namespace PosSystem.App.ViewModels
 
         private void DeleteCategory()
         {
+            if (!RequireAdminUnlocked()) return;
+
             string name = CategoryToDelete;
 
             if (string.IsNullOrWhiteSpace(name))
@@ -708,6 +792,11 @@ namespace PosSystem.App.ViewModels
 
         private void StartEdit(InventoryRow row)
         {
+            // Gated here, not in SaveEdit -- blocking entry into edit mode
+            // is a clearer signal than letting someone fill out the whole
+            // form and only finding out it's locked on Save.
+            if (!RequireAdminUnlocked()) return;
+
             row.EditName = row.Name;
             row.EditBarcode = row.Barcode;
             row.EditCategoryInput = row.Category;
@@ -798,6 +887,8 @@ namespace PosSystem.App.ViewModels
         // CountByCategory blocks an in-use category delete.
         private void DeleteProduct(InventoryRow row)
         {
+            if (!RequireAdminUnlocked()) return;
+
             try
             {
                 string name = row.Name;

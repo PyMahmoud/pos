@@ -216,5 +216,90 @@ app; the monthly-report half needs client input before it can start.)*
 
 ---
 
+## Phase 11 — Feature batch (requested 2026-08-27)
+**Goal:** seven items Mahmoud asked for in one batch. Given the size, working
+through them one at a time rather than all at once — each gets its own
+build/test pass eventually, same standing caveat as everything since Phase 4.
+
+- [x] **#1 Low-stock badge invisible in light mode — fixed.** Root cause: in
+  `InventoryView.xaml`, the badge `Border` set `Background` both as a direct
+  XAML attribute AND inside its own `Style`'s `DataTrigger` — a local value
+  always wins over a Style setter in WPF, so the trigger never actually
+  changed the background in either theme. Only *looked* broken in light mode
+  specifically: the text color still changed correctly (no local override
+  on that), and light-peach text on dark-mode's unchanged dark background
+  still read fine by coincidence; the same peach text on light mode's
+  near-white unchanged background did not. Fixed by moving the default
+  `Background` into the `Style`'s own `Setter` so the `DataTrigger`s apply.
+  Customers' debt badge already had this right — not a systemic issue,
+  isolated to Inventory.
+- [x] **#2 Database moved out of the install folder — done, then moved
+  again (2026-08-27, round 2, per Mahmoud's explicit follow-up).**
+  `Core.Data.Server.Location` now points at `Documents\PosSystem` — not
+  next to the .exe, and not `%AppData%\PosSystem` either anymore (round 1's
+  choice): AppData is hidden by default in Explorer, which makes it hard
+  for a non-technical shop owner to find/back up the file himself outside
+  the in-app Backup Now button. Documents is visible and expected, while
+  keeping the same survival guarantee — untouched by an app update or
+  uninstall/reinstall. Two-step auto-migration in `Server`'s static
+  constructor: if nothing exists yet at the new Documents path, checks the
+  AppData path first (any machine that already ran the round-1 build), then
+  the original next-to-exe path — copies whichever is found, never moves,
+  so nothing is ever deleted from an old location.
+- [ ] **#3 Excel export (last 7/30 days, this week/month/year, custom range)
+  — not started.** Needs a spreadsheet-writing library; this project has no
+  NuGet access from here (same standing issue as Phase 6's LiveCharts
+  install), so this will mean adding a `packages.config` entry (likely
+  ClosedXML — free, no Excel/Interop dependency, unlike EPPlus which went
+  commercial) that Mahmoud has to restore via NuGet before it builds, flagged
+  the same way LiveCharts was.
+- [ ] **#4 Contact support — not started, blocked on the phone number**
+  Mahmoud said he'd provide. Placeholder UI (a Settings section or a
+  sidebar/footer entry) can be built now with a placeholder, or held until
+  the number is in hand — Mahmoud's call.
+- [ ] **#5 Help documentation (Arabic + English) — not started.** Likely
+  shape: a new Help nav item / screen with localized static content,
+  following the same Strings.*.xaml pattern every other screen's text
+  already uses, rather than a separate document — keeps it inside the app
+  the way the client will actually use it.
+- [ ] **#6 Bills view + delete-with-reversal in Checkout — not started,
+  the largest remaining item.** New "Bills" button above the customer
+  dropdown → list of saved bills → drill into one → see its line items
+  (from `sells.Billnumber`) → delete a single product from the bill or the
+  whole bill. Per Mahmoud (2026-08-27): deleting must reverse effects, not
+  just remove the row — restore the product's `Goods.Quantity`, and if the
+  bill was linked to a customer (`bills.CustomerId`), reduce their `Paid`/
+  `Remain` by whatever that line item (or the whole bill) contributed.
+  Real risk here: getting the reversal math wrong corrupts Inventory
+  quantities or a customer's balance silently, so this needs a careful,
+  explicit pass — not a quick bolt-on — and a real build/run test before
+  it's trusted with actual data.
+- [x] **#7 Admin password — Dashboard gated, then extended (2026-08-27,
+  round 2) to also cover Inventory's product/category CRUD, per Mahmoud's
+  explicit confirmation this pass.** `AppSettings.AdminPasswordHash`
+  (SHA-256, no salt/KDF — a deterrent against casually opening the .db in a
+  SQLite browser, not real security; proportionate to what's actually being
+  protected here, revenue numbers, not payment data) is unchanged. What
+  changed: the lock state moved off a private field on `DashboardViewModel`
+  into a new shared `AdminSession` static class (`PosSystem.App/
+  AdminSession.cs`) so unlocking on ANY gated screen counts for all of
+  them for the rest of the session — Dashboard, and now
+  `InventoryViewModel`'s `AddProduct`/`StartEdit` (blocks reaching
+  `SaveEdit`)/`DeleteProduct`/`AddCategory`/`DeleteCategory`, each guarded
+  by a shared `RequireAdminUnlocked()` check. Browsing, searching,
+  filtering, and the existing inline quantity-adjust stay open to any
+  staff member — only the actions Mahmoud actually named are gated.
+  Inventory shows a small inline unlock box (not a full-screen overlay like
+  Dashboard's) above Add Product/Manage Categories while locked.
+  `SettingsViewModel.SaveAdminPassword` now calls
+  `AdminSession.ResetForPasswordChange()` so setting a brand-new password
+  immediately re-locks every gated screen, and clearing it back to blank
+  immediately un-gates all of them. Same default as before: if no password
+  has ever been set, everything stays open (doesn't lock out a fresh
+  install with nothing configured) — still worth confirming this default is
+  wanted before the client's build ships with a password never set. Excel
+  export (#3, once built) is meant to share this same gate — flagged there,
+  not yet wired since that feature doesn't exist yet.
+
 ## Suggested order of attack from today
 **1 → 2 → 3 → 4 → 5**, in that order, without skipping ahead — Checkout and Customers/Debt are the two screens the client actually needs, so everything before them is foundation and everything after them (Dashboard, Inventory, reporting) can wait until those two are solid and in the client's hands.

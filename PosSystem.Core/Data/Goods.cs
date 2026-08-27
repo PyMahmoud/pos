@@ -632,5 +632,85 @@ namespace PosSystem.Core.Data
                 }
             }
         }
+
+        // Added 2026-08-27 for item #6 (Bills view delete/reversal) --
+        // restoring inventory when a sold line is deleted needs to find
+        // WHICH goods row that line came from, but Data/Sells.cs's `sells`
+        // table stores a denormalized snapshot per line (Name, Category,
+        // Cost, Price, Barcode all copied at sale time, see RemoveGoodsById's
+        // comment above) -- NOT a foreign key to goods.ID. So this is
+        // necessarily a best-effort lookup, not a guaranteed match: prefer
+        // Barcode (unique whenever non-empty, enforced by the partial UNIQUE
+        // index DatabaseBootstrapper.EnsureSchema() adds), fall back to Name
+        // when the line has no barcode. If the product was renamed, deleted,
+        // or never had a distinguishing barcode since the original sale,
+        // this can return null (nothing to restore -- caller must handle
+        // that) or, in a Name collision between two different products,
+        // the wrong row. Flagged, not solved -- solving it properly needs an
+        // actual goods.ID column on `sells`, which is a schema change well
+        // beyond this feature's scope.
+        public Models.Goods FindGoodByBarcode(string TableName, string Barcode)
+        {
+            if (string.IsNullOrEmpty(Barcode)) return null;
+
+            string readString = "SELECT * FROM " + TableName + " WHERE Barcode = @barcode LIMIT 1";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(readString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@barcode", Barcode);
+                    IDataReader reader = cmd.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        return new Models.Goods
+                        {
+                            Id = Convert.ToInt32(reader["ID"]),
+                            Name = reader["Name"].ToString(),
+                            Category = reader["Category"].ToString(),
+                            Quantity = Convert.ToDouble(reader["Quantity"]),
+                            Cost = Convert.ToDouble(reader["Cost"]),
+                            Price = Convert.ToDouble(reader["Price"]),
+                            Type = reader["Type"].ToString(),
+                            Barcode = reader["Barcode"].ToString(),
+                            Earned = Convert.ToDouble(reader["Earned"]),
+                        };
+                    }
+                    return null;
+                }
+            }
+        }
+
+        public Models.Goods FindGoodByName(string TableName, string Name)
+        {
+            if (string.IsNullOrEmpty(Name)) return null;
+
+            string readString = "SELECT * FROM " + TableName + " WHERE Name = @name LIMIT 1";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(readString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", Name);
+                    IDataReader reader = cmd.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        return new Models.Goods
+                        {
+                            Id = Convert.ToInt32(reader["ID"]),
+                            Name = reader["Name"].ToString(),
+                            Category = reader["Category"].ToString(),
+                            Quantity = Convert.ToDouble(reader["Quantity"]),
+                            Cost = Convert.ToDouble(reader["Cost"]),
+                            Price = Convert.ToDouble(reader["Price"]),
+                            Type = reader["Type"].ToString(),
+                            Barcode = reader["Barcode"].ToString(),
+                            Earned = Convert.ToDouble(reader["Earned"]),
+                        };
+                    }
+                    return null;
+                }
+            }
+        }
     }
 }

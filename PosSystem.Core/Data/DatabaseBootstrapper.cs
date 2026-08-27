@@ -201,6 +201,18 @@ namespace PosSystem.Core.Data
                     // Same pre-existing-schema caveat as the two try/catch
                     // blocks above -- not fatal either way.
                 }
+                // Added for the Settings screen's Tax Rate / Low Stock
+                // Threshold fields (2026-08-26) -- see Core.Data.Settings'
+                // class doc comment for why this is a generic key/value
+                // table rather than one schema column per setting.
+                using (var cmd = new SQLiteCommand(
+                    @"CREATE TABLE IF NOT EXISTS settings (
+                        Key TEXT PRIMARY KEY,
+                        Value TEXT
+                    )", conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
 

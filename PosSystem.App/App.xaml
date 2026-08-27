@@ -28,6 +28,7 @@
             <conv:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
             <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
             <conv:PositiveCountToVisibilityConverter x:Key="PositiveCountToVisibilityConverter" />
+            <conv:PositiveNumberToVisibilityConverter x:Key="PositiveNumberToVisibilityConverter" />
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <conv:CustomerBalanceTextConverter x:Key="CustomerBalanceTextConverter" />
 

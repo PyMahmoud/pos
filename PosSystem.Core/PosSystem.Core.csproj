@@ -68,6 +68,7 @@
     <Compile Include="Data\Sells.cs" />
     <Compile Include="Data\SellsOffline.cs" />
     <Compile Include="Data\StockChecks.cs" />
+    <Compile Include="Data\Settings.cs" />
     <Compile Include="Data\Server.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

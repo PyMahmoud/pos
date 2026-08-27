@@ -45,6 +45,8 @@
     <system:String x:Key="CheckoutAllCategory">الكل</system:String>
     <system:String x:Key="CheckoutCartTitle">الطلب الحالي</system:String>
     <system:String x:Key="CheckoutCartEmpty">السلة فارغة — اضغط على منتج لإضافته.</system:String>
+    <system:String x:Key="CheckoutSubtotal">الإجمالي الفرعي</system:String>
+    <system:String x:Key="CheckoutTax">الضريبة</system:String>
     <system:String x:Key="CheckoutTotal">الإجمالي</system:String>
     <system:String x:Key="CheckoutCash">نقدًا</system:String>
     <system:String x:Key="CheckoutCard">بطاقة</system:String>
@@ -163,8 +165,56 @@
 
     <system:String x:Key="InventoryManageCategoriesTitle">إدارة الفئات</system:String>
 
+    <system:String x:Key="InventoryAdminLockedTitle">مطلوب صلاحية المالك أو المدير</system:String>
+    <system:String x:Key="InventoryAdminLockedSubtitle">إضافة أو تعديل أو حذف المنتجات والفئات يتطلب كلمة مرور المسؤول.</system:String>
+    <system:String x:Key="InventoryAdminRequired">أدخل كلمة مرور المسؤول أدناه لإجراء هذا التغيير.</system:String>
+
     <system:String x:Key="SettingsHeading">الإعدادات</system:String>
-    <system:String x:Key="SettingsDescription">تعيش تفضيلات التطبيق العامة هنا. اللغة هي أول تفضيل — سيُضاف إعداد الطابعة، تذييل الإيصال، نسبة الضريبة، وغيرها حسب حاجة العميل.</system:String>
-    <system:String x:Key="LanguageToggleLabel">Toggle Language / تبديل اللغة</system:String>
+    <system:String x:Key="SettingsDescription">تعيش تفضيلات التطبيق العامة والمظهر والنسخ الاحتياطي للبيانات هنا — كل ما لا يخص شاشة واحدة بعينها يعيش هنا.</system:String>
+
+    <system:String x:Key="SettingsAppearanceTitle">المظهر</system:String>
+    <system:String x:Key="SettingsLanguageLabel">اللغة</system:String>
+    <system:String x:Key="SettingsLanguageEnglish">English</system:String>
+    <system:String x:Key="SettingsLanguageArabic">العربية</system:String>
+    <system:String x:Key="SettingsThemeLabel">السمة</system:String>
+    <system:String x:Key="SettingsThemeLight">فاتح</system:String>
+    <system:String x:Key="SettingsThemeDark">داكن</system:String>
+
+    <system:String x:Key="SettingsPreferencesTitle">التفضيلات</system:String>
+    <system:String x:Key="SettingsTaxRateLabel">نسبة الضريبة (%)</system:String>
+    <system:String x:Key="SettingsTaxRateHint">تُطبَّق على الإجمالي الفرعي لكل عملية بيع في شاشة الدفع. اتركها 0 إذا كان هذا المحل لا يفرض ضريبة.</system:String>
+    <system:String x:Key="SettingsLowStockThresholdLabel">حد المخزون المنخفض</system:String>
+    <system:String x:Key="SettingsLowStockThresholdHint">تتحول شارة حالة المخزون للمنتج في شاشة المخزون إلى "مخزون منخفض" عند هذه الكمية أو أقل.</system:String>
+    <system:String x:Key="SettingsSaveButton">حفظ التفضيلات</system:String>
+    <system:String x:Key="SettingsSaveSuccess">تم حفظ التفضيلات.</system:String>
+    <system:String x:Key="SettingsSaveError">حدث خطأ. حاول مرة أخرى.</system:String>
+    <system:String x:Key="SettingsTaxRateInvalid">أدخل نسبة ضريبة صحيحة بين 0 و100.</system:String>
+    <system:String x:Key="SettingsLowStockThresholdInvalid">أدخل حدًا صحيحًا (0 أو أكثر).</system:String>
+    <system:String x:Key="SettingsDataBackupTitle">البيانات والنسخ الاحتياطي</system:String>
+    <system:String x:Key="SettingsDatabaseLocationLabel">ملف قاعدة البيانات</system:String>
+    <system:String x:Key="SettingsDatabaseSizeLabel">الحجم</system:String>
+    <system:String x:Key="SettingsBackupNowButton">إنشاء نسخة احتياطية الآن</system:String>
+    <system:String x:Key="SettingsOpenBackupsFolderButton">فتح مجلد النسخ الاحتياطية</system:String>
+    <system:String x:Key="SettingsBackupSuccess">تم حفظ النسخة الاحتياطية باسم {0}.</system:String>
+    <system:String x:Key="SettingsBackupError">فشل إنشاء النسخة الاحتياطية. حاول مرة أخرى.</system:String>
+    <system:String x:Key="SettingsDatabaseNotFound">ملف قاعدة البيانات غير موجود.</system:String>
+
+    <system:String x:Key="SettingsAboutTitle">حول التطبيق</system:String>
+    <system:String x:Key="SettingsAboutDescription">PosSystem — نظام نقاط بيع لتوزيع الأدوية.</system:String>
+
+    <system:String x:Key="DashboardLockedTitle">للمالك أو المدير فقط</system:String>
+    <system:String x:Key="DashboardLockedSubtitle">تعرض هذه الشاشة إيرادات المتجر. أدخل كلمة مرور المسؤول للمتابعة.</system:String>
+    <system:String x:Key="DashboardUnlockButton">فتح</system:String>
+    <system:String x:Key="DashboardUnlockIncorrect">كلمة المرور غير صحيحة.</system:String>
+    <system:String x:Key="SettingsAdminPasswordSectionTitle">كلمة مرور المسؤول</system:String>
+    <system:String x:Key="SettingsAdminPasswordDescription">تحمي أرقام الإيرادات في لوحة التحكم، وإضافة/تعديل/حذف المنتجات والفئات، وتصدير البيانات. اترك الحقلين فارغين واحفظ لإزالة كلمة المرور.</system:String>
+    <system:String x:Key="SettingsAdminPasswordCurrentStatusSet">تم تعيين كلمة مرور حاليًا.</system:String>
+    <system:String x:Key="SettingsAdminPasswordCurrentStatusNotSet">لا توجد كلمة مرور حاليًا — لوحة التحكم وإجراءات المخزون الإدارية والتصدير مفتوحة للجميع.</system:String>
+    <system:String x:Key="SettingsAdminPasswordNewLabel">كلمة المرور الجديدة</system:String>
+    <system:String x:Key="SettingsAdminPasswordConfirmLabel">تأكيد كلمة المرور الجديدة</system:String>
+    <system:String x:Key="SettingsAdminPasswordSaveButton">حفظ كلمة مرور المسؤول</system:String>
+    <system:String x:Key="SettingsAdminPasswordMismatch">كلمتا المرور غير متطابقتين.</system:String>
+    <system:String x:Key="SettingsAdminPasswordSaveSuccess">تم تحديث كلمة مرور المسؤول.</system:String>
+    <system:String x:Key="SettingsAdminPasswordCleared">تمت إزالة كلمة مرور المسؤول — لوحة التحكم مفتوحة الآن للجميع.</system:String>
 
 </ResourceDictionary>

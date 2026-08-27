@@ -14,6 +14,12 @@ namespace PosSystem.App
             // column doesn't exist yet" error this was written to prevent.
             Core.Data.DatabaseBootstrapper.EnsureSchema();
 
+            // Must run after EnsureSchema (needs the `settings` table to
+            // exist) and before base.OnStartup (Dashboard/Inventory/Checkout
+            // all read AppSettings values as soon as they're constructed —
+            // see AppSettings' own class doc comment).
+            AppSettings.Load();
+
             base.OnStartup(e);
         }
     }

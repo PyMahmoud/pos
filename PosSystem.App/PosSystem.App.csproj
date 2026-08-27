@@ -191,8 +191,11 @@
     <Compile Include="Converters\GreaterThanZeroConverter.cs" />
     <Compile Include="Converters\CountToVisibilityConverter.cs" />
     <Compile Include="Converters\PositiveCountToVisibilityConverter.cs" />
+    <Compile Include="Converters\PositiveNumberToVisibilityConverter.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\CustomerBalanceTextConverter.cs" />
+    <Compile Include="AppSettings.cs" />
+    <Compile Include="AdminSession.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\RelayCommand.cs" />
     <Compile Include="ViewModels\NavItem.cs" />
@@ -214,6 +217,7 @@
     <Compile Include="ViewModels\InventoryDataEvents.cs" />
     <Compile Include="ViewModels\InventoryRow.cs" />
     <Compile Include="ViewModels\InventoryViewModel.cs" />
+    <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -242,7 +246,6 @@
     <Error Condition="!Exists('..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets'))" />
   </Target>
   <Import Project="..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets" Condition="Exists('..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets')" />
-
   <!--
       HarfBuzzSharp.NativeAssets.Win32/.macOS ship their copy-native-dll
       targets under buildTransitive\, not build\ — unlike the SkiaSharp

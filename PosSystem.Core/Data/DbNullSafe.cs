@@ -22,5 +22,10 @@ namespace PosSystem.Core.Data
 
         public static string ToStringSafe(object value) =>
             value == null || value == DBNull.Value ? "" : value.ToString();
+
+        // Added for bills.CustomerId (nullable FK -- a bill may or may not
+        // be linked to a customer, see CheckoutViewModel.CompleteSale).
+        public static int? ToNullableInt32(object value) =>
+            value == null || value == DBNull.Value ? (int?)null : Convert.ToInt32(value);
     }
 }

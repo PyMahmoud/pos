@@ -9,6 +9,49 @@
         <vm:DashboardViewModel />
     </UserControl.DataContext>
 
+    <Grid>
+        <!-- Locked overlay (#7, 2026-08-27) — covers the whole screen
+             while IsLocked is true so revenue never renders behind it.
+             The real dashboard content (ScrollViewer below) still loads/
+             computes normally either way — only visibility is gated, not
+             the data load itself — so unlocking is instant with no reload
+             flicker. See DashboardViewModel's IsUnlocked doc comment for
+             the session-persists-until-restart behavior and the "no
+             password set yet = unlocked" default. -->
+        <Border Background="{DynamicResource BackgroundBrush}"
+                Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibilityConverter}}"
+                Panel.ZIndex="10">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="360">
+                <TextBlock Text="{DynamicResource DashboardLockedTitle}"
+                           Style="{StaticResource HeadlineMedium}"
+                           Foreground="{DynamicResource OnSurfaceBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,8" />
+                <TextBlock Text="{DynamicResource DashboardLockedSubtitle}"
+                           Style="{StaticResource BodyLarge}"
+                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,20" />
+                <PasswordBox x:Name="UnlockPasswordBox"
+                             Style="{StaticResource ThemedPasswordBoxStyle}"
+                             PasswordChanged="UnlockPasswordBox_PasswordChanged"
+                             Margin="0,0,0,12" />
+                <Button Content="{DynamicResource DashboardUnlockButton}"
+                        Command="{Binding UnlockCommand}"
+                        Background="{DynamicResource PrimaryBrush}"
+                        Foreground="{DynamicResource OnPrimaryBrush}"
+                        Template="{StaticResource SelectableButtonTemplate}"
+                        Padding="0,12"
+                        HorizontalContentAlignment="Center" />
+                <TextBlock Text="{Binding UnlockError}"
+                           Foreground="{DynamicResource ErrorBrush}"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           Margin="0,10,0,0" />
+            </StackPanel>
+        </Border>
+
     <ScrollViewer Background="{DynamicResource BackgroundBrush}" VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24">
 
@@ -344,4 +387,5 @@
                        Visibility="{Binding NoDataYet, Converter={StaticResource BoolToVisibilityConverter}}" />
         </StackPanel>
     </ScrollViewer>
+    </Grid>
 </UserControl>

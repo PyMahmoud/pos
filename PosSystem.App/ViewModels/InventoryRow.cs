@@ -14,13 +14,18 @@ namespace PosSystem.App.ViewModels
     /// </summary>
     public class InventoryRow : INotifyPropertyChanged
     {
-        // Placeholder default, not confirmed with the client — see
-        // InventoryViewModel's class-level comment for why this is a plain
-        // constant rather than a stored-per-product or stored-global
-        // setting (same "flag rather than add a schema column unasked"
-        // reasoning Phase 4 already applied to the Goods IsAvailable
-        // question).
-        public const double LowStockThreshold = 10;
+        // Was a plain, unconfirmed-with-the-client placeholder constant
+        // (10) until the Settings screen got real content (2026-08-26) --
+        // see InventoryViewModel's class-level comment (historical, kept
+        // for context) and AppSettings.LowStockThreshold's own doc comment.
+        // Reading the live app-wide setting here means every InventoryRow
+        // (existing or freshly constructed) reflects whatever was last
+        // saved on Settings without needing its own subscription --
+        // InventoryViewModel.LoadGoods() rebuilds every row from scratch on
+        // AppSettings.Changed (see that class), so this always gets
+        // re-evaluated against the current value rather than a stale one
+        // captured at construction time.
+        public static double LowStockThreshold => PosSystem.App.AppSettings.LowStockThreshold;
 
         public int Id { get; }
 

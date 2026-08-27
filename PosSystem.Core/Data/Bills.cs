@@ -144,6 +144,7 @@ namespace PosSystem.Core.Data
                         goods_List.Tax = DbNullSafe.ToDouble(reader["tax"]);
                         goods_List.Discount = DbNullSafe.ToDouble(reader["discount"]);
                         goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
+                        goods_List.CustomerId = DbNullSafe.ToNullableInt32(reader["CustomerId"]);
                         bills.Add(goods_List);
                       
                     }
@@ -184,9 +185,56 @@ namespace PosSystem.Core.Data
                         goods_List.Tax = DbNullSafe.ToDouble(reader["tax"]);
                         goods_List.Discount = DbNullSafe.ToDouble(reader["discount"]);
                         goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
+                        goods_List.CustomerId = DbNullSafe.ToNullableInt32(reader["CustomerId"]);
                         bills.Add(goods_List);
                     }
                     return bills;
+                }
+            }
+        }
+
+        // Everything below added 2026-08-27 for item #6 (Bills view on
+        // Checkout + delete-line/delete-whole-bill with reversal).
+
+        public bool DeleteBillById(string TableName, int Id)
+        {
+            string deleteString = "DELETE FROM " + TableName + " WHERE ID = @id";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(deleteString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", Id);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                    return true;
+                }
+            }
+        }
+
+        // Re-totals a bill after one of its line items is deleted (a whole
+        // bill delete just removes the bills row entirely via
+        // DeleteBillById above -- this is only for the "delete one product
+        // from the bill, the rest stays" case). Billcost/Paid/Remain/Earned
+        // are the four fields that actually shift when a line disappears --
+        // Time/Datex/Ownername/etc. describe the bill as a whole and don't
+        // change just because it now has one fewer item on it.
+        public bool UpdateBillAmounts(string TableName, int Id, double Billcost, double Paid, double Remain, double Earned)
+        {
+            string updateString = "UPDATE " + TableName + " SET Billcost = @billcost, Paid = @paid, Remain = @remain, Earned = @earned WHERE ID = @id";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(updateString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@billcost", Billcost);
+                    cmd.Parameters.AddWithValue("@paid", Paid);
+                    cmd.Parameters.AddWithValue("@remain", Remain);
+                    cmd.Parameters.AddWithValue("@earned", Earned);
+                    cmd.Parameters.AddWithValue("@id", Id);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                    return true;
                 }
             }
         }

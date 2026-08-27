@@ -22,6 +22,42 @@
         Border brightens to Primary on focus so it's obvious which field is
         active.
     -->
+    <!--
+        Same visual shape as ThemedTextBoxStyle above, but PasswordBox is
+        not a TextBox subtype in WPF (no shared base for this), so it needs
+        its own style rather than reusing that one. Added 2026-08-27 for
+        the Dashboard admin-password unlock screen and Settings' admin-
+        password fields.
+    -->
+    <Style x:Key="ThemedPasswordBoxStyle" TargetType="PasswordBox">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighestBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariantBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="PasswordBox">
+                    <Border x:Name="Root"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="10"
+                            Padding="{TemplateBinding Padding}">
+                        <ScrollViewer x:Name="PART_ContentHost" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                            <Setter TargetName="Root" Property="BorderThickness" Value="2" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="ThemedTextBoxStyle" TargetType="TextBox">
         <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighestBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />

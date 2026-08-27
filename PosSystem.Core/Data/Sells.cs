@@ -152,5 +152,79 @@ namespace PosSystem.Core.Data
                 }
             }
         }
+
+        // Everything below added 2026-08-27 for item #6 (Bills view on
+        // Checkout + delete-line/delete-whole-bill with reversal).
+
+        // A bill's line items, for the drill-down view when someone taps a
+        // bill in the list -- and the input to "restore inventory for every
+        // line" when the whole bill is deleted (see BillsViewModel.
+        // DeleteWholeBill).
+        public List<Models.Sells> ReadSellsByBillnumber(string TableName, int Billnumber)
+        {
+            List<Models.Sells> sells = new List<Models.Sells>();
+            string readString = "SELECT * FROM " + TableName + " WHERE Billnumber = @billnumber";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(readString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@billnumber", Billnumber);
+                    IDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        var goods_List = new Models.Sells();
+                        goods_List.Id = DbNullSafe.ToInt32(reader["ID"]);
+                        goods_List.Name = DbNullSafe.ToStringSafe(reader["Name"]);
+                        goods_List.Category = DbNullSafe.ToStringSafe(reader["Category"]);
+                        goods_List.Quantity = DbNullSafe.ToDouble(reader["Quantity"]);
+                        goods_List.Cost = DbNullSafe.ToDouble(reader["Cost"]);
+                        goods_List.Price = DbNullSafe.ToDouble(reader["Price"]);
+                        goods_List.Type = DbNullSafe.ToStringSafe(reader["Type"]);
+                        goods_List.Time = DbNullSafe.ToStringSafe(reader["Time"]);
+                        goods_List.Datex = DbNullSafe.ToStringSafe(reader["Datex"]);
+                        goods_List.Barcode = DbNullSafe.ToStringSafe(reader["Barcode"]);
+                        goods_List.Billnumber = DbNullSafe.ToInt32(reader["Billnumber"]);
+                        goods_List.Earned = DbNullSafe.ToDouble(reader["Earned"]);
+                        goods_List.Returned = DbNullSafe.ToStringSafe(reader["Returned"]);
+                        goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
+                        sells.Add(goods_List);
+                    }
+                    return sells;
+                }
+            }
+        }
+
+        public bool DeleteSellById(string TableName, int Id)
+        {
+            string deleteString = "DELETE FROM " + TableName + " WHERE ID = @id";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(deleteString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", Id);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                    return true;
+                }
+            }
+        }
+
+        public bool DeleteSellsByBillnumber(string TableName, int Billnumber)
+        {
+            string deleteString = "DELETE FROM " + TableName + " WHERE Billnumber = @billnumber";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(deleteString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@billnumber", Billnumber);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                    return true;
+                }
+            }
+        }
     }
 }

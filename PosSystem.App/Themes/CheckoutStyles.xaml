@@ -182,4 +182,59 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Settings' Appearance section (2026-08-26) — Language and Theme
+         segmented pickers. Same DataTrigger-per-named-bool-property shape
+         as every style above despite living in a file named for Checkout
+         (already not exclusively true — see the Dashboard range-button
+         styles above this comment), bound to SettingsViewModel's
+         IsEnglishSelected/IsArabicSelected/IsLightThemeSelected/
+         IsDarkThemeSelected. -->
+    <Style x:Key="LanguageEnglishButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsEnglishSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="LanguageArabicButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsArabicSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ThemeLightButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsLightThemeSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ThemeDarkButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsDarkThemeSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
 </ResourceDictionary>
