@@ -264,6 +264,11 @@
     <system:String x:Key="SettingsTaxRateInvalid">Enter a valid tax rate between 0 and 100.</system:String>
     <system:String x:Key="SettingsLowStockThresholdInvalid">Enter a valid threshold (0 or more).</system:String>
 
+    <!-- Preferences admin gate (added per Mahmoud's request), Tax Rate
+         and Low Stock Threshold now require the admin password to change,
+         same inline-unlock-box pattern as the Export section below. -->
+    <system:String x:Key="SettingsPreferencesAdminRequired">Enter the admin password below to change these preferences.</system:String>
+
     <!-- Data & Backup (new, 2026-08-26) — see SettingsViewModel's class doc
          comment for why this is backup-only, no restore. -->
     <system:String x:Key="SettingsDataBackupTitle">Data &amp; Backup</system:String>
@@ -298,6 +303,11 @@
     <system:String x:Key="SettingsAdminPasswordMismatch">Passwords don't match.</system:String>
     <system:String x:Key="SettingsAdminPasswordSaveSuccess">Admin password updated.</system:String>
     <system:String x:Key="SettingsAdminPasswordCleared">Admin password removed — Dashboard is now open to anyone.</system:String>
+
+    <!-- Admin Password section gate (added per Mahmoud's request)
+         changing the password now requires the CURRENT admin password
+         first, same inline-unlock-box pattern as Export/Preferences. -->
+    <system:String x:Key="SettingsAdminPasswordUnlockRequired">Enter the current admin password below to change it.</system:String>
 
     <!-- Export to Excel (Phase 11 #3, 2026-08-28) — Settings' Export
          section: quick-range buttons, admin-gated unlock, and the actual

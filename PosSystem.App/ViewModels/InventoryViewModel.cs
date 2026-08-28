@@ -92,7 +92,20 @@ namespace PosSystem.App.ViewModels
         // any staff member -- only the actions Mahmoud actually named are
         // gated: AddProduct, StartEdit (which blocks reaching SaveEdit),
         // DeleteProduct, AddCategory, DeleteCategory.
-        public bool IsAdminUnlocked => AdminSession.IsUnlocked;
+        // Admin gate (#7, 2026-08-27 batch, item #7's extension beyond just
+        // Dashboard) -- reworked (per Mahmoud's explicit request) so this
+        // screen's unlock is independent and temporary, same reasoning as
+        // DashboardViewModel.IsUnlocked's doc comment: unlocking Inventory
+        // does NOT unlock Dashboard, Bills, or Settings' gated sections,
+        // and leaving this screen re-locks it -- LockAdmin() below is
+        // called from InventoryView's Unloaded event. Browsing, searching,
+        // filtering, and the existing inline quantity-adjust (a routine
+        // restock-count task, not a structural change) stay open to any
+        // staff member -- only the actions Mahmoud actually named are
+        // gated: AddProduct, StartEdit (which blocks reaching SaveEdit),
+        // DeleteProduct, AddCategory, DeleteCategory.
+        private bool _isUnlockedThisVisit;
+        public bool IsAdminUnlocked => !AppSettings.HasAdminPassword || _isUnlockedThisVisit;
         public bool IsAdminLocked => !IsAdminUnlocked;
 
         private string _adminUnlockPasswordInput = "";
@@ -113,8 +126,11 @@ namespace PosSystem.App.ViewModels
 
         private void AdminUnlock()
         {
-            if (AdminSession.TryUnlock(AdminUnlockPasswordInput))
+            if (AppSettings.VerifyAdminPassword(AdminUnlockPasswordInput))
             {
+                _isUnlockedThisVisit = true;
+                OnPropertyChanged(nameof(IsAdminUnlocked));
+                OnPropertyChanged(nameof(IsAdminLocked));
                 AdminUnlockError = "";
                 AdminUnlockPasswordInput = "";
             }
@@ -122,6 +138,22 @@ namespace PosSystem.App.ViewModels
             {
                 AdminUnlockError = LocalizationManager.GetString("DashboardUnlockIncorrect");
             }
+        }
+
+        /// <summary>
+        /// Re-locks this screen -- called from InventoryView's Unloaded
+        /// event when the sidebar selection moves away from Inventory, so
+        /// coming back later requires the password again. Same pattern as
+        /// DashboardViewModel.LockAdmin.
+        /// </summary>
+        public void LockAdmin()
+        {
+            if (!_isUnlockedThisVisit) return;
+            _isUnlockedThisVisit = false;
+            AdminUnlockPasswordInput = "";
+            AdminUnlockError = "";
+            OnPropertyChanged(nameof(IsAdminUnlocked));
+            OnPropertyChanged(nameof(IsAdminLocked));
         }
 
         /// <summary>
@@ -396,7 +428,7 @@ namespace PosSystem.App.ViewModels
                 if (p is InventoryRow row) DeleteProduct(row);
             });
             AdminUnlockCommand = new RelayCommand(_ => AdminUnlock());
-            AdminSession.Changed += () =>
+            AppSettings.Changed += () =>
             {
                 OnPropertyChanged(nameof(IsAdminUnlocked));
                 OnPropertyChanged(nameof(IsAdminLocked));

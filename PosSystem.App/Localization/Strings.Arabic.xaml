@@ -213,6 +213,7 @@
     <system:String x:Key="SettingsSaveButton">حفظ التفضيلات</system:String>
     <system:String x:Key="SettingsSaveSuccess">تم حفظ التفضيلات.</system:String>
     <system:String x:Key="SettingsSaveError">حدث خطأ. حاول مرة أخرى.</system:String>
+    <system:String x:Key="SettingsPreferencesAdminRequired">أدخل كلمة مرور المسؤول أدناه لتغيير هذه التفضيلات.</system:String>
     <system:String x:Key="SettingsTaxRateInvalid">أدخل نسبة ضريبة صحيحة بين 0 و100.</system:String>
     <system:String x:Key="SettingsLowStockThresholdInvalid">أدخل حدًا صحيحًا (0 أو أكثر).</system:String>
     <system:String x:Key="SettingsDataBackupTitle">البيانات والنسخ الاحتياطي</system:String>
@@ -240,6 +241,7 @@
     <system:String x:Key="SettingsAdminPasswordSaveButton">حفظ كلمة مرور المسؤول</system:String>
     <system:String x:Key="SettingsAdminPasswordMismatch">كلمتا المرور غير متطابقتين.</system:String>
     <system:String x:Key="SettingsAdminPasswordSaveSuccess">تم تحديث كلمة مرور المسؤول.</system:String>
+    <system:String x:Key="SettingsAdminPasswordUnlockRequired">أدخل كلمة مرور المسؤول الحالية أدناه لتغييرها.</system:String>
     <system:String x:Key="SettingsAdminPasswordCleared">تمت إزالة كلمة مرور المسؤول — لوحة التحكم مفتوحة الآن للجميع.</system:String>
 
     <!-- تصدير إلى Excel (البند 3 من الدفعة 11) — نفس مجموعة المفاتيح الموجودة

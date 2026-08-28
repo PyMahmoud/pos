@@ -108,10 +108,16 @@ namespace PosSystem.App.ViewModels
             set => SetProperty(ref _statusMessage, value);
         }
 
-        // Admin gate — same shared AdminSession + RequireAdminUnlocked
-        // pattern as InventoryViewModel; see that class's own comment for
-        // why a shared session (not a per-screen password) is the design.
-        public bool IsAdminUnlocked => AdminSession.IsUnlocked;
+        // Admin gate -- reworked (per Mahmoud's explicit request) to be
+        // fully independent of Dashboard/Inventory/Settings' gates: this
+        // ViewModel is already a fresh instance every time "Bills" is
+        // opened (see class doc comment), so a private, non-shared
+        // _isUnlockedThisVisit flag naturally requires the password again
+        // on every reopen -- no separate lock-on-navigate-away hook needed
+        // the way Dashboard/Inventory/Settings need one, since there's no
+        // cached instance to leave unlocked in the background here.
+        private bool _isUnlockedThisVisit;
+        public bool IsAdminUnlocked => !AppSettings.HasAdminPassword || _isUnlockedThisVisit;
         public bool IsAdminLocked => !IsAdminUnlocked;
 
         private string _adminUnlockPasswordInput = "";
@@ -132,8 +138,11 @@ namespace PosSystem.App.ViewModels
 
         private void AdminUnlock()
         {
-            if (AdminSession.TryUnlock(AdminUnlockPasswordInput))
+            if (AppSettings.VerifyAdminPassword(AdminUnlockPasswordInput))
             {
+                _isUnlockedThisVisit = true;
+                OnPropertyChanged(nameof(IsAdminUnlocked));
+                OnPropertyChanged(nameof(IsAdminLocked));
                 AdminUnlockError = "";
                 AdminUnlockPasswordInput = "";
             }
@@ -166,11 +175,6 @@ namespace PosSystem.App.ViewModels
         public BillsBrowserViewModel()
         {
             AdminUnlockCommand = new RelayCommand(_ => AdminUnlock());
-            AdminSession.Changed += () =>
-            {
-                OnPropertyChanged(nameof(IsAdminUnlocked));
-                OnPropertyChanged(nameof(IsAdminLocked));
-            };
 
             ViewBillCommand = new RelayCommand(p =>
             {

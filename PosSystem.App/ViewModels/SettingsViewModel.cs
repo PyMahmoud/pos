@@ -196,10 +196,60 @@ namespace PosSystem.App.ViewModels
 
         public bool HasAdminPassword => AppSettings.HasAdminPassword;
 
+        // Admin Password section gate (added per Mahmoud's request,
+        // reworked again per his follow-up request) -- fully independent
+        // of Preferences/Export below and of Dashboard/Inventory/Bills:
+        // unlocking this section does NOT unlock any other gated section,
+        // and leaving the Settings tab re-locks all three Settings
+        // sections -- see LockAllAdminSections() and SettingsView's
+        // Unloaded hook. _adminPasswordUnlockedThisVisit is a private,
+        // non-shared flag (no more AdminSession).
+        private bool _adminPasswordUnlockedThisVisit;
+        public bool IsAdminPasswordUnlocked => !AppSettings.HasAdminPassword || _adminPasswordUnlockedThisVisit;
+        public bool IsAdminPasswordLocked => !IsAdminPasswordUnlocked;
+
+        private string _adminPasswordUnlockPasswordInput = "";
+        public string AdminPasswordUnlockPasswordInput
+        {
+            get => _adminPasswordUnlockPasswordInput;
+            set => SetProperty(ref _adminPasswordUnlockPasswordInput, value);
+        }
+
+        private string _adminPasswordUnlockError = "";
+        public string AdminPasswordUnlockError
+        {
+            get => _adminPasswordUnlockError;
+            set => SetProperty(ref _adminPasswordUnlockError, value);
+        }
+
+        public ICommand AdminPasswordUnlockCommand { get; }
+
+        private void AdminPasswordUnlock()
+        {
+            if (AppSettings.VerifyAdminPassword(AdminPasswordUnlockPasswordInput))
+            {
+                _adminPasswordUnlockedThisVisit = true;
+                OnPropertyChanged(nameof(IsAdminPasswordUnlocked));
+                OnPropertyChanged(nameof(IsAdminPasswordLocked));
+                AdminPasswordUnlockError = "";
+                AdminPasswordUnlockPasswordInput = "";
+            }
+            else
+            {
+                AdminPasswordUnlockError = LocalizationManager.GetString("DashboardUnlockIncorrect");
+            }
+        }
+
         public ICommand SaveAdminPasswordCommand { get; }
 
         private void SaveAdminPassword()
         {
+            if (!IsAdminPasswordUnlocked)
+            {
+                StatusMessage = LocalizationManager.GetString("SettingsAdminPasswordUnlockRequired");
+                return;
+            }
+
             if (NewAdminPasswordInput != ConfirmAdminPasswordInput)
             {
                 StatusMessage = LocalizationManager.GetString("SettingsAdminPasswordMismatch");
@@ -211,15 +261,59 @@ namespace PosSystem.App.ViewModels
             ConfirmAdminPasswordInput = "";
             OnPropertyChanged(nameof(HasAdminPassword));
 
-            // Setting a NEW password re-locks every gated screen (Dashboard,
-            // Inventory's product/category CRUD, Excel export) immediately —
-            // someone just turned protection on. Clearing it back to blank
-            // un-gates all of them, since there's no password left to enter.
-            // See AdminSession.ResetForPasswordChange's doc comment.
-            AdminSession.ResetForPasswordChange();
+            // Setting a NEW password re-locks every gated section on this
+            // screen (Preferences, Export, and this Admin Password section
+            // itself) immediately -- the password just entered to reach
+            // this point is about to become stale. Clearing it back to
+            // blank un-gates all of them, since there's no password left to
+            // enter. Dashboard/Inventory/Bills don't need an equivalent
+            // reset here -- each already re-locks independently the moment
+            // its own tab loses focus (see their LockAdmin methods), so by
+            // the time someone reaches this Save button on Settings, those
+            // are already locked again on their own.
+            LockAllAdminSections();
 
             StatusMessage = LocalizationManager.GetString(
                 AppSettings.HasAdminPassword ? "SettingsAdminPasswordSaveSuccess" : "SettingsAdminPasswordCleared");
+        }
+
+        // Preferences section gate (added per Mahmoud's request, reworked
+        // again per his follow-up request) -- fully independent of Export/
+        // Admin Password above, same reasoning as those two.
+        private bool _preferencesUnlockedThisVisit;
+        public bool IsPreferencesUnlocked => !AppSettings.HasAdminPassword || _preferencesUnlockedThisVisit;
+        public bool IsPreferencesLocked => !IsPreferencesUnlocked;
+
+        private string _preferencesUnlockPasswordInput = "";
+        public string PreferencesUnlockPasswordInput
+        {
+            get => _preferencesUnlockPasswordInput;
+            set => SetProperty(ref _preferencesUnlockPasswordInput, value);
+        }
+
+        private string _preferencesUnlockError = "";
+        public string PreferencesUnlockError
+        {
+            get => _preferencesUnlockError;
+            set => SetProperty(ref _preferencesUnlockError, value);
+        }
+
+        public ICommand PreferencesUnlockCommand { get; }
+
+        private void PreferencesUnlock()
+        {
+            if (AppSettings.VerifyAdminPassword(PreferencesUnlockPasswordInput))
+            {
+                _preferencesUnlockedThisVisit = true;
+                OnPropertyChanged(nameof(IsPreferencesUnlocked));
+                OnPropertyChanged(nameof(IsPreferencesLocked));
+                PreferencesUnlockError = "";
+                PreferencesUnlockPasswordInput = "";
+            }
+            else
+            {
+                PreferencesUnlockError = LocalizationManager.GetString("DashboardUnlockIncorrect");
+            }
         }
 
         public ICommand SaveCommand { get; }
@@ -230,8 +324,10 @@ namespace PosSystem.App.ViewModels
 
         // ----- Export (Phase 11 #3, 2026-08-28) — see class doc comment -----
 
-        public bool IsExportUnlocked => AdminSession.IsUnlocked;
+        public bool IsExportUnlocked => !AppSettings.HasAdminPassword || _exportUnlockedThisVisit;
         public bool IsExportLocked => !IsExportUnlocked;
+
+        private bool _exportUnlockedThisVisit;
 
         private string _exportUnlockPasswordInput = "";
         public string ExportUnlockPasswordInput
@@ -251,8 +347,11 @@ namespace PosSystem.App.ViewModels
 
         private void ExportUnlock()
         {
-            if (AdminSession.TryUnlock(ExportUnlockPasswordInput))
+            if (AppSettings.VerifyAdminPassword(ExportUnlockPasswordInput))
             {
+                _exportUnlockedThisVisit = true;
+                OnPropertyChanged(nameof(IsExportUnlocked));
+                OnPropertyChanged(nameof(IsExportLocked));
                 ExportUnlockError = "";
                 ExportUnlockPasswordInput = "";
             }
@@ -482,6 +581,8 @@ namespace PosSystem.App.ViewModels
             BackupNowCommand = new RelayCommand(_ => BackupNow());
             OpenBackupsFolderCommand = new RelayCommand(_ => OpenBackupsFolder());
             SaveAdminPasswordCommand = new RelayCommand(_ => SaveAdminPassword());
+            AdminPasswordUnlockCommand = new RelayCommand(_ => AdminPasswordUnlock());
+            PreferencesUnlockCommand = new RelayCommand(_ => PreferencesUnlock());
             ExportUnlockCommand = new RelayCommand(_ => ExportUnlock());
             SetExportQuickRangeCommand = new RelayCommand(p =>
             {
@@ -490,10 +591,14 @@ namespace PosSystem.App.ViewModels
             ExportToExcelCommand = new RelayCommand(_ => ExportToExcel());
             OpenExportsFolderCommand = new RelayCommand(_ => OpenExportsFolder());
 
-            AdminSession.Changed += () =>
+            AppSettings.Changed += () =>
             {
                 OnPropertyChanged(nameof(IsExportUnlocked));
                 OnPropertyChanged(nameof(IsExportLocked));
+                OnPropertyChanged(nameof(IsPreferencesUnlocked));
+                OnPropertyChanged(nameof(IsPreferencesLocked));
+                OnPropertyChanged(nameof(IsAdminPasswordUnlocked));
+                OnPropertyChanged(nameof(IsAdminPasswordLocked));
             };
 
             // Neither manager is owned by this ViewModel -- Theme can
@@ -596,8 +701,53 @@ namespace PosSystem.App.ViewModels
             LowStockThresholdInput = AppSettings.LowStockThreshold.ToString(CultureInfo.InvariantCulture);
         }
 
+        /// <summary>
+        /// Re-locks all three of Settings' independent admin gates
+        /// (Preferences, Export, Admin Password) at once -- called both
+        /// after a successful password change/clear in SaveAdminPassword
+        /// (the just-entered password is about to become stale) and from
+        /// SettingsView's Unloaded event when the sidebar selection moves
+        /// away from Settings, so returning later requires the password
+        /// again for each section independently, matching
+        /// Dashboard/Inventory's own LockAdmin methods. Also clears the
+        /// New/Confirm admin-password fields -- they sit behind the Admin
+        /// Password gate, so a partially-typed new password shouldn't
+        /// linger once that gate re-locks.
+        /// </summary>
+        public void LockAllAdminSections()
+        {
+            bool changed = _preferencesUnlockedThisVisit || _adminPasswordUnlockedThisVisit || _exportUnlockedThisVisit;
+
+            _preferencesUnlockedThisVisit = false;
+            _adminPasswordUnlockedThisVisit = false;
+            _exportUnlockedThisVisit = false;
+
+            PreferencesUnlockPasswordInput = "";
+            PreferencesUnlockError = "";
+            AdminPasswordUnlockPasswordInput = "";
+            AdminPasswordUnlockError = "";
+            ExportUnlockPasswordInput = "";
+            ExportUnlockError = "";
+            NewAdminPasswordInput = "";
+            ConfirmAdminPasswordInput = "";
+
+            if (!changed) return;
+            OnPropertyChanged(nameof(IsPreferencesUnlocked));
+            OnPropertyChanged(nameof(IsPreferencesLocked));
+            OnPropertyChanged(nameof(IsAdminPasswordUnlocked));
+            OnPropertyChanged(nameof(IsAdminPasswordLocked));
+            OnPropertyChanged(nameof(IsExportUnlocked));
+            OnPropertyChanged(nameof(IsExportLocked));
+        }
+
         private void Save()
         {
+            if (!IsPreferencesUnlocked)
+            {
+                StatusMessage = LocalizationManager.GetString("SettingsPreferencesAdminRequired");
+                return;
+            }
+
             if (!double.TryParse(TaxRatePercentInput, NumberStyles.Float, CultureInfo.InvariantCulture, out double taxRate)
                 || taxRate < 0 || taxRate > 100)
             {

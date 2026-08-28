@@ -9,6 +9,14 @@ namespace PosSystem.App.Views
         {
             InitializeComponent();
 
+            // Re-lock on navigate-away (per Mahmoud's explicit request) --
+            // same pattern as DashboardView.xaml.cs; see
+            // InventoryViewModel.LockAdmin's doc comment.
+            Unloaded += (s, e) =>
+            {
+                if (DataContext is InventoryViewModel vm) vm.LockAdmin();
+            };
+
             // Clears the visible PasswordBox after a successful unlock
             // (ViewModel resets AdminUnlockPasswordInput to "") -- same
             // pull-direction sync SettingsView.xaml.cs does for its two

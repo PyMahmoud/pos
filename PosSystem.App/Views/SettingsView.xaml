@@ -120,39 +120,77 @@
                                    Foreground="{DynamicResource OnSurfaceBrush}"
                                    Margin="0,0,0,16" />
 
-                        <TextBlock Text="{DynamicResource SettingsTaxRateLabel}"
-                                   Style="{StaticResource LabelSmall}"
-                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                   Margin="0,0,0,4" />
-                        <TextBox Text="{Binding TaxRatePercentInput, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource ThemedTextBoxStyle}"
-                                 Margin="0,0,0,4" />
-                        <TextBlock Text="{DynamicResource SettingsTaxRateHint}"
-                                   Style="{StaticResource LabelSmall}"
-                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                   TextWrapping="Wrap"
-                                   Margin="0,0,0,16" />
+                        <!-- Locked state (admin gate added per Mahmoud's
+                             request), same inline-unlock-box pattern as
+                             the Export section below; shares AdminSession,
+                             so unlocking here or on any other gated section
+                             unlocks this one too. -->
+                        <StackPanel Visibility="{Binding IsPreferencesLocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{DynamicResource SettingsPreferencesAdminRequired}"
+                                       Style="{StaticResource BodyLarge}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="260" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <PasswordBox Grid.Column="0"
+                                             x:Name="PreferencesUnlockPasswordBox"
+                                             Style="{StaticResource ThemedPasswordBoxStyle}"
+                                             PasswordChanged="PreferencesUnlockPasswordBox_PasswordChanged" />
+                                <Button Grid.Column="2"
+                                        Content="{DynamicResource DashboardUnlockButton}"
+                                        Command="{Binding PreferencesUnlockCommand}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Foreground="{DynamicResource OnPrimaryBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="16,8" />
+                            </Grid>
+                            <TextBlock Text="{Binding PreferencesUnlockError}"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0" />
+                        </StackPanel>
 
-                        <TextBlock Text="{DynamicResource SettingsLowStockThresholdLabel}"
-                                   Style="{StaticResource LabelSmall}"
-                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                   Margin="0,0,0,4" />
-                        <TextBox Text="{Binding LowStockThresholdInput, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource ThemedTextBoxStyle}"
-                                 Margin="0,0,0,4" />
-                        <TextBlock Text="{DynamicResource SettingsLowStockThresholdHint}"
-                                   Style="{StaticResource LabelSmall}"
-                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                   TextWrapping="Wrap"
-                                   Margin="0,0,0,20" />
+                        <!-- Unlocked state -->
+                        <StackPanel Visibility="{Binding IsPreferencesUnlocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{DynamicResource SettingsTaxRateLabel}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       Margin="0,0,0,4" />
+                            <TextBox Text="{Binding TaxRatePercentInput, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource ThemedTextBoxStyle}"
+                                     Margin="0,0,0,4" />
+                            <TextBlock Text="{DynamicResource SettingsTaxRateHint}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,16" />
 
-                        <Button Content="{DynamicResource SettingsSaveButton}"
-                                Command="{Binding SaveCommand}"
-                                Background="{DynamicResource PrimaryBrush}"
-                                Foreground="{DynamicResource OnPrimaryBrush}"
-                                Template="{StaticResource SelectableButtonTemplate}"
-                                Padding="0,12"
-                                HorizontalContentAlignment="Center" />
+                            <TextBlock Text="{DynamicResource SettingsLowStockThresholdLabel}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       Margin="0,0,0,4" />
+                            <TextBox Text="{Binding LowStockThresholdInput, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource ThemedTextBoxStyle}"
+                                     Margin="0,0,0,4" />
+                            <TextBlock Text="{DynamicResource SettingsLowStockThresholdHint}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,20" />
+
+                            <Button Content="{DynamicResource SettingsSaveButton}"
+                                    Command="{Binding SaveCommand}"
+                                    Background="{DynamicResource PrimaryBrush}"
+                                    Foreground="{DynamicResource OnPrimaryBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="0,12"
+                                    HorizontalContentAlignment="Center" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -378,48 +416,87 @@
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,12" />
 
-                        <Border CornerRadius="8" Padding="10,6" Margin="0,0,0,16"
-                                HorizontalAlignment="Left"
-                                Background="{DynamicResource SurfaceContainerHighBrush}">
-                            <TextBlock Foreground="{DynamicResource OnSurfaceVariantBrush}">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock" BasedOn="{StaticResource LabelSmall}">
-                                        <Setter Property="Text" Value="{DynamicResource SettingsAdminPasswordCurrentStatusNotSet}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasAdminPassword}" Value="True">
-                                                <Setter Property="Text" Value="{DynamicResource SettingsAdminPasswordCurrentStatusSet}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
+                        <!-- Locked state (admin gate added per Mahmoud's
+                             request), changing the admin password now
+                             requires the CURRENT one first, same inline-
+                             unlock-box pattern as Export/Preferences.
+                             Shares AdminSession, so unlocking here or on
+                             any other gated section unlocks this one too. -->
+                        <StackPanel Visibility="{Binding IsAdminPasswordLocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{DynamicResource SettingsAdminPasswordUnlockRequired}"
+                                       Style="{StaticResource BodyLarge}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="260" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <PasswordBox Grid.Column="0"
+                                             x:Name="AdminPasswordUnlockPasswordBox"
+                                             Style="{StaticResource ThemedPasswordBoxStyle}"
+                                             PasswordChanged="AdminPasswordUnlockPasswordBox_PasswordChanged" />
+                                <Button Grid.Column="2"
+                                        Content="{DynamicResource DashboardUnlockButton}"
+                                        Command="{Binding AdminPasswordUnlockCommand}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Foreground="{DynamicResource OnPrimaryBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="16,8" />
+                            </Grid>
+                            <TextBlock Text="{Binding AdminPasswordUnlockError}"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0" />
+                        </StackPanel>
 
-                        <TextBlock Text="{DynamicResource SettingsAdminPasswordNewLabel}"
-                                   Style="{StaticResource LabelSmall}"
-                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                   Margin="0,0,0,4" />
-                        <PasswordBox x:Name="NewAdminPasswordBox"
-                                     Style="{StaticResource ThemedPasswordBoxStyle}"
-                                     PasswordChanged="NewAdminPasswordBox_PasswordChanged"
-                                     Margin="0,0,0,12" />
+                        <!-- Unlocked state -->
+                        <StackPanel Visibility="{Binding IsAdminPasswordUnlocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Border CornerRadius="8" Padding="10,6" Margin="0,0,0,16"
+                                    HorizontalAlignment="Left"
+                                    Background="{DynamicResource SurfaceContainerHighBrush}">
+                                <TextBlock Foreground="{DynamicResource OnSurfaceVariantBrush}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource LabelSmall}">
+                                            <Setter Property="Text" Value="{DynamicResource SettingsAdminPasswordCurrentStatusNotSet}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasAdminPassword}" Value="True">
+                                                    <Setter Property="Text" Value="{DynamicResource SettingsAdminPasswordCurrentStatusSet}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
 
-                        <TextBlock Text="{DynamicResource SettingsAdminPasswordConfirmLabel}"
-                                   Style="{StaticResource LabelSmall}"
-                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                   Margin="0,0,0,4" />
-                        <PasswordBox x:Name="ConfirmAdminPasswordBox"
-                                     Style="{StaticResource ThemedPasswordBoxStyle}"
-                                     PasswordChanged="ConfirmAdminPasswordBox_PasswordChanged"
-                                     Margin="0,0,0,16" />
+                            <TextBlock Text="{DynamicResource SettingsAdminPasswordNewLabel}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       Margin="0,0,0,4" />
+                            <PasswordBox x:Name="NewAdminPasswordBox"
+                                         Style="{StaticResource ThemedPasswordBoxStyle}"
+                                         PasswordChanged="NewAdminPasswordBox_PasswordChanged"
+                                         Margin="0,0,0,12" />
 
-                        <Button Content="{DynamicResource SettingsAdminPasswordSaveButton}"
-                                Command="{Binding SaveAdminPasswordCommand}"
-                                Background="{DynamicResource PrimaryBrush}"
-                                Foreground="{DynamicResource OnPrimaryBrush}"
-                                Template="{StaticResource SelectableButtonTemplate}"
-                                Padding="0,12"
-                                HorizontalContentAlignment="Center" />
+                            <TextBlock Text="{DynamicResource SettingsAdminPasswordConfirmLabel}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       Margin="0,0,0,4" />
+                            <PasswordBox x:Name="ConfirmAdminPasswordBox"
+                                         Style="{StaticResource ThemedPasswordBoxStyle}"
+                                         PasswordChanged="ConfirmAdminPasswordBox_PasswordChanged"
+                                         Margin="0,0,0,16" />
+
+                            <Button Content="{DynamicResource SettingsAdminPasswordSaveButton}"
+                                    Command="{Binding SaveAdminPasswordCommand}"
+                                    Background="{DynamicResource PrimaryBrush}"
+                                    Foreground="{DynamicResource OnPrimaryBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="0,12"
+                                    HorizontalContentAlignment="Center" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 

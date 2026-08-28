@@ -3,6 +3,21 @@ using System;
 namespace PosSystem.App
 {
     /// <summary>
+    /// UNUSED as of 2026-08-28 -- kept only as history, do not wire this
+    /// back up. Mahmoud explicitly asked for the opposite of what this
+    /// class did: unlocking one gated section (Dashboard, Inventory,
+    /// Bills, or any one of Settings' three sections) must NOT unlock any
+    /// other section, and leaving a screen must re-lock it, requiring the
+    /// password again on return. Every former caller (DashboardViewModel,
+    /// InventoryViewModel, BillsBrowserViewModel, SettingsViewModel) now
+    /// carries its own private, non-shared "unlocked this visit" bool and
+    /// calls AppSettings.VerifyAdminPassword directly instead of going
+    /// through this class -- see each ViewModel's own IsUnlocked-style
+    /// property and LockAdmin()/LockAllAdminSections() methods.
+    ///
+    /// Original doc comment below, preserved for context on why this
+    /// existed and was later replaced:
+    ///
     /// Static, app-wide "is the admin-gated area currently unlocked"
     /// session flag — added 2026-08-27 (item #7's extension beyond just
     /// Dashboard). Originally each gated screen (Dashboard, then Inventory)

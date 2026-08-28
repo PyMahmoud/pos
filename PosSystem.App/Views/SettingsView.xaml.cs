@@ -14,6 +14,15 @@ namespace PosSystem.App.Views
         {
             InitializeComponent();
 
+            // Re-lock all three admin gates on navigate-away (per Mahmoud's
+            // explicit request) -- same Unloaded-event pattern as
+            // DashboardView/InventoryView; see
+            // SettingsViewModel.LockAllAdminSections' doc comment.
+            Unloaded += (s, e) =>
+            {
+                if (DataContext is SettingsViewModel lockVm) lockVm.LockAllAdminSections();
+            };
+
             // Admin password (#7, 2026-08-27) -- PasswordBox can't bind
             // Password directly (see DashboardView.xaml.cs's identical
             // comment for why), so both directions need code-behind: typing
@@ -55,6 +64,19 @@ namespace PosSystem.App.Views
             {
                 ExportUnlockPasswordBox.Password = "";
             }
+            // Preferences and Admin Password section admin-unlock gates
+            // (added per Mahmoud's request) -- same PasswordBox two-way-sync
+            // need as the Export unlock box above.
+            if (e.PropertyName == nameof(SettingsViewModel.PreferencesUnlockPasswordInput)
+                && vm.PreferencesUnlockPasswordInput == "")
+            {
+                PreferencesUnlockPasswordBox.Password = "";
+            }
+            if (e.PropertyName == nameof(SettingsViewModel.AdminPasswordUnlockPasswordInput)
+                && vm.AdminPasswordUnlockPasswordInput == "")
+            {
+                AdminPasswordUnlockPasswordBox.Password = "";
+            }
         }
 
         private void NewAdminPasswordBox_PasswordChanged(object sender, System.Windows.RoutedEventArgs e)
@@ -78,6 +100,22 @@ namespace PosSystem.App.Views
             if (DataContext is SettingsViewModel vm)
             {
                 vm.ExportUnlockPasswordInput = ExportUnlockPasswordBox.Password;
+            }
+        }
+
+        private void PreferencesUnlockPasswordBox_PasswordChanged(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.PreferencesUnlockPasswordInput = PreferencesUnlockPasswordBox.Password;
+            }
+        }
+
+        private void AdminPasswordUnlockPasswordBox_PasswordChanged(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.AdminPasswordUnlockPasswordInput = AdminPasswordUnlockPasswordBox.Password;
             }
         }
     }

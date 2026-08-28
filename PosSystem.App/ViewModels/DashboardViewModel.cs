@@ -109,7 +109,23 @@ namespace PosSystem.App.ViewModels
         // no admin password has ever been set (AppSettings.HasAdminPassword
         // is false), AdminSession starts unlocked, so the Dashboard stays
         // open exactly as it always has on a fresh install.
-        public bool IsUnlocked => AdminSession.IsUnlocked;
+        // Admin gate (#7, 2026-08-27) -- reworked (per Mahmoud's explicit
+        // request) so this screen's unlock is independent and temporary:
+        // unlocking Dashboard does NOT unlock Inventory, Bills, or any of
+        // Settings' gated sections, and leaving this screen (switching
+        // sidebar tabs) re-locks it -- the password has to be re-entered
+        // next time Dashboard is opened, even though this ViewModel
+        // instance itself is cached for the app's lifetime like every
+        // other screen (MainViewModel's view cache). _isUnlockedThisVisit
+        // is a private, per-ViewModel flag -- not shared via any static
+        // session class. LockAdmin() below resets it and is called from
+        // DashboardView's Unloaded event, which fires whenever this cached
+        // view leaves the visual tree (i.e. the sidebar selection moves
+        // elsewhere), even though the instance survives. If no admin
+        // password has ever been set (AppSettings.HasAdminPassword is
+        // false), this stays unlocked unconditionally, same as before.
+        private bool _isUnlockedThisVisit;
+        public bool IsUnlocked => !AppSettings.HasAdminPassword || _isUnlockedThisVisit;
         public bool IsLocked => !IsUnlocked;
 
         private string _unlockPasswordInput = "";
@@ -130,8 +146,11 @@ namespace PosSystem.App.ViewModels
 
         private void Unlock()
         {
-            if (AdminSession.TryUnlock(UnlockPasswordInput))
+            if (AppSettings.VerifyAdminPassword(UnlockPasswordInput))
             {
+                _isUnlockedThisVisit = true;
+                OnPropertyChanged(nameof(IsUnlocked));
+                OnPropertyChanged(nameof(IsLocked));
                 UnlockError = "";
                 UnlockPasswordInput = "";
             }
@@ -139,6 +158,22 @@ namespace PosSystem.App.ViewModels
             {
                 UnlockError = LocalizationManager.GetString("DashboardUnlockIncorrect");
             }
+        }
+
+        /// <summary>
+        /// Re-locks this screen -- called from DashboardView's Unloaded
+        /// event when the sidebar selection moves away from Dashboard, so
+        /// coming back later requires the password again instead of
+        /// staying unlocked for the rest of the app session.
+        /// </summary>
+        public void LockAdmin()
+        {
+            if (!_isUnlockedThisVisit) return;
+            _isUnlockedThisVisit = false;
+            UnlockPasswordInput = "";
+            UnlockError = "";
+            OnPropertyChanged(nameof(IsUnlocked));
+            OnPropertyChanged(nameof(IsLocked));
         }
 
         private readonly Core.Data.Bills _billsData = new Core.Data.Bills();
@@ -410,7 +445,7 @@ namespace PosSystem.App.ViewModels
         public DashboardViewModel()
         {
             UnlockCommand = new RelayCommand(_ => Unlock());
-            AdminSession.Changed += () =>
+            AppSettings.Changed += () =>
             {
                 OnPropertyChanged(nameof(IsUnlocked));
                 OnPropertyChanged(nameof(IsLocked));

@@ -8,6 +8,17 @@ namespace PosSystem.App.Views
         public DashboardView()
         {
             InitializeComponent();
+
+            // Re-lock on navigate-away (per Mahmoud's explicit request) --
+            // Unloaded fires whenever this cached view leaves the visual
+            // tree (i.e. MainViewModel.CurrentView switches to another
+            // screen), even though the view/ViewModel instance itself is
+            // cached for the app's lifetime. See DashboardViewModel.LockAdmin's
+            // doc comment for the full reasoning.
+            Unloaded += (s, e) =>
+            {
+                if (DataContext is DashboardViewModel vm) vm.LockAdmin();
+            };
         }
 
         // PasswordBox deliberately doesn't support a Password binding (a
