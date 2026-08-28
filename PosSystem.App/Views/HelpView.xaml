@@ -1,0 +1,248 @@
+<UserControl x:Class="PosSystem.App.Views.HelpView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:app="clr-namespace:PosSystem.App"
+             FlowDirection="{DynamicResource AppFlowDirection}">
+
+    <!--
+        Help / how-to-use guide (Phase 11 #5, 2026-08-28). Same
+        ScrollViewer-over-centered-StackPanel-of-cards shape SettingsView
+        already established, reused here rather than invented fresh so this
+        screen looks like it belongs next to the rest of the app. Every
+        section is a static Title + body TextBlock pair bound to
+        Strings.English.xaml/Strings.Arabic.xaml via DynamicResource 
+        switching language on Settings' Appearance picker updates this
+        screen the same instant it updates every other screen, with no
+        code here needing to know which language is active.
+
+        Deliberately plain, no Expander/accordion collapsing  everything
+        just reads top to bottom. An accordion would need its own
+        ControlTemplate override to match the app's theme (see
+        CommonStyles.xaml's long comments on why ComboBox/DatePicker each
+        needed one) and this app currently has no way to click-test that
+        without a real Windows build, so the lower-risk plain-scroll shape
+        was chosen instead.
+    -->
+    <Grid Background="{DynamicResource BackgroundBrush}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel HorizontalAlignment="Center" MaxWidth="640" Margin="0,32">
+                <TextBlock Text="{DynamicResource HelpHeading}"
+                           Style="{StaticResource DisplayLarge}"
+                           Foreground="{DynamicResource OnSurfaceBrush}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="{DynamicResource HelpDescription}"
+                           Style="{StaticResource BodyLarge}"
+                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           Margin="0,8,0,24" />
+
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                        CornerRadius="16" Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource HelpGettingStartedTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource HelpGettingStartedBody}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                        CornerRadius="16" Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource HelpCheckoutTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource HelpCheckoutBody}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                        CornerRadius="16" Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource HelpBillsTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource HelpBillsBody}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                        CornerRadius="16" Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource HelpCustomersTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource HelpCustomersBody}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                        CornerRadius="16" Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource HelpInventoryTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource HelpInventoryBody}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                        CornerRadius="16" Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource HelpDashboardTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource HelpDashboardBody}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                        CornerRadius="16" Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource HelpSettingsTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource HelpSettingsBody}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                        CornerRadius="16" Padding="24">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource HelpNeedMoreTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,10" />
+                        <TextBlock Text="{DynamicResource HelpNeedMoreBody}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Contact Support (Phase 11 #4, 2026-08-28; moved here
+                     from Settings 2026-08-28 per Mahmoud's request — this
+                     is where someone looking for help actually lands, so
+                     the live card belongs here rather than requiring a
+                     trip to Settings first). No ViewModel on this screen
+                     (see HelpView's class doc comment), so this card binds
+                     straight to ContactInfo.cs's public constants via
+                     x:Static instead of a bound display property, and the
+                     three buttons are plain Click handlers in
+                     HelpView.xaml.cs instead of ICommand bindings — same
+                     tel:/wa.me:/mailto: launch logic Settings' card used
+                     to own, just without the ViewModel layer this screen
+                     doesn't otherwise need. -->
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                        CornerRadius="16" Padding="24" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource HelpContactSupportTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,8" />
+                        <TextBlock Text="{DynamicResource HelpContactSupportDescription}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,16" />
+
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{DynamicResource HelpContactPhoneLabel}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       Margin="0,0,8,0" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{x:Static app:ContactInfo.PhoneDisplay}"
+                                       Foreground="{DynamicResource OnSurfaceBrush}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{DynamicResource HelpContactEmailLabel}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       Margin="0,0,8,0" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{x:Static app:ContactInfo.SupportEmail}"
+                                       Foreground="{DynamicResource OnSurfaceBrush}" />
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0"
+                                    Content="{DynamicResource HelpContactCallButton}"
+                                    Click="CallSupport_Click"
+                                    Background="{DynamicResource PrimaryBrush}"
+                                    Foreground="{DynamicResource OnPrimaryBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="0,12"
+                                    HorizontalContentAlignment="Center" />
+                            <Button Grid.Column="2"
+                                    Content="{DynamicResource HelpContactWhatsAppButton}"
+                                    Click="WhatsAppSupport_Click"
+                                    Background="{DynamicResource SurfaceContainerHighBrush}"
+                                    Foreground="{DynamicResource OnSurfaceBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="0,12"
+                                    HorizontalContentAlignment="Center" />
+                            <Button Grid.Column="4"
+                                    Content="{DynamicResource HelpContactEmailButton}"
+                                    Click="EmailSupport_Click"
+                                    Background="{DynamicResource SurfaceContainerHighBrush}"
+                                    Foreground="{DynamicResource OnSurfaceBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="0,12"
+                                    HorizontalContentAlignment="Center" />
+                        </Grid>
+
+                        <TextBlock x:Name="ContactErrorText"
+                                   Foreground="{DynamicResource ErrorBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,12,0,0" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

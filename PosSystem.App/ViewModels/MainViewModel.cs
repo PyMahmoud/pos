@@ -55,6 +55,10 @@ namespace PosSystem.App.ViewModels
                 new NavItem("NavCustomers", IconGeometries.Customers, () => new CustomersView()),
                 new NavItem("NavInventory", IconGeometries.Inventory, () => new InventoryView()),
                 new NavItem("NavSettings", IconGeometries.Settings, () => new SettingsView()),
+                // Help (Phase 11 #5, 2026-08-28) — static bilingual how-to-
+                // use guide, last in the sidebar since it's reference
+                // material, not a daily-use screen like everything above it.
+                new NavItem("NavHelp", IconGeometries.Help, () => new HelpView()),
             };
 
             // Dashboard first — matches the sidebar order in all three

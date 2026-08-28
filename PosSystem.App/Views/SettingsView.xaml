@@ -262,6 +262,9 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Contact Support card moved to Help (2026-08-28, per
+                     Mahmoud's request) — see HelpView.xaml. -->
+
                 <!-- Export (Phase 11 #3, 2026-08-28) — see SettingsViewModel's
                      class doc comment for why this is gated (revenue-
                      sensitive) and follows Inventory's inline-unlock-box
@@ -489,13 +492,37 @@
                                          PasswordChanged="ConfirmAdminPasswordBox_PasswordChanged"
                                          Margin="0,0,0,16" />
 
-                            <Button Content="{DynamicResource SettingsAdminPasswordSaveButton}"
-                                    Command="{Binding SaveAdminPasswordCommand}"
-                                    Background="{DynamicResource PrimaryBrush}"
-                                    Foreground="{DynamicResource OnPrimaryBrush}"
-                                    Template="{StaticResource SelectableButtonTemplate}"
-                                    Padding="0,12"
-                                    HorizontalContentAlignment="Center" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0"
+                                        Content="{DynamicResource SettingsAdminPasswordSaveButton}"
+                                        Command="{Binding SaveAdminPasswordCommand}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Foreground="{DynamicResource OnPrimaryBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="0,12"
+                                        HorizontalContentAlignment="Center" />
+                                <!-- Remove Password (added per Mahmoud's
+                                     request) — explicit alternative to the
+                                     blank+blank+Save removal path, only
+                                     shown once a password actually exists
+                                     to remove. See
+                                     SettingsViewModel.RemoveAdminPasswordCommand's
+                                     doc comment. -->
+                                <Button Grid.Column="2"
+                                        Content="{DynamicResource SettingsAdminPasswordRemoveButton}"
+                                        Command="{Binding RemoveAdminPasswordCommand}"
+                                        Background="{DynamicResource SurfaceContainerHighBrush}"
+                                        Foreground="{DynamicResource ErrorBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="0,12"
+                                        HorizontalContentAlignment="Center"
+                                        Visibility="{Binding HasAdminPassword, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            </Grid>
                         </StackPanel>
                     </StackPanel>
                 </Border>

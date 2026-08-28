@@ -15,6 +15,7 @@
     <system:String x:Key="NavCustomers">العملاء</system:String>
     <system:String x:Key="NavInventory">المخزون</system:String>
     <system:String x:Key="NavSettings">الإعدادات</system:String>
+    <system:String x:Key="NavHelp">المساعدة</system:String>
 
     <system:String x:Key="DashboardHeading">لوحة التحكم</system:String>
     <system:String x:Key="DashboardTodayRevenue">الإيرادات</system:String>
@@ -239,6 +240,7 @@
     <system:String x:Key="SettingsAdminPasswordNewLabel">كلمة المرور الجديدة</system:String>
     <system:String x:Key="SettingsAdminPasswordConfirmLabel">تأكيد كلمة المرور الجديدة</system:String>
     <system:String x:Key="SettingsAdminPasswordSaveButton">حفظ كلمة مرور المسؤول</system:String>
+    <system:String x:Key="SettingsAdminPasswordRemoveButton">إزالة كلمة المرور</system:String>
     <system:String x:Key="SettingsAdminPasswordMismatch">كلمتا المرور غير متطابقتين.</system:String>
     <system:String x:Key="SettingsAdminPasswordSaveSuccess">تم تحديث كلمة مرور المسؤول.</system:String>
     <system:String x:Key="SettingsAdminPasswordUnlockRequired">أدخل كلمة مرور المسؤول الحالية أدناه لتغييرها.</system:String>
@@ -288,5 +290,81 @@
     <system:String x:Key="ExportColReturned">مرتجع</system:String>
     <system:String x:Key="ExportReturnedYes">نعم</system:String>
     <system:String x:Key="ExportReturnedNo">لا</system:String>
+
+    <!-- التواصل مع الدعم (البند 4 من الدفعة 11، نقل من الإعدادات إلى المساعدة 2026-08-28 بناءً على طلب محمود) — نفس مجموعة المفاتيح الموجودة في Strings.English.xaml. -->
+    <system:String x:Key="HelpContactSupportTitle">التواصل مع الدعم</system:String>
+    <system:String x:Key="HelpContactSupportDescription">هل تحتاج إلى مساعدة أو واجهت مشكلة؟ تواصل معنا بأي من الطرق التالية.</system:String>
+    <system:String x:Key="HelpContactPhoneLabel">الهاتف</system:String>
+    <system:String x:Key="HelpContactEmailLabel">البريد الإلكتروني</system:String>
+    <system:String x:Key="HelpContactCallButton">اتصال</system:String>
+    <system:String x:Key="HelpContactWhatsAppButton">واتساب</system:String>
+    <system:String x:Key="HelpContactEmailButton">بريد إلكتروني</system:String>
+    <system:String x:Key="HelpContactError">تعذر فتح ذلك — تحقق من الرقم/البريد الإلكتروني في ملف ContactInfo.cs.</system:String>
+
+    <!-- شاشة المساعدة (البند 5 من الدفعة 11) — نفس مجموعة المفاتيح الموجودة في Strings.English.xaml مع محتوى مترجم. -->
+    <system:String x:Key="HelpHeading">المساعدة</system:String>
+    <system:String x:Key="HelpDescription">دليل سريع لكل شاشة في النظام — اقرأ من الأعلى للأسفل، أو انتقل مباشرة إلى القسم الذي تحتاجه.</system:String>
+
+    <system:String x:Key="HelpGettingStartedTitle">البداية</system:String>
+    <system:String x:Key="HelpGettingStartedBody">يحتوي النظام على ست شاشات، مذكورة في القائمة الجانبية على اليسار: لوحة التحكم، الدفع، العملاء، المخزون، الإعدادات، وشاشة المساعدة هذه.
+
+يمكنك التبديل بين اللغة الإنجليزية والعربية، وبين المظهر الفاتح والداكن، من الإعدادات ← المظهر — يتحدث التطبيق بأكمله فورًا دون الحاجة لإعادة التشغيل.
+
+بعض الشاشات والإجراءات محمية بكلمة مرور المسؤول (يتم تعيينها من الإعدادات ← كلمة مرور المسؤول) — هذا أمر متوقع إذا لم تكن أنت المالك أو المدير. اطلب منه فتحها، أو أدخل كلمة المرور بنفسك إذا كانت متوفرة لديك.</system:String>
+
+    <system:String x:Key="HelpCheckoutTitle">الدفع — إتمام عملية بيع</system:String>
+    <system:String x:Key="HelpCheckoutBody">اضغط على المنتجات لإضافتها إلى السلة على اليمين. استخدم مربع البحث أو فئات المنتجات في الأعلى للعثور على منتج بسرعة.
+
+اضبط الكمية باستخدام أزرار +/- في كل سطر من السلة، أو احذف السطر بالكامل باستخدام أيقونة الحذف.
+
+اختر عميلاً من القائمة المنسدلة أعلى السلة إذا كان يجب تسجيل هذه العملية على حسابه (مفيد لعمليات البيع بالدين/الآجل) — اتركها كـــعميل عابرــــ لعملية بيع نقدية عادية.
+
+اختر طريقة الدفع — نقداً، بطاقة، أو دفع لاحقًا — ثم اضغط على إتمام البيع. الدفع لاحقًا يسجل البيع على رصيد العميل المختار بدلاً من تحصيل الدفع فورًا.
+
+يتم تطبيق الضريبة وأي خصم تلقائيًا بناءً على الإعدادات ← التفضيلات.</system:String>
+
+    <system:String x:Key="HelpBillsTitle">الفواتير — عرض وتعديل المبيعات السابقة</system:String>
+    <system:String x:Key="HelpBillsBody">اضغط على زر الفواتير أعلى قائمة العملاء في شاشة الدفع لفتح قائمة الفواتير السابقة.
+
+اضغط على أي فاتورة لعرض كل منتج بها، مع الكميات والأسعار والإجماليات.
+
+من داخل الفاتورة يمكنك تعديل أو إزالة كمية منتج واحد (يعيد هذا حساب الضريبة والخصم والرصيد المتبقي لتلك الفاتورة تلقائيًا)، أو حذف الفاتورة بأكملها.
+
+هذا القسم محمي بكلمة مرور المسؤول — حذف أو تعديل فاتورة يغيّر سجل المبيعات الفعلي، لذا يتطلب كلمة مرور المسؤول بنفس طريقة إجراءات لوحة التحكم والمخزون الإدارية.</system:String>
+
+    <system:String x:Key="HelpCustomersTitle">العملاء — جهات الاتصال والديون</system:String>
+    <system:String x:Key="HelpCustomersBody">أضف عميلاً جديدًا باسمه ورقم هاتفه من شاشة العملاء. اضغط على عميل لفتح صفحته التفصيلية.
+
+تعرض صفحة تفاصيل العميل رصيده الحالي (المبلغ الذي يدين به من عمليات الدفع لاحقًا) وسجل مشترياته الكامل، بما في ذلك — بالنسبة لمخزون الصيدلية عند الحاجة — أي دفعات وتواريخ انتهاء صلاحية تم بيعها له.
+
+سجّل دفعة على رصيد العميل من صفحته التفصيلية لتقليل ما يدين به.</system:String>
+
+    <system:String x:Key="HelpInventoryTitle">المخزون — المنتجات والفئات</system:String>
+    <system:String x:Key="HelpInventoryBody">تصفح جميع المنتجات، مجمعة حسب الفئة، مع عرض مستويات المخزون لكل منتج. يتم تمييز المنتجات منخفضة المخزون (أقل من الحد المحدد في الإعدادات ← التفضيلات) لتكون واضحة بسهولة.
+
+أضف أو عدّل أو احذف منتجًا أو فئة من هذه الشاشة — هذه الإجراءات محمية بكلمة مرور المسؤول لنفس سبب حماية الفواتير: فهي تغيّر ما يبيعه الدفع وبأي سعر، لذا تتطلب كلمة مرور المسؤول.
+
+عند إضافة أو تعديل منتج، حدّد تكلفته وسعر بيعه حتى تبقى أرقام الربح في لوحة التحكم دقيقة.</system:String>
+
+    <system:String x:Key="HelpDashboardTitle">لوحة التحكم — الإيرادات والتقارير</system:String>
+    <system:String x:Key="HelpDashboardBody">تعرض إيرادات اليوم (أو فترة زمنية مختارة) والربح وعدد المعاملات والديون المستحقة على العملاء، بالإضافة إلى رسوم بيانية لأكثر المنتجات مبيعًا، وتوزيع طرق الدفع، واتجاه الإيرادات، والإيرادات حسب الفئة.
+
+استخدم أزرار الفترة الزمنية أو أدوات اختيار تاريخ الـ"من" و"إلى" لعرض فترة مختلفة. صفِّ حسب طريقة الدفع أو الفئة لتضييق النطاق أكثر.
+
+هذه الشاشة محمية افتراضيًا بكلمة مرور المسؤول — الإيرادات معلومة حساسة تجاريًا، لذا فهي مقفلة خلف كلمة مرور المسؤول حتى يدخلها أحد.</system:String>
+
+    <system:String x:Key="HelpSettingsTitle">الإعدادات — اللغة والمظهر والنسخ الاحتياطي والمزيد</system:String>
+    <system:String x:Key="HelpSettingsBody">المظهر: بدّل لغة التطبيق (إنجليزي/عربي) ومظهره (فاتح/داكن) فورًا.
+
+التفضيلات: حدّد نسبة الضريبة وحد المخزون المنخفض المستخدمين في التطبيق بأكمله — محمي بكلمة مرور المسؤول.
+
+البيانات والنسخ الاحتياطي: اطلع على مكان ملف قاعدة البيانات، وانسخه احتياطيًا بضغطة واحدة، وافتح مجلد النسخ الاحتياطية.
+
+التصدير إلى Excel: نزّل ملف بيانات للفواتير والمبيعات لفترة زمنية محددة — محمي بكلمة مرور المسؤول.
+
+كلمة مرور المسؤول: عيّن أو غيّر أو احذف كلمة المرور التي تحمي إجراءات لوحة التحكم والفواتير والمخزون الإدارية. اترك الحقلين فارغين واحفظ، أو استخدم زر إزالة كلمة المرور، لإزالتها بالكامل.</system:String>
+
+    <system:String x:Key="HelpNeedMoreTitle">ما زلت بحاجة إلى مساعدة؟</system:String>
+    <system:String x:Key="HelpNeedMoreBody">إذا لم يجب هذا الدليل على سؤالك، استخدم بطاقة التواصل مع الدعم أدناه للاتصال أو المراسلة عبر واتساب أو البريد الإلكتروني مباشرة.</system:String>
 
 </ResourceDictionary>

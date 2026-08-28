@@ -277,6 +277,40 @@ namespace PosSystem.App.ViewModels
                 AppSettings.HasAdminPassword ? "SettingsAdminPasswordSaveSuccess" : "SettingsAdminPasswordCleared");
         }
 
+        // Remove Password (added per Mahmoud's request) -- an explicit
+        // button doing exactly what "leave both fields blank and Save"
+        // already did (AppSettings.SetAdminPassword("")), for people who'd
+        // rather press a clearly-labeled button than intuit that blank
+        // fields is the removal path. Only reachable once this section is
+        // already unlocked (same gate SaveAdminPassword checks), and only
+        // shown on screen at all when HasAdminPassword is true (see
+        // SettingsView.xaml) -- nothing to remove otherwise. Ignores
+        // whatever is currently typed into New/Confirm rather than
+        // requiring those boxes to actually be empty first.
+        public ICommand RemoveAdminPasswordCommand { get; }
+
+        private void RemoveAdminPassword()
+        {
+            if (!IsAdminPasswordUnlocked)
+            {
+                StatusMessage = LocalizationManager.GetString("SettingsAdminPasswordUnlockRequired");
+                return;
+            }
+
+            AppSettings.SetAdminPassword("");
+            NewAdminPasswordInput = "";
+            ConfirmAdminPasswordInput = "";
+            OnPropertyChanged(nameof(HasAdminPassword));
+
+            // Same reasoning as SaveAdminPassword's LockAllAdminSections
+            // call above -- though in practice IsXUnlocked already reports
+            // true unconditionally the instant HasAdminPassword is false,
+            // so this mainly clears the unlock-password input boxes.
+            LockAllAdminSections();
+
+            StatusMessage = LocalizationManager.GetString("SettingsAdminPasswordCleared");
+        }
+
         // Preferences section gate (added per Mahmoud's request, reworked
         // again per his follow-up request) -- fully independent of Export/
         // Admin Password above, same reasoning as those two.
@@ -581,6 +615,7 @@ namespace PosSystem.App.ViewModels
             BackupNowCommand = new RelayCommand(_ => BackupNow());
             OpenBackupsFolderCommand = new RelayCommand(_ => OpenBackupsFolder());
             SaveAdminPasswordCommand = new RelayCommand(_ => SaveAdminPassword());
+            RemoveAdminPasswordCommand = new RelayCommand(_ => RemoveAdminPassword());
             AdminPasswordUnlockCommand = new RelayCommand(_ => AdminPasswordUnlock());
             PreferencesUnlockCommand = new RelayCommand(_ => PreferencesUnlock());
             ExportUnlockCommand = new RelayCommand(_ => ExportUnlock());

@@ -15,6 +15,7 @@
     <system:String x:Key="NavCustomers">Customers</system:String>
     <system:String x:Key="NavInventory">Inventory</system:String>
     <system:String x:Key="NavSettings">Settings</system:String>
+    <system:String x:Key="NavHelp">Help</system:String>
 
     <system:String x:Key="DashboardHeading">Dashboard</system:String>
     <system:String x:Key="DashboardTodayRevenue">Revenue</system:String>
@@ -300,6 +301,10 @@
     <system:String x:Key="SettingsAdminPasswordNewLabel">New password</system:String>
     <system:String x:Key="SettingsAdminPasswordConfirmLabel">Confirm new password</system:String>
     <system:String x:Key="SettingsAdminPasswordSaveButton">Save Admin Password</system:String>
+    <!-- Remove Password button (added per Mahmoud's request) — explicit
+         alternative to the blank+blank+Save removal path, only shown once
+         a password actually exists to remove (HasAdminPassword). -->
+    <system:String x:Key="SettingsAdminPasswordRemoveButton">Remove Password</system:String>
     <system:String x:Key="SettingsAdminPasswordMismatch">Passwords don't match.</system:String>
     <system:String x:Key="SettingsAdminPasswordSaveSuccess">Admin password updated.</system:String>
     <system:String x:Key="SettingsAdminPasswordCleared">Admin password removed — Dashboard is now open to anyone.</system:String>
@@ -362,5 +367,89 @@
     <system:String x:Key="ExportColReturned">Returned</system:String>
     <system:String x:Key="ExportReturnedYes">Yes</system:String>
     <system:String x:Key="ExportReturnedNo">No</system:String>
+
+    <!-- Contact Support (Phase 11 #4, 2026-08-28; moved from Settings to
+         Help 2026-08-28 per Mahmoud's request — Help is where someone
+         looking for support actually lands, so the live card belongs
+         there rather than making them find it inside Settings first).
+         Ungated, since there's no sensitive data here — just phone/
+         WhatsApp/email actions. The actual number/email live in
+         ContactInfo.cs, not here. -->
+    <system:String x:Key="HelpContactSupportTitle">Contact Support</system:String>
+    <system:String x:Key="HelpContactSupportDescription">Need help or found a problem? Reach out any of these ways.</system:String>
+    <system:String x:Key="HelpContactPhoneLabel">Phone</system:String>
+    <system:String x:Key="HelpContactEmailLabel">Email</system:String>
+    <system:String x:Key="HelpContactCallButton">Call</system:String>
+    <system:String x:Key="HelpContactWhatsAppButton">WhatsApp</system:String>
+    <system:String x:Key="HelpContactEmailButton">Email</system:String>
+    <system:String x:Key="HelpContactError">Couldn't open that — check the number/email in ContactInfo.cs.</system:String>
+
+    <!-- Help screen (Phase 11 #5, 2026-08-28)  see HelpView.xaml's own
+         doc comment for the overall shape. Strings.Arabic.xaml defines the
+         identical set of keys with translated content. -->
+    <system:String x:Key="HelpHeading">Help</system:String>
+    <system:String x:Key="HelpDescription">A quick guide to every screen in PosSystem -- read top to bottom, or jump to the section you need.</system:String>
+
+    <system:String x:Key="HelpGettingStartedTitle">Getting Started</system:String>
+    <system:String x:Key="HelpGettingStartedBody">PosSystem has six screens, listed in the sidebar on the left: Dashboard, Checkout, Customers, Inventory, Settings, and this Help screen.
+
+Switch between English and Arabic, and between light and dark themes, from Settings &#8594; Appearance -- the whole app updates immediately, no restart needed.
+
+Some screens and actions are protected by an admin password (set in Settings &#8594; Admin Password) -- that's expected if you're not the owner or manager. Ask them to unlock it, or enter the password yourself if you have it.</system:String>
+
+    <system:String x:Key="HelpCheckoutTitle">Checkout -- Making a Sale</system:String>
+    <system:String x:Key="HelpCheckoutBody">Tap products to add them to the cart on the right. Use the search box or category chips at the top to find a product quickly.
+
+Adjust quantity with the +/- buttons on each cart line, or remove a line entirely with its delete icon.
+
+Pick a customer from the dropdown above the cart if this sale should be tracked against their account (useful for debt/credit sales) -- leave it as Walk-in Customer for a normal cash sale.
+
+Choose a payment method -- Cash, Card, or Pay Later -- then tap Complete Sale. Pay Later records the sale against the selected customer's balance instead of collecting payment now.
+
+Tax and any discount are applied automatically based on Settings &#8594; Preferences.</system:String>
+
+    <system:String x:Key="HelpBillsTitle">Bills -- Viewing and Editing Past Sales</system:String>
+    <system:String x:Key="HelpBillsBody">Tap the Bills button above the customer dropdown in Checkout to open the list of past bills.
+
+Tap any bill to see every product on it, along with quantities, prices, and totals.
+
+From inside a bill you can adjust or remove a single product's quantity (this recalculates the tax, discount, and remaining balance for that bill automatically), or delete the whole bill.
+
+This area is admin-gated -- deleting or editing a bill changes real sales history, so it needs the admin password the same way Dashboard and Inventory's admin actions do.</system:String>
+
+    <system:String x:Key="HelpCustomersTitle">Customers -- Contacts and Debt</system:String>
+    <system:String x:Key="HelpCustomersBody">Add a new customer with their name and phone number from the Customers screen. Tap a customer to open their detail page.
+
+A customer's detail page shows their running balance (how much they owe from Pay Later sales) and their full purchase history, including -- for pharmacy stock, where applicable -- which batches and expiry dates were sold to them.
+
+Record a payment against a customer's balance from their detail page to bring what they owe back down.</system:String>
+
+    <system:String x:Key="HelpInventoryTitle">Inventory -- Products and Categories</system:String>
+    <system:String x:Key="HelpInventoryBody">Browse all products, grouped by category, with stock levels shown for each. Products running low (below the threshold set in Settings &#8594; Preferences) are highlighted so they're easy to spot.
+
+Add, edit, or delete a product or category from this screen -- these actions are admin-gated, same reasoning as Bills: they change what Checkout sells and at what price, so they need the admin password.
+
+When adding or editing a product, set its cost and selling price so Dashboard's profit numbers stay accurate.</system:String>
+
+    <system:String x:Key="HelpDashboardTitle">Dashboard -- Revenue and Reports</system:String>
+    <system:String x:Key="HelpDashboardBody">Shows today's (or a chosen date range's) revenue, profit, transaction count, and outstanding customer debt, plus charts for top-selling items, payment split, revenue trend, and revenue by category.
+
+Use the date range buttons or the From/To date pickers to look at a different period. Filter by payment method or category to narrow it further.
+
+This screen is admin-gated by default -- revenue is business-sensitive information, so it's locked behind the admin password until someone enters it.</system:String>
+
+    <system:String x:Key="HelpSettingsTitle">Settings -- Language, Theme, Backups, and More</system:String>
+    <system:String x:Key="HelpSettingsBody">Appearance: switch the app's language (English/Arabic) and theme (light/dark) instantly.
+
+Preferences: set the tax rate and the low-stock threshold used across the app -- admin-gated.
+
+Data &amp; Backup: see where the database file lives, back it up with one tap, and open the backups folder.
+
+Export to Excel: download a spreadsheet of bills and sales for a chosen date range -- admin-gated.
+
+Admin Password: set, change, or remove the password that protects Dashboard, Bills, and Inventory's admin actions. Leave both fields blank and save, or use the Remove Password button, to remove it entirely.</system:String>
+
+    <system:String x:Key="HelpNeedMoreTitle">Still Need Help?</system:String>
+    <system:String x:Key="HelpNeedMoreBody">If this guide didn't answer your question, use the Contact Support card below to call, WhatsApp, or email us directly.</system:String>
 
 </ResourceDictionary>

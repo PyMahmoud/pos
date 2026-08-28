@@ -39,5 +39,13 @@ namespace PosSystem.App.Assets
         public static readonly Geometry Calendar = Geometry.Parse(
             "M6,3 V6 M18,3 V6 M4,8 H20 M4,6 A2,2 0 0 1 6,4 H18 A2,2 0 0 1 20,6 V19 A2,2 0 0 1 18,21 H6 A2,2 0 0 1 4,19 Z " +
             "M7,11 H10 V14 H7 Z");
+
+        // Question-mark-in-circle — added 2026-08-28 for the new Help nav
+        // item (Phase 11 #5). Plain outlined circle with a question-mark
+        // glyph inside, same 24x24 convention as everything above.
+        public static readonly Geometry Help = Geometry.Parse(
+            "M12,2.5 A9.5,9.5 0 1 0 12.01,2.5 Z " +
+            "M9.2,9.3 C9.2,7.6 10.4,6.3 12,6.3 C13.6,6.3 14.8,7.5 14.8,9 C14.8,10.9 12.6,11.1 12.4,13.2 " +
+            "M12.3,16.2 V16.9");
     }
 }
