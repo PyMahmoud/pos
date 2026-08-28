@@ -87,7 +87,7 @@
     <system:String x:Key="BillsDeleteWholeBillSuccess">Bill #{0} deleted.</system:String>
     <system:String x:Key="BillsDeleteWholeBillError">Something went wrong. Please try again.</system:String>
 
-    <!-- Per-line +/- quantity adjustment (2026-08-28) -- lets Mahmoud
+    <!-- Per-line +/- quantity adjustment (2026-08-28): lets Mahmoud
          remove or add back a SPECIFIC amount of a line instead of only
          being able to delete the whole line via the Remove button above.
          See BillsBrowserViewModel.IncrementLineQuantity/
@@ -298,5 +298,59 @@
     <system:String x:Key="SettingsAdminPasswordMismatch">Passwords don't match.</system:String>
     <system:String x:Key="SettingsAdminPasswordSaveSuccess">Admin password updated.</system:String>
     <system:String x:Key="SettingsAdminPasswordCleared">Admin password removed — Dashboard is now open to anyone.</system:String>
+
+    <!-- Export to Excel (Phase 11 #3, 2026-08-28) — Settings' Export
+         section: quick-range buttons, admin-gated unlock, and the actual
+         export/open-folder actions. These same keys also feed
+         SettingsViewModel.BuildExportLabels(), which SalesExportService
+         writes directly into the generated .xlsx's Summary/Bills/Sales
+         Detail sheets — see that class's own doc comment for the full
+         layout. Added to close the gap where the export UI/ViewModel/Core
+         service were already wired but these resource keys were never
+         written, so every label on this section would have rendered blank. -->
+    <system:String x:Key="ExportSectionTitle">Export to Excel</system:String>
+    <system:String x:Key="ExportSectionSubtitle">Download a spreadsheet of bills and sales for a date range — Summary, Bills, and Sales Detail sheets.</system:String>
+    <system:String x:Key="ExportAdminRequired">Enter the admin password below to export sales data.</system:String>
+    <system:String x:Key="ExportRangeLabel">Date range</system:String>
+    <system:String x:Key="ExportRangeLast7">Last 7 Days</system:String>
+    <system:String x:Key="ExportRangeLast30">Last 30 Days</system:String>
+    <system:String x:Key="ExportRangeThisWeek">This Week</system:String>
+    <system:String x:Key="ExportRangeThisMonth">This Month</system:String>
+    <system:String x:Key="ExportRangeThisYear">This Year</system:String>
+    <system:String x:Key="ExportToExcelButton">Export to Excel</system:String>
+    <system:String x:Key="ExportOpenFolderButton">Open exports folder</system:String>
+    <system:String x:Key="ExportInvalidRange">The start date must be on or before the end date.</system:String>
+    <system:String x:Key="ExportSuccess">Exported {0}.</system:String>
+    <system:String x:Key="ExportError">Export failed.</system:String>
+
+    <!-- Workbook content — written into the .xlsx itself, not shown on
+         screen. -->
+    <system:String x:Key="ExportReportTitle">Sales Report</system:String>
+    <system:String x:Key="ExportDateRangeLabel">Date range</system:String>
+    <system:String x:Key="ExportGeneratedLabel">Generated</system:String>
+    <system:String x:Key="ExportSummarySheetName">Summary</system:String>
+    <system:String x:Key="ExportNoDataMessage">No sales in this date range.</system:String>
+    <system:String x:Key="ExportColBillNumber">Bill #</system:String>
+    <system:String x:Key="ExportColDate">Date</system:String>
+    <system:String x:Key="ExportColTime">Time</system:String>
+    <system:String x:Key="ExportColPaymentMethod">Payment Method</system:String>
+    <system:String x:Key="ExportColProduct">Product</system:String>
+    <system:String x:Key="ExportColUnitPrice">Unit Price</system:String>
+    <system:String x:Key="ExportColLineTotal">Line Total</system:String>
+    <system:String x:Key="ExportColProfit">Profit</system:String>
+    <system:String x:Key="ExportSalesDetailSheetName">Sales Detail</system:String>
+
+    <!-- Bills/Sales Detail sheet columns added on top of the original
+         Phase 11 #3 shape above, per Mahmoud's request (2026-08-28) for
+         phone, items, payment status, discount, and returned columns. -->
+    <system:String x:Key="ExportColPaymentStatus">Payment Status</system:String>
+    <system:String x:Key="ExportPaymentStatusPaid">Paid in Full</system:String>
+    <system:String x:Key="ExportPaymentStatusPartial">Partial</system:String>
+    <system:String x:Key="ExportPaymentStatusUnpaid">Unpaid</system:String>
+    <system:String x:Key="ExportColItems">Items</system:String>
+    <system:String x:Key="ExportColDiscount">Discount</system:String>
+    <system:String x:Key="ExportColReturned">Returned</system:String>
+    <system:String x:Key="ExportReturnedYes">Yes</system:String>
+    <system:String x:Key="ExportReturnedNo">No</system:String>
 
 </ResourceDictionary>

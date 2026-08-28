@@ -224,6 +224,139 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Export (Phase 11 #3, 2026-08-28) — see SettingsViewModel's
+                     class doc comment for why this is gated (revenue-
+                     sensitive) and follows Inventory's inline-unlock-box
+                     pattern rather than locking the whole Settings screen. -->
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                        CornerRadius="16"
+                        Padding="24"
+                        Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource ExportSectionTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,8" />
+                        <TextBlock Text="{DynamicResource ExportSectionSubtitle}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,16" />
+
+                        <!-- Locked state -->
+                        <StackPanel Visibility="{Binding IsExportLocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{DynamicResource ExportAdminRequired}"
+                                       Style="{StaticResource BodyLarge}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="260" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <PasswordBox Grid.Column="0"
+                                             x:Name="ExportUnlockPasswordBox"
+                                             Style="{StaticResource ThemedPasswordBoxStyle}"
+                                             PasswordChanged="ExportUnlockPasswordBox_PasswordChanged" />
+                                <Button Grid.Column="2"
+                                        Content="{DynamicResource DashboardUnlockButton}"
+                                        Command="{Binding ExportUnlockCommand}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Foreground="{DynamicResource OnPrimaryBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="16,8" />
+                            </Grid>
+                            <TextBlock Text="{Binding ExportUnlockError}"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0" />
+                        </StackPanel>
+
+                        <!-- Unlocked state -->
+                        <StackPanel Visibility="{Binding IsExportUnlocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{DynamicResource ExportRangeLabel}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       Margin="0,0,0,6" />
+                            <WrapPanel Orientation="Horizontal" Margin="0,0,0,14">
+                                <Button Content="{DynamicResource ExportRangeLast7}"
+                                        Command="{Binding SetExportQuickRangeCommand}"
+                                        CommandParameter="{x:Static vm:ExportQuickRange.Last7Days}"
+                                        Style="{StaticResource ExportRangeLast7ButtonStyle}"
+                                        Padding="14,8" Margin="0,0,8,8" />
+                                <Button Content="{DynamicResource ExportRangeLast30}"
+                                        Command="{Binding SetExportQuickRangeCommand}"
+                                        CommandParameter="{x:Static vm:ExportQuickRange.Last30Days}"
+                                        Style="{StaticResource ExportRangeLast30ButtonStyle}"
+                                        Padding="14,8" Margin="0,0,8,8" />
+                                <Button Content="{DynamicResource ExportRangeThisWeek}"
+                                        Command="{Binding SetExportQuickRangeCommand}"
+                                        CommandParameter="{x:Static vm:ExportQuickRange.ThisWeek}"
+                                        Style="{StaticResource ExportRangeThisWeekButtonStyle}"
+                                        Padding="14,8" Margin="0,0,8,8" />
+                                <Button Content="{DynamicResource ExportRangeThisMonth}"
+                                        Command="{Binding SetExportQuickRangeCommand}"
+                                        CommandParameter="{x:Static vm:ExportQuickRange.ThisMonth}"
+                                        Style="{StaticResource ExportRangeThisMonthButtonStyle}"
+                                        Padding="14,8" Margin="0,0,8,8" />
+                                <Button Content="{DynamicResource ExportRangeThisYear}"
+                                        Command="{Binding SetExportQuickRangeCommand}"
+                                        CommandParameter="{x:Static vm:ExportQuickRange.ThisYear}"
+                                        Style="{StaticResource ExportRangeThisYearButtonStyle}"
+                                        Padding="14,8" Margin="0,0,0,8" />
+                            </WrapPanel>
+
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{DynamicResource DashboardFilterFromLabel}"
+                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                               Margin="0,0,0,4" />
+                                    <DatePicker SelectedDate="{Binding ExportStartDate, Mode=TwoWay}"
+                                                Style="{StaticResource ThemedDatePickerStyle}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{DynamicResource DashboardFilterToLabel}"
+                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                               Margin="0,0,0,4" />
+                                    <DatePicker SelectedDate="{Binding ExportEndDate, Mode=TwoWay}"
+                                                Style="{StaticResource ThemedDatePickerStyle}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0"
+                                        Content="{DynamicResource ExportToExcelButton}"
+                                        Command="{Binding ExportToExcelCommand}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Foreground="{DynamicResource OnPrimaryBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="0,12"
+                                        HorizontalContentAlignment="Center" />
+                                <Button Grid.Column="2"
+                                        Content="{DynamicResource ExportOpenFolderButton}"
+                                        Command="{Binding OpenExportsFolderCommand}"
+                                        Background="{DynamicResource SurfaceContainerHighBrush}"
+                                        Foreground="{DynamicResource OnSurfaceBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="0,12"
+                                        HorizontalContentAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
                 <!-- Admin password (#7, 2026-08-27) — gates Dashboard
                      access (revenue is business-sensitive per Mahmoud). See
                      SettingsViewModel's doc comment on the new fields for

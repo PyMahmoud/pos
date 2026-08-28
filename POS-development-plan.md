@@ -246,13 +246,45 @@ build/test pass eventually, same standing caveat as everything since Phase 4.
   AppData path first (any machine that already ran the round-1 build), then
   the original next-to-exe path — copies whichever is found, never moves,
   so nothing is ever deleted from an old location.
-- [ ] **#3 Excel export (last 7/30 days, this week/month/year, custom range)
-  — not started.** Needs a spreadsheet-writing library; this project has no
-  NuGet access from here (same standing issue as Phase 6's LiveCharts
-  install), so this will mean adding a `packages.config` entry (likely
-  ClosedXML — free, no Excel/Interop dependency, unlike EPPlus which went
-  commercial) that Mahmoud has to restore via NuGet before it builds, flagged
-  the same way LiveCharts was.
+- [x] **#3 Excel export (last 7/30 days, this week/month/year, custom range)
+  — code-complete (2026-08-28), not yet build/run tested.** Three layers,
+  all written: `PosSystem.Core/Reporting/SalesExportService.cs` (builds a
+  real .xlsx via ClosedXML — Summary/Bills/Sales Detail sheets, filtered by
+  date range against the existing `Bills`/`Sells` data layer, no new SQL)
+  plus `SalesExportLabels.cs` (Core stays localization-agnostic, same as
+  every other class here — the App layer builds the labels from whichever
+  language is active); a new Export section on `SettingsView`/
+  `SettingsViewModel` (quick-range buttons: Last 7 Days/Last 30 Days/This
+  Week/This Month/This Year, plus two custom date pickers — same pattern as
+  Dashboard's own filter), gated behind the shared `AdminSession` (export
+  is at least as sensitive as Dashboard's revenue numbers, which are
+  already gated) using Inventory's inline-unlock-box pattern rather than
+  locking the whole Settings screen. Exports save timestamped into
+  `Documents\PosSystem\Exports`, with an Open Exports Folder button next to
+  Export to Excel.
+
+  **Found and fixed (2026-08-28, this session):** the Core/ViewModel/View/
+  styles were all already fully written, but every `Export*` localization
+  key the UI depends on (`ExportSectionTitle`, `ExportRangeLast7`,
+  `ExportToExcelButton`, the 14 workbook-content labels
+  `SalesExportLabels`/`BuildExportLabels()` needs, etc. — 28 keys in total)
+  was missing from both `Strings.English.xaml` and `Strings.Arabic.xaml` —
+  this is where the earlier pass on this feature actually stopped. Every
+  label/button on the Export section would have rendered blank without
+  them. Added all 28 keys, matching sets in both files.
+
+  Needs `ClosedXML` installed via NuGet before this builds — same standing
+  issue as Phase 6's LiveCharts install: `PosSystem.Core.csproj` already has
+  a `<Reference Include="ClosedXML" />` placeholder with no HintPath and a
+  comment explaining why (right-click PosSystem.Core → Manage NuGet
+  Packages → install ClosedXML; NuGet fills in the real HintPath and
+  transitive dependencies). **Not yet build/run tested by Mahmoud** — same
+  standing caveat as everything since Phase 4. Before treating this as
+  closed: install ClosedXML, build, unlock the Export section with the
+  admin password, try each quick-range button and a custom range, export,
+  confirm the .xlsx opens with correct Summary/Bills/Sales Detail data, and
+  check Arabic labels/RTL on the section specifically since it's new UI
+  surface.
 - [ ] **#4 Contact support — not started, blocked on the phone number**
   Mahmoud said he'd provide. Placeholder UI (a Settings section or a
   sidebar/footer entry) can be built now with a placeholder, or held until

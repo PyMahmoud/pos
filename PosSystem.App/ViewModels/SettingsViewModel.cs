@@ -2,13 +2,35 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Windows.Input;
 using PosSystem.App.Localization;
 using PosSystem.App.Theming;
+using PosSystem.Core.Reporting;
 
 namespace PosSystem.App.ViewModels
 {
+    /// <summary>
+    /// Which quick-range button (if any) is active for the Excel export
+    /// section — same enum-plus-IsXSelected-bool shape as Dashboard's own
+    /// DashboardQuickRange (see that enum's doc comment); a separate enum
+    /// rather than reusing DashboardQuickRange since the two pickers don't
+    /// offer the same set of presets (export adds Last 7 Days and This
+    /// Year, which Dashboard's filter never needed; export has no All Time,
+    /// since "export everything" is just as easily a manually-picked wide
+    /// custom range).
+    /// </summary>
+    public enum ExportQuickRange
+    {
+        Last7Days,
+        Last30Days,
+        ThisWeek,
+        ThisMonth,
+        ThisYear,
+        Custom
+    }
+
     /// <summary>
     /// DataContext for SettingsView (rewritten 2026-08-26 into a real,
     /// full settings screen). Four sections, each independent of the
@@ -43,6 +65,22 @@ namespace PosSystem.App.ViewModels
     ///   assembly's own AssemblyVersion, Properties/AssemblyInfo.cs), so
     ///   there's a real place to point someone asking "what version is
     ///   this" without them having to check file properties in Explorer.
+    /// - Export (Phase 11 #3, 2026-08-28): builds an .xlsx report
+    ///   (Summary/Bills/Sales Detail sheets — see
+    ///   PosSystem.Core.Reporting.SalesExportService's own doc comment for
+    ///   the full shape) covering a chosen date range, via the same
+    ///   quick-range-button-plus-custom-date-pickers pattern Dashboard's
+    ///   filter already established (ExportQuickRange mirrors
+    ///   DashboardQuickRange). Gated behind the shared AdminSession — a
+    ///   full export of every sale's revenue/profit is at least as
+    ///   sensitive as Dashboard's on-screen totals, which are already
+    ///   gated, and Phase 11's own admin-password note already flagged
+    ///   Excel export as meant to share this same gate once built. Unlike
+    ///   Dashboard/Bills' full-screen lock overlay, this follows
+    ///   Inventory's smaller inline-unlock-box pattern (just this one card
+    ///   swaps to an unlock prompt, the rest of Settings stays reachable),
+    ///   since gating the WHOLE Settings screen over one section would also
+    ///   block Appearance/Preferences, which aren't sensitive.
     ///
     /// Same validate-in-the-Save-method-then-set-StatusMessage shape the
     /// Preferences section already used (and every other form in this app
@@ -190,6 +228,246 @@ namespace PosSystem.App.ViewModels
         public ICommand BackupNowCommand { get; }
         public ICommand OpenBackupsFolderCommand { get; }
 
+        // ----- Export (Phase 11 #3, 2026-08-28) — see class doc comment -----
+
+        public bool IsExportUnlocked => AdminSession.IsUnlocked;
+        public bool IsExportLocked => !IsExportUnlocked;
+
+        private string _exportUnlockPasswordInput = "";
+        public string ExportUnlockPasswordInput
+        {
+            get => _exportUnlockPasswordInput;
+            set => SetProperty(ref _exportUnlockPasswordInput, value);
+        }
+
+        private string _exportUnlockError = "";
+        public string ExportUnlockError
+        {
+            get => _exportUnlockError;
+            set => SetProperty(ref _exportUnlockError, value);
+        }
+
+        public ICommand ExportUnlockCommand { get; }
+
+        private void ExportUnlock()
+        {
+            if (AdminSession.TryUnlock(ExportUnlockPasswordInput))
+            {
+                ExportUnlockError = "";
+                ExportUnlockPasswordInput = "";
+            }
+            else
+            {
+                ExportUnlockError = LocalizationManager.GetString("DashboardUnlockIncorrect");
+            }
+        }
+
+        // Set true while ApplyExportQuickRange is setting both dates at
+        // once, so the ExportStartDate/ExportEndDate setters below don't
+        // stomp ActiveExportRange back to Custom mid-assignment — identical
+        // reasoning to DashboardViewModel's own _isApplyingQuickRange.
+        private bool _isApplyingExportQuickRange;
+
+        private DateTime? _exportStartDate;
+        public DateTime? ExportStartDate
+        {
+            get => _exportStartDate;
+            set
+            {
+                if (!SetProperty(ref _exportStartDate, value)) return;
+                if (!_isApplyingExportQuickRange) ActiveExportRange = ExportQuickRange.Custom;
+            }
+        }
+
+        private DateTime? _exportEndDate;
+        public DateTime? ExportEndDate
+        {
+            get => _exportEndDate;
+            set
+            {
+                if (!SetProperty(ref _exportEndDate, value)) return;
+                if (!_isApplyingExportQuickRange) ActiveExportRange = ExportQuickRange.Custom;
+            }
+        }
+
+        private ExportQuickRange _activeExportRange = ExportQuickRange.Last30Days;
+        public ExportQuickRange ActiveExportRange
+        {
+            get => _activeExportRange;
+            private set
+            {
+                if (!SetProperty(ref _activeExportRange, value)) return;
+                OnPropertyChanged(nameof(IsExportRangeLast7Selected));
+                OnPropertyChanged(nameof(IsExportRangeLast30Selected));
+                OnPropertyChanged(nameof(IsExportRangeThisWeekSelected));
+                OnPropertyChanged(nameof(IsExportRangeThisMonthSelected));
+                OnPropertyChanged(nameof(IsExportRangeThisYearSelected));
+            }
+        }
+
+        // Same IsXSelected-bool-per-option pattern Dashboard's own quick
+        // range buttons and Checkout's Cash/Card/Pay Later buttons already
+        // use.
+        public bool IsExportRangeLast7Selected => ActiveExportRange == ExportQuickRange.Last7Days;
+        public bool IsExportRangeLast30Selected => ActiveExportRange == ExportQuickRange.Last30Days;
+        public bool IsExportRangeThisWeekSelected => ActiveExportRange == ExportQuickRange.ThisWeek;
+        public bool IsExportRangeThisMonthSelected => ActiveExportRange == ExportQuickRange.ThisMonth;
+        public bool IsExportRangeThisYearSelected => ActiveExportRange == ExportQuickRange.ThisYear;
+
+        public ICommand SetExportQuickRangeCommand { get; }
+        public ICommand ExportToExcelCommand { get; }
+        public ICommand OpenExportsFolderCommand { get; }
+
+        private void ApplyExportQuickRange(ExportQuickRange range)
+        {
+            _isApplyingExportQuickRange = true;
+            try
+            {
+                DateTime today = DateTime.Today;
+                switch (range)
+                {
+                    case ExportQuickRange.Last7Days:
+                        ExportStartDate = today.AddDays(-6);
+                        ExportEndDate = today;
+                        break;
+                    case ExportQuickRange.Last30Days:
+                        ExportStartDate = today.AddDays(-29);
+                        ExportEndDate = today;
+                        break;
+                    case ExportQuickRange.ThisWeek:
+                        // Week starts Saturday — same regional convention
+                        // DashboardViewModel.ApplyQuickRange already uses.
+                        int daysSinceSaturday = ((int)today.DayOfWeek + 1) % 7;
+                        ExportStartDate = today.AddDays(-daysSinceSaturday);
+                        ExportEndDate = today;
+                        break;
+                    case ExportQuickRange.ThisMonth:
+                        ExportStartDate = new DateTime(today.Year, today.Month, 1);
+                        ExportEndDate = today;
+                        break;
+                    case ExportQuickRange.ThisYear:
+                        ExportStartDate = new DateTime(today.Year, 1, 1);
+                        ExportEndDate = today;
+                        break;
+                    default:
+                        ExportStartDate = today.AddDays(-29);
+                        ExportEndDate = today;
+                        break;
+                }
+                ActiveExportRange = range;
+            }
+            finally
+            {
+                _isApplyingExportQuickRange = false;
+            }
+        }
+
+        /// <summary>
+        /// Builds a SalesExportLabels from whichever language is currently
+        /// active — see that class's own doc comment for why Core stays
+        /// unaware LocalizationManager even exists, and this translation
+        /// happens here instead.
+        /// </summary>
+        private static SalesExportLabels BuildExportLabels()
+        {
+            string L(string key) => LocalizationManager.GetString(key);
+            return new SalesExportLabels
+            {
+                ReportTitle = L("ExportReportTitle"),
+                DateRangeLabel = L("ExportDateRangeLabel"),
+                GeneratedLabel = L("ExportGeneratedLabel"),
+                SummarySheetName = L("ExportSummarySheetName"),
+                TotalRevenueLabel = L("DashboardTodayRevenue"),
+                TotalProfitLabel = L("DashboardTodayProfit"),
+                TotalTransactionsLabel = L("DashboardTodayTransactions"),
+                CashTotalLabel = L("CheckoutCash"),
+                CardTotalLabel = L("CheckoutCard"),
+                PayLaterTotalLabel = L("CheckoutPayLater"),
+                NoDataMessage = L("ExportNoDataMessage"),
+                BillsSheetName = L("BillsBrowserTitle"),
+                ColBillNumber = L("ExportColBillNumber"),
+                ColDate = L("ExportColDate"),
+                ColTime = L("ExportColTime"),
+                ColCustomer = L("CheckoutCustomerLabel"),
+                ColPhone = L("CustomersPhoneField"),
+                ColPaymentMethod = L("ExportColPaymentMethod"),
+                ColPaymentStatus = L("ExportColPaymentStatus"),
+                PaymentStatusPaidLabel = L("ExportPaymentStatusPaid"),
+                PaymentStatusPartialLabel = L("ExportPaymentStatusPartial"),
+                PaymentStatusUnpaidLabel = L("ExportPaymentStatusUnpaid"),
+                ColItems = L("ExportColItems"),
+                ColSubtotal = L("CheckoutSubtotal"),
+                ColDiscount = L("ExportColDiscount"),
+                ColTax = L("CheckoutTax"),
+                ColTotal = L("CheckoutTotal"),
+                ColPaid = L("CustomersBalancePaidUp"),
+                ColRemaining = L("CustomersPaymentAmountLabel"),
+                SalesDetailSheetName = L("ExportSalesDetailSheetName"),
+                ColProduct = L("ExportColProduct"),
+                ColCategory = L("InventoryProductCategoryLabel"),
+                ColQuantity = L("InventoryQuantityLabel"),
+                ColUnitPrice = L("ExportColUnitPrice"),
+                ColUnitCost = L("InventoryProductCostLabel"),
+                ColLineTotal = L("ExportColLineTotal"),
+                ColProfit = L("ExportColProfit"),
+                ColReturned = L("ExportColReturned"),
+                ReturnedYesLabel = L("ExportReturnedYes"),
+                ReturnedNoLabel = L("ExportReturnedNo"),
+                WalkInLabel = L("BillsBrowserWalkInLabel")
+            };
+        }
+
+        private void ExportToExcel()
+        {
+            if (!IsExportUnlocked)
+            {
+                StatusMessage = LocalizationManager.GetString("ExportAdminRequired");
+                return;
+            }
+
+            DateTime start = (ExportStartDate ?? DateTime.Today.AddDays(-29)).Date;
+            DateTime end = (ExportEndDate ?? DateTime.Today).Date;
+            if (start > end)
+            {
+                StatusMessage = LocalizationManager.GetString("ExportInvalidRange");
+                return;
+            }
+
+            try
+            {
+                string exportsFolder = Path.Combine(Core.Data.Server.Location, "Exports");
+                // Timestamped, same reasoning as BackupNow's filenames below —
+                // exporting the same range twice (e.g. re-running "This
+                // Month" partway through the month) shouldn't silently
+                // overwrite the earlier file.
+                string fileName = "SalesReport_" + start.ToString("yyyy-MM-dd") + "_to_" + end.ToString("yyyy-MM-dd")
+                    + "_" + DateTime.Now.ToString("HHmmss") + ".xlsx";
+                string outputPath = Path.Combine(exportsFolder, fileName);
+
+                SalesExportService.Export(start, end, outputPath, BuildExportLabels());
+
+                StatusMessage = string.Format(LocalizationManager.GetString("ExportSuccess"), fileName);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = LocalizationManager.GetString("ExportError") + " (" + ex.Message + ")";
+            }
+        }
+
+        private void OpenExportsFolder()
+        {
+            try
+            {
+                string exportsFolder = Path.Combine(Core.Data.Server.Location, "Exports");
+                Directory.CreateDirectory(exportsFolder);
+                Process.Start("explorer.exe", "\"" + exportsFolder + "\"");
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = LocalizationManager.GetString("ExportError") + " (" + ex.Message + ")";
+            }
+        }
+
         public SettingsViewModel()
         {
             SaveCommand = new RelayCommand(Save);
@@ -204,6 +482,19 @@ namespace PosSystem.App.ViewModels
             BackupNowCommand = new RelayCommand(_ => BackupNow());
             OpenBackupsFolderCommand = new RelayCommand(_ => OpenBackupsFolder());
             SaveAdminPasswordCommand = new RelayCommand(_ => SaveAdminPassword());
+            ExportUnlockCommand = new RelayCommand(_ => ExportUnlock());
+            SetExportQuickRangeCommand = new RelayCommand(p =>
+            {
+                if (p is ExportQuickRange range) ApplyExportQuickRange(range);
+            });
+            ExportToExcelCommand = new RelayCommand(_ => ExportToExcel());
+            OpenExportsFolderCommand = new RelayCommand(_ => OpenExportsFolder());
+
+            AdminSession.Changed += () =>
+            {
+                OnPropertyChanged(nameof(IsExportUnlocked));
+                OnPropertyChanged(nameof(IsExportLocked));
+            };
 
             // Neither manager is owned by this ViewModel -- Theme can
             // change from the sidebar's own toggle button (still there,
@@ -218,6 +509,7 @@ namespace PosSystem.App.ViewModels
             RefreshThemeSelection();
             RefreshDatabaseInfo();
             LoadFromAppSettings();
+            ApplyExportQuickRange(ExportQuickRange.Last30Days);
         }
 
         private void RefreshLanguageSelection()

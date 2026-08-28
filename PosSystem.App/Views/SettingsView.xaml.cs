@@ -46,6 +46,15 @@ namespace PosSystem.App.Views
             {
                 ConfirmAdminPasswordBox.Password = "";
             }
+            // Export admin unlock (Phase 11 #3, 2026-08-28) -- same PasswordBox
+            // two-way-sync need as the admin password fields above: a
+            // successful unlock resets ExportUnlockPasswordInput to "" in
+            // the ViewModel, and the visible box needs to follow.
+            if (e.PropertyName == nameof(SettingsViewModel.ExportUnlockPasswordInput)
+                && vm.ExportUnlockPasswordInput == "")
+            {
+                ExportUnlockPasswordBox.Password = "";
+            }
         }
 
         private void NewAdminPasswordBox_PasswordChanged(object sender, System.Windows.RoutedEventArgs e)
@@ -61,6 +70,14 @@ namespace PosSystem.App.Views
             if (DataContext is SettingsViewModel vm)
             {
                 vm.ConfirmAdminPasswordInput = ConfirmAdminPasswordBox.Password;
+            }
+        }
+
+        private void ExportUnlockPasswordBox_PasswordChanged(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.ExportUnlockPasswordInput = ExportUnlockPasswordBox.Password;
             }
         }
     }

@@ -237,4 +237,69 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Settings' Export section quick-range buttons (Phase 11 #3,
+         2026-08-28) — same DataTrigger-per-named-bool-property pattern as
+         every style above, bound to SettingsViewModel's
+         IsExportRangeLast7Selected/Last30Selected/ThisWeekSelected/
+         ThisMonthSelected/ThisYearSelected. -->
+    <Style x:Key="ExportRangeLast7ButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsExportRangeLast7Selected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ExportRangeLast30ButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsExportRangeLast30Selected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ExportRangeThisWeekButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsExportRangeThisWeekSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ExportRangeThisMonthButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsExportRangeThisMonthSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ExportRangeThisYearButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsExportRangeThisYearSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
 </ResourceDictionary>

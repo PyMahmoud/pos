@@ -242,4 +242,49 @@
     <system:String x:Key="SettingsAdminPasswordSaveSuccess">تم تحديث كلمة مرور المسؤول.</system:String>
     <system:String x:Key="SettingsAdminPasswordCleared">تمت إزالة كلمة مرور المسؤول — لوحة التحكم مفتوحة الآن للجميع.</system:String>
 
+    <!-- تصدير إلى Excel (البند 3 من الدفعة 11) — نفس مجموعة المفاتيح الموجودة
+         في Strings.English.xaml — يجب أن تطابق مجموعة المفاتيح الإنجليزية تمامًا. -->
+    <system:String x:Key="ExportSectionTitle">تصدير إلى Excel</system:String>
+    <system:String x:Key="ExportSectionSubtitle">تنزيل ملف بيانات للفواتير والمبيعات لفترة زمنية محددة — أوراق الملخص والفواتير وتفاصيل المبيعات.</system:String>
+    <system:String x:Key="ExportAdminRequired">أدخل كلمة مرور المسؤول أدناه لتصدير بيانات المبيعات.</system:String>
+    <system:String x:Key="ExportRangeLabel">الفترة الزمنية</system:String>
+    <system:String x:Key="ExportRangeLast7">آخر 7 أيام</system:String>
+    <system:String x:Key="ExportRangeLast30">آخر 30 يومًا</system:String>
+    <system:String x:Key="ExportRangeThisWeek">هذا الأسبوع</system:String>
+    <system:String x:Key="ExportRangeThisMonth">هذا الشهر</system:String>
+    <system:String x:Key="ExportRangeThisYear">هذا العام</system:String>
+    <system:String x:Key="ExportToExcelButton">تصدير إلى Excel</system:String>
+    <system:String x:Key="ExportOpenFolderButton">فتح مجلد الملفات المصدّرة</system:String>
+    <system:String x:Key="ExportInvalidRange">يجب أن يكون تاريخ البداية قبل تاريخ النهاية أو مساويًا له.</system:String>
+    <system:String x:Key="ExportSuccess">تم تصدير {0}.</system:String>
+    <system:String x:Key="ExportError">فشل التصدير.</system:String>
+
+    <!-- محتوى ملف Excel نفسه — غير معروض على الشاشة. -->
+    <system:String x:Key="ExportReportTitle">تقرير المبيعات</system:String>
+    <system:String x:Key="ExportDateRangeLabel">الفترة الزمنية</system:String>
+    <system:String x:Key="ExportGeneratedLabel">تاريخ الإنشاء</system:String>
+    <system:String x:Key="ExportSummarySheetName">الملخص</system:String>
+    <system:String x:Key="ExportNoDataMessage">لا توجد مبيعات في هذه الفترة الزمنية.</system:String>
+    <system:String x:Key="ExportColBillNumber">رقم الفاتورة</system:String>
+    <system:String x:Key="ExportColDate">التاريخ</system:String>
+    <system:String x:Key="ExportColTime">الوقت</system:String>
+    <system:String x:Key="ExportColPaymentMethod">طريقة الدفع</system:String>
+    <system:String x:Key="ExportColProduct">المنتج</system:String>
+    <system:String x:Key="ExportColUnitPrice">سعر الوحدة</system:String>
+    <system:String x:Key="ExportColLineTotal">إجمالي السطر</system:String>
+    <system:String x:Key="ExportColProfit">الربح</system:String>
+    <system:String x:Key="ExportSalesDetailSheetName">تفاصيل المبيعات</system:String>
+
+    <!-- أعمدة إضافية في ورقتي الفواتير وتفاصيل المبيعات (طلب محمود، 2026-08-28)
+         يجب أن تطابق مجموعة المفاتيح الإنجليزية تمامًا. -->
+    <system:String x:Key="ExportColPaymentStatus">حالة الدفع</system:String>
+    <system:String x:Key="ExportPaymentStatusPaid">مدفوعة بالكامل</system:String>
+    <system:String x:Key="ExportPaymentStatusPartial">دفع جزئي</system:String>
+    <system:String x:Key="ExportPaymentStatusUnpaid">غير مدفوعة</system:String>
+    <system:String x:Key="ExportColItems">الأصناف</system:String>
+    <system:String x:Key="ExportColDiscount">الخصم</system:String>
+    <system:String x:Key="ExportColReturned">مرتجع</system:String>
+    <system:String x:Key="ExportReturnedYes">نعم</system:String>
+    <system:String x:Key="ExportReturnedNo">لا</system:String>
+
 </ResourceDictionary>
