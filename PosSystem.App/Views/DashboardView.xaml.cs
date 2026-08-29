@@ -18,6 +18,16 @@ namespace PosSystem.App.Views
             Unloaded += (s, e) =>
             {
                 if (DataContext is DashboardViewModel vm) vm.LockAdmin();
+
+                // LockAdmin() above clears the ViewModel's
+                // UnlockPasswordInput string, but PasswordBox.Password
+                // deliberately can't be data-bound (see the comment on
+                // UnlockPasswordBox_PasswordChanged below), so clearing the
+                // ViewModel property alone never touches what's actually
+                // displayed in the box. Without this, the typed dots stay
+                // visible next time this cached view is shown again, even
+                // though the screen is correctly re-locked underneath.
+                UnlockPasswordBox.Clear();
             };
         }
 
