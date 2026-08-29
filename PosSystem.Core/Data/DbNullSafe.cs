@@ -27,5 +27,19 @@ namespace PosSystem.Core.Data
         // be linked to a customer, see CheckoutViewModel.CompleteSale).
         public static int? ToNullableInt32(object value) =>
             value == null || value == DBNull.Value ? (int?)null : Convert.ToInt32(value);
+
+        // Added 2026-08-28 for bills.IsCurrent (receipt revisioning, see
+        // BillsBrowserViewModel's class doc comment) -- stored as SQLite
+        // INTEGER 0/1, same as every other boolean-ish column in this app's
+        // schema (there's no real BOOLEAN type in SQLite). Defaults to true
+        // on a null cell: DatabaseBootstrapper's one-time backfill already
+        // sets every pre-existing bill's IsCurrent to 1 right after adding
+        // the column, so a null should only ever be seen, in practice,
+        // before that backfill has run once -- treating it as "current" in
+        // that narrow window is the safer default (a receipt silently
+        // vanishing from the Bills list/Dashboard would be a worse bug than
+        // one briefly still showing as current).
+        public static bool ToBool(object value) =>
+            value == null || value == DBNull.Value || Convert.ToInt32(value) != 0;
     }
 }

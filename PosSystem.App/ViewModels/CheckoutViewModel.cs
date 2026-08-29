@@ -476,10 +476,14 @@ namespace PosSystem.App.ViewModels
 
                 foreach (var line in CartLines)
                 {
+                    // BillId (2026-08-28, receipt revisioning) is just
+                    // nextId -- the bills row inserted a few lines above IS
+                    // this sale's bill, so its ID is already known here
+                    // without a second query.
                     _sellsData.InsertSells(
                         "sells", line.Name, line.Category, line.Quantity, line.Cost, line.Price,
                         line.Type, time, date, line.Barcode, nextBillNumber,
-                        (line.Price - line.Cost) * line.Quantity, "No", "");
+                        (line.Price - line.Cost) * line.Quantity, "No", "", nextId);
 
                     // ID-based, not Barcode-based (Phase 7): a product's
                     // Barcode can now be "" (no barcode), which is no

@@ -253,6 +253,463 @@ namespace PosSystem.Core.Data
                 {
                     cmd.ExecuteNonQuery();
                 }
+
+                // Added 2026-08-28 for receipt revisioning (Mahmoud's
+                // explicit requirement): removing/returning a product from
+                // a bill must no longer rewrite that bill's own row in
+                // place -- it must leave the original receipt untouched as
+                // history and add a NEW bills row carrying the same
+                // Billnumber plus a suffix ("210" -> "210-e1", a second
+                // return on the same receipt -> "210-e2", etc. -- see
+                // BillsBrowserViewModel for where RevisionSuffix values are
+                // actually assigned). IsCurrent marks which one of a
+                // receipt's rows (there can now be several sharing one
+                // Billnumber) is the one that counts toward Dashboard/
+                // Customer-balance/Excel-export totals -- every reader of
+                // `bills` that computes a KPI or a running balance must
+                // filter to IsCurrent = 1, or a returned bill's original,
+                // now-superseded totals would double up against its
+                // replacement's. RevisionSuffix is NULL for an original,
+                // never-edited bill (Core.Models.Bills.DisplayNumber
+                // reads that as "no suffix to show").
+                EnsureColumn(conn, "bills", "IsCurrent", "INTEGER");
+                EnsureColumn(conn, "bills", "RevisionSuffix", "TEXT");
+
+                // ALTER TABLE ADD COLUMN always inserts NULL for existing
+                // rows, never a real default (SQLite doesn't apply
+                // ADD COLUMN's DEFAULT retroactively the way some other
+                // engines do for this specific syntax) -- so every bill
+                // that existed before this feature needs an explicit
+                // one-time backfill to IsCurrent = 1 ("still the current/
+                // only version of this receipt"), or DbNullSafe.ToBool's
+                // null-is-true fallback would be silently doing this same
+                // job forever instead of the data itself just saying so.
+                // Safe to re-run every startup -- a no-op once every row
+                // already has a real 0/1.
+                try
+                {
+                    using (var cmd = new SQLiteCommand(
+                        "UPDATE bills SET IsCurrent = 1 WHERE IsCurrent IS NULL", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    // Same pre-existing-schema caveat as the categories
+                    // backfills above -- not fatal; DbNullSafe.ToBool's own
+                    // null-is-true fallback still covers any row this
+                    // somehow missed.
+                }
+
+                // sells.BillId (new column): the per-revision counterpart
+                // to bills.IsCurrent/RevisionSuffix above. Billnumber alone
+                // is no longer enough to find "this bill's line items" --
+                // once a receipt has been returned-from, MULTIPLE bills
+                // rows share the same Billnumber (the original plus every
+                // revision), so a Sells row also needs to say which SPECIFIC
+                // bills.ID row it belongs to, not just which receipt number.
+                // Billnumber itself is left in place on `sells` (still
+                // useful for display/search, e.g. Excel export's Bill #
+                // column) -- BillId is the new authoritative link Core.Data.
+                // Sells.ReadSellsByBillId and everywhere that must not mix
+                // one revision's lines with another's now uses instead.
+                EnsureColumn(conn, "sells", "BillId", "INTEGER");
+
+                // One-time backfill, same reasoning as the bills.IsCurrent
+                // backfill above: every sells row that existed before this
+                // feature was sold under a bill that -- at the time -- was
+                // still the ONLY bills row with that Billnumber (revisioning
+                // didn't exist yet), so matching purely on Billnumber here
+                // is exact, not a guess, for every row this backfill will
+                // ever actually touch. ORDER BY ID ASC LIMIT 1 is belt-and-
+                // suspenders for that same reason -- there should only ever
+                // be one match at backfill time, but if this somehow runs
+                // again after revisions already exist, it picks the
+                // earliest (original) rather than leaving it ambiguous.
+                try
+                {
+                    using (var cmd = new SQLiteCommand(
+                        @"UPDATE sells SET BillId = (
+                              SELECT ID FROM bills
+                              WHERE bills.Billnumber = sells.Billnumber
+                              ORDER BY bills.ID ASC LIMIT 1
+                          ) WHERE BillId IS NULL", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    // Not fatal -- see comment above. A row this misses
+                    // just won't be found by BillId-based lookups until
+                    // fixed by hand; Billnumber-based reads elsewhere are
+                    // untouched either way.
+                }
+
+                // De-duplicates bills.ID (2026-08-29) -- discovered live via
+                // "UNIQUE constraint failed: bills_rebuild.ID" the first
+                // time the primary-key-move rebuild below actually ran.
+                // Unlike Billnumber (genuinely unique the whole time -- it
+                // was this table's real PRIMARY KEY all along, confirmed by
+                // this method's own earlier diagnostic log), ID turns out to
+                // have pre-existing duplicate values in this live
+                // rovaShop.db, despite every INSERT this app's own code has
+                // ever issued computing ID via a MAX(ID)+1 scan first --
+                // however that happened historically (a manual edit, a
+                // restored/merged backup, some older code path before this
+                // rebuild), ID can't safely become the table's new PRIMARY
+                // KEY as-is. Left unfixed, this wouldn't just block that
+                // rebuild -- it would silently corrupt
+                // BillsBrowserViewModel/Sells.ReadSellsByBillId's
+                // per-revision line-item lookups for any two bills that
+                // happen to collide, mixing one receipt's items into
+                // another's.
+                //
+                // Billnumber is the reliable pivot for fixing this, since it
+                // has always been genuinely unique: every sells row for a
+                // given bill can still be found unambiguously by Billnumber
+                // even while ID is broken. For every ID value shared by more
+                // than one row, every row but the first (lowest Billnumber)
+                // keeps its own Billnumber but is assigned a brand-new,
+                // actually-unique ID (current table max + 1, incrementing
+                // per fix) -- and every sells row for THAT Billnumber has
+                // its BillId updated to match in the same transaction, so
+                // the sells.BillId <-> bills.ID link this feature depends on
+                // stays correct throughout, not just bills.ID itself.
+                try
+                {
+                    int nextFreeId = 1;
+                    using (var cmd = new SQLiteCommand("SELECT MAX(ID) FROM bills", conn))
+                    {
+                        var result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value) nextFreeId = Convert.ToInt32(result) + 1;
+                    }
+
+                    int nullIdsFixed = 0;
+                    int duplicatesFixed = 0;
+
+                    using (var tx = conn.BeginTransaction())
+                    {
+                        // Step 1: NULL IDs. Discovered live (2026-08-29) via
+                        // an InvalidCastException the first time the
+                        // duplicate-ID query below actually ran --
+                        // "GROUP BY ID" in SQLite (like most SQL engines)
+                        // treats every NULL as belonging to the SAME group,
+                        // so any row with a NULL ID was being caught by the
+                        // "HAVING COUNT(*) > 1" duplicate check below, then
+                        // failing to Convert.ToInt32 a DBNull. A NULL ID
+                        // isn't really a "duplicate" the way two rows
+                        // sharing an actual number are -- there's no
+                        // existing value to keep -- so every row with a
+                        // NULL ID gets a fresh unique one here, not just
+                        // "all but the first" the way an actual duplicate
+                        // group is handled in step 2 below.
+                        var nullIdBillnumbers = new System.Collections.Generic.List<int>();
+                        using (var cmd = new SQLiteCommand(
+                            "SELECT Billnumber FROM bills WHERE ID IS NULL", conn, tx))
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read()) nullIdBillnumbers.Add(Convert.ToInt32(reader["Billnumber"]));
+                        }
+
+                        foreach (int billnumberToFix in nullIdBillnumbers)
+                        {
+                            int newId = nextFreeId++;
+                            using (var cmd = new SQLiteCommand(
+                                "UPDATE sells SET BillId = @newid WHERE Billnumber = @billnumber", conn, tx))
+                            {
+                                cmd.Parameters.AddWithValue("@newid", newId);
+                                cmd.Parameters.AddWithValue("@billnumber", billnumberToFix);
+                                cmd.ExecuteNonQuery();
+                            }
+                            using (var cmd = new SQLiteCommand(
+                                "UPDATE bills SET ID = @newid WHERE Billnumber = @billnumber", conn, tx))
+                            {
+                                cmd.Parameters.AddWithValue("@newid", newId);
+                                cmd.Parameters.AddWithValue("@billnumber", billnumberToFix);
+                                cmd.ExecuteNonQuery();
+                            }
+                            nullIdsFixed++;
+                        }
+
+                        // Step 2: actual duplicate (non-NULL) IDs -- see
+                        // this whole block's opening comment. WHERE
+                        // ID IS NOT NULL is now belt-and-suspenders rather
+                        // than strictly required (step 1 just fixed every
+                        // NULL), but costs nothing to keep explicit.
+                        var duplicateIds = new System.Collections.Generic.List<int>();
+                        using (var cmd = new SQLiteCommand(
+                            "SELECT ID FROM bills WHERE ID IS NOT NULL GROUP BY ID HAVING COUNT(*) > 1", conn, tx))
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read()) duplicateIds.Add(Convert.ToInt32(reader["ID"]));
+                        }
+
+                        foreach (int dupId in duplicateIds)
+                        {
+                            var billnumbers = new System.Collections.Generic.List<int>();
+                            using (var cmd = new SQLiteCommand(
+                                "SELECT Billnumber FROM bills WHERE ID = @id ORDER BY Billnumber ASC", conn, tx))
+                            {
+                                cmd.Parameters.AddWithValue("@id", dupId);
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    while (reader.Read()) billnumbers.Add(Convert.ToInt32(reader["Billnumber"]));
+                                }
+                            }
+
+                            // Keep the first (lowest Billnumber) at its
+                            // current ID; every other bill sharing this ID
+                            // gets reassigned a fresh one.
+                            for (int i = 1; i < billnumbers.Count; i++)
+                            {
+                                int billnumberToFix = billnumbers[i];
+                                int newId = nextFreeId++;
+
+                                using (var cmd = new SQLiteCommand(
+                                    "UPDATE sells SET BillId = @newid WHERE Billnumber = @billnumber", conn, tx))
+                                {
+                                    cmd.Parameters.AddWithValue("@newid", newId);
+                                    cmd.Parameters.AddWithValue("@billnumber", billnumberToFix);
+                                    cmd.ExecuteNonQuery();
+                                }
+                                using (var cmd = new SQLiteCommand(
+                                    "UPDATE bills SET ID = @newid WHERE Billnumber = @billnumber", conn, tx))
+                                {
+                                    cmd.Parameters.AddWithValue("@newid", newId);
+                                    cmd.Parameters.AddWithValue("@billnumber", billnumberToFix);
+                                    cmd.ExecuteNonQuery();
+                                }
+                                duplicatesFixed++;
+                            }
+                        }
+
+                        tx.Commit();
+                    }
+
+                    try
+                    {
+                        string logPath = System.IO.Path.Combine(Server.Location, "schema-migration-error.log");
+                        System.IO.File.AppendAllText(logPath,
+                            DateTime.Now + " -- bills.ID de-duplication ran. " +
+                            $"nullIdsFixed={nullIdsFixed}, rowsReassigned={duplicatesFixed}\r\n\r\n");
+                    }
+                    catch (Exception)
+                    {
+                        // Nothing more to do if even this fails.
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // If this fails, the primary-key-move rebuild below will
+                    // very likely fail again too (same root cause) -- logged
+                    // for the same reason as every other diagnostic in this
+                    // block: so that shows up as an explained failure rather
+                    // than the same unexplained UNIQUE-constraint symptom a
+                    // third time.
+                    try
+                    {
+                        string logPath = System.IO.Path.Combine(Server.Location, "schema-migration-error.log");
+                        System.IO.File.AppendAllText(logPath,
+                            DateTime.Now + " -- bills.ID de-duplication failed:\r\n" +
+                            ex + "\r\n\r\n");
+                    }
+                    catch (Exception)
+                    {
+                        // Nothing more to do if even this fails.
+                    }
+                }
+
+                // Removes bills.Billnumber's uniqueness constraint
+                // (2026-08-29) -- confirmed live via a "UNIQUE constraint
+                // failed: bills.Billnumber" error the first time a return
+                // was attempted after shipping receipt revisioning above,
+                // and confirmed exactly WHY via this method's own diagnostic
+                // log (added the same day): Billnumber -- not ID -- turned
+                // out to be this table's actual PRIMARY KEY AUTOINCREMENT
+                // column (SQLite's rowid alias, unconditionally unique by
+                // definition, with no separate "UNIQUE" keyword anywhere in
+                // its declaration for a first pass of this fix to find by
+                // searching the table's SQL text for that literal word --
+                // that first attempt is why this comment now says "first
+                // time" above rather than being the whole story). Nothing in
+                // this codebase or in DatabaseBootstrapper ever declared
+                // that -- it must already be baked into this live
+                // rovaShop.db from before this rebuild.
+                //
+                // ID, not Billnumber, is what this app's OWN code has always
+                // actually treated as a bill row's unique identity --
+                // CheckoutViewModel.CompleteSale and BillsBrowserViewModel.
+                // NextBillId both compute a "next ID" by scanning MAX(ID)
+                // and have always kept every row's ID distinct, entirely
+                // independent of whatever SQLite itself was separately
+                // enforcing on Billnumber underneath. So the fix isn't just
+                // "remove the constraint" -- it's "move the primary key from
+                // Billnumber onto ID", the column this app was already
+                // relying on for that role.
+                //
+                // SQLite has no ALTER TABLE ... DROP CONSTRAINT and no way to
+                // relax an INTEGER PRIMARY KEY column back to an ordinary
+                // one in place, so this rebuilds the table via SQLite's own
+                // documented procedure for exactly this situation: create a
+                // new table from the current columns (read from PRAGMA
+                // table_info, so every column this table actually has --
+                // including CustomerId/IsCurrent/RevisionSuffix added above
+                // this same run -- is preserved, along with each column's
+                // real NOT NULL/DEFAULT), but with the PRIMARY KEY
+                // AUTOINCREMENT moved onto ID instead of Billnumber; copy
+                // every row across positionally (INSERT INTO ... SELECT * --
+                // correct regardless of column NAMES since both tables are
+                // built in the same PRAGMA table_info order, and safe
+                // specifically because this app's own ID values have always
+                // been unique, per the paragraph above -- there's nothing to
+                // deduplicate); drop the old table; rename the new one into
+                // its place.
+                try
+                {
+                    var columns = new System.Collections.Generic.List<(string Name, string Type, bool NotNull, string Default, bool IsPk)>();
+                    using (var cmd = new SQLiteCommand("PRAGMA table_info(bills)", conn))
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            columns.Add((
+                                reader["name"].ToString(),
+                                reader["type"].ToString(),
+                                Convert.ToInt32(reader["notnull"]) == 1,
+                                reader["dflt_value"] == DBNull.Value ? null : reader["dflt_value"].ToString(),
+                                Convert.ToInt32(reader["pk"]) == 1));
+                        }
+                    }
+
+                    bool billnumberIsPk = columns.Exists(c =>
+                        string.Equals(c.Name, "Billnumber", StringComparison.OrdinalIgnoreCase) && c.IsPk);
+
+                    int indexesDropped = 0;
+                    using (var cmd = new SQLiteCommand(
+                        "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='bills' AND sql LIKE '%UNIQUE%'", conn))
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string indexName = reader["name"].ToString();
+                            using (var dropCmd = new SQLiteCommand($"DROP INDEX IF EXISTS {indexName}", conn))
+                            {
+                                dropCmd.ExecuteNonQuery();
+                            }
+                            indexesDropped++;
+                        }
+                    }
+
+                    string tableSql = null;
+                    using (var cmd = new SQLiteCommand(
+                        "SELECT sql FROM sqlite_master WHERE type='table' AND name='bills'", conn))
+                    {
+                        var result = cmd.ExecuteScalar();
+                        tableSql = result?.ToString();
+                    }
+                    bool hasInlineUnique = tableSql != null && tableSql.IndexOf("UNIQUE", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    bool rebuildNeeded = billnumberIsPk || hasInlineUnique;
+
+                    if (rebuildNeeded)
+                    {
+                        var columnDefs = new System.Collections.Generic.List<string>();
+                        foreach (var col in columns)
+                        {
+                            // The actual fix: ID becomes the real PRIMARY
+                            // KEY AUTOINCREMENT column, Billnumber becomes an
+                            // ordinary (repeatable) INTEGER column -- see
+                            // this whole block's opening comment for why.
+                            bool makePrimaryKey = string.Equals(col.Name, "ID", StringComparison.OrdinalIgnoreCase);
+
+                            string def = $"\"{col.Name}\" {col.Type}";
+                            if (makePrimaryKey)
+                            {
+                                def += " PRIMARY KEY AUTOINCREMENT";
+                            }
+                            else
+                            {
+                                if (col.NotNull) def += " NOT NULL";
+                                if (col.Default != null) def += $" DEFAULT {col.Default}";
+                            }
+                            columnDefs.Add(def);
+                        }
+
+                        using (var tx = conn.BeginTransaction())
+                        {
+                            using (var cmd = new SQLiteCommand(
+                                $"CREATE TABLE bills_rebuild ({string.Join(", ", columnDefs)})", conn, tx))
+                            {
+                                cmd.ExecuteNonQuery();
+                            }
+                            using (var cmd = new SQLiteCommand(
+                                "INSERT INTO bills_rebuild SELECT * FROM bills", conn, tx))
+                            {
+                                cmd.ExecuteNonQuery();
+                            }
+                            using (var cmd = new SQLiteCommand("DROP TABLE bills", conn, tx))
+                            {
+                                cmd.ExecuteNonQuery();
+                            }
+                            using (var cmd = new SQLiteCommand(
+                                "ALTER TABLE bills_rebuild RENAME TO bills", conn, tx))
+                            {
+                                cmd.ExecuteNonQuery();
+                            }
+                            tx.Commit();
+                        }
+                    }
+
+                    // Always logged (2026-08-29), success path included --
+                    // not just the failure path below -- since "ran, found
+                    // nothing to fix" (detection logic wrong, as it turned
+                    // out to be on the first pass) and "never ran at all"
+                    // (old build still running) look identical from outside
+                    // without this: both leave the exact same symptom.
+                    try
+                    {
+                        string logPath = System.IO.Path.Combine(Server.Location, "schema-migration-error.log");
+                        System.IO.File.AppendAllText(logPath,
+                            DateTime.Now + " -- bills primary-key check ran. " +
+                            $"billnumberIsPk={billnumberIsPk}, hasInlineUnique={hasInlineUnique}, " +
+                            $"indexesDropped={indexesDropped}, rebuildNeeded={rebuildNeeded}\r\n\r\n");
+                    }
+                    catch (Exception)
+                    {
+                        // Nothing more to do if even this fails.
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Widened from SQLiteException to Exception, and
+                    // logged (2026-08-29) -- unlike every other try/catch in
+                    // this file, a failure HERE means returns keep failing
+                    // with the same UNIQUE constraint error forever, not
+                    // just a nice-to-have backfill silently not applying,
+                    // and a bare silent catch already once gave zero way to
+                    // tell WHY it failed when this exact symptom was
+                    // reported after this exact code had already run.
+                    // Logs next to the database itself (Documents\PosSystem,
+                    // same folder Mahmoud already knows about from Settings'
+                    // Data & Backup section) rather than anywhere requiring
+                    // its own separate UI to surface -- still wrapped in its
+                    // own try/catch since a failure while trying to WRITE a
+                    // diagnostic log must never be what crashes the app.
+                    try
+                    {
+                        string logPath = System.IO.Path.Combine(Server.Location, "schema-migration-error.log");
+                        System.IO.File.AppendAllText(logPath,
+                            DateTime.Now + " -- bills primary-key fix failed:\r\n" +
+                            ex + "\r\n\r\n");
+                    }
+                    catch (Exception)
+                    {
+                        // Nothing more to do if even this fails -- see
+                        // comment above.
+                    }
+                }
             }
         }
 

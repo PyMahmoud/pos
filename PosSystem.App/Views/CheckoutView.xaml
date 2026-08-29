@@ -479,9 +479,19 @@
                                                     CornerRadius="14" Padding="18"
                                                     Background="{DynamicResource SurfaceContainerBrush}">
                                                 <StackPanel>
-                                                    <TextBlock Text="{Binding Billnumber, StringFormat={}Bill #{0}}"
+                                                    <TextBlock Text="{Binding DisplayNumber, StringFormat={}Bill #{0}}"
                                                                Style="{StaticResource TitleMedium}"
                                                                Foreground="{DynamicResource OnSurfaceBrush}" />
+                                                    <!-- "Edited" tag (2026-08-28, receipt revisioning) —
+                                                         shown on a superseded original/earlier revision so
+                                                         the list makes clear #210 and #210-e1 are the SAME
+                                                         receipt at two points in time, not two unrelated
+                                                         sales that happen to share a number. -->
+                                                    <TextBlock Text="{DynamicResource BillsBrowserSupersededTag}"
+                                                               Style="{StaticResource LabelSmall}"
+                                                               Foreground="{DynamicResource TertiaryBrush}"
+                                                               Visibility="{Binding IsCurrent, Converter={StaticResource InverseBoolToVisibilityConverter}}"
+                                                               Margin="0,2,0,0" />
                                                     <TextBlock Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                                                Style="{StaticResource LabelSmall}"
                                                                Margin="0,2,0,0">
@@ -550,7 +560,7 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{Binding SelectedBill.Billnumber, StringFormat={}Bill #{0}}"
+                                        <TextBlock Text="{Binding SelectedBill.DisplayNumber, StringFormat={}Bill #{0}}"
                                                    Style="{StaticResource HeadlineMedium}"
                                                    Foreground="{DynamicResource OnSurfaceBrush}" />
                                         <TextBlock Foreground="{DynamicResource OnSurfaceVariantBrush}"
@@ -613,6 +623,38 @@
                                     </StackPanel>
                                 </Border>
 
+                                <!-- Superseded-history banner (2026-08-28, receipt
+                                     revisioning) — shown only when this bill is an
+                                     older/original version that's since been returned-
+                                     from (IsSelectedBillSuperseded). Return actions below
+                                     (line +/-, Remove, whole-bill) are all hidden in this
+                                     state via IsSelectedBillCurrent — history is frozen,
+                                     read-only, exactly as it was actually sold. -->
+                                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                                        CornerRadius="14" Padding="16" Margin="0,0,0,20"
+                                        Visibility="{Binding IsSelectedBillSuperseded, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{DynamicResource BillsBrowserSupersededBanner}"
+                                                   Style="{StaticResource BodyLarge}"
+                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center" />
+                                        <Button Grid.Column="1"
+                                                Content="{DynamicResource BillsBrowserViewCurrentButton}"
+                                                Command="{Binding ViewCurrentVersionCommand}"
+                                                Background="{DynamicResource PrimaryBrush}"
+                                                Foreground="{DynamicResource OnPrimaryBrush}"
+                                                Template="{StaticResource SelectableButtonTemplate}"
+                                                Padding="14,10"
+                                                Margin="12,0,0,0" />
+                                    </Grid>
+                                </Border>
+
                                 <!-- Line items -->
                                 <TextBlock Text="{DynamicResource BillsDetailItemsTitle}"
                                            Style="{StaticResource TitleMedium}"
@@ -636,34 +678,45 @@
                                                                TextWrapping="Wrap"
                                                                VerticalAlignment="Center" />
 
-                                                    <!-- +/- quantity adjustment (2026-08-28) — same
-                                                         −/qty/+ layout as Checkout's own cart lines
-                                                         (CartLine's Increment/DecrementLineCommand),
-                                                         reused here for a saved Sells row instead of
-                                                         an in-memory cart line. Minus restores one
-                                                         unit to inventory (or removes the line
-                                                         outright if it's the last unit); plus sells
-                                                         one more, capped by real stock on hand — see
-                                                         BillsBrowserViewModel.IncrementLineQuantity/
-                                                         DecrementLineQuantity for the reversal math. -->
+                                                    <!-- Line-level return actions (2026-08-28,
+                                                         receipt revisioning) — − returns one unit
+                                                         (drops the line entirely once it hits zero);
+                                                         Remove returns the whole line at once. Both
+                                                         restore inventory and create a NEW bill
+                                                         revision rather than editing this bill in
+                                                         place — see BillsBrowserViewModel's class doc
+                                                         comment ("Return math") for the full reasoning.
+                                                         No "+" here any more: adding units back to an
+                                                         already-sold, possibly-historical receipt isn't
+                                                         a return, and doesn't fit this model — a
+                                                         genuinely new sale belongs in a fresh Checkout
+                                                         cart instead. The − BUTTON is hidden entirely
+                                                         (IsSelectedBillCurrent) when viewing a
+                                                         superseded/historical revision — see the banner
+                                                         above this ItemsControl — but the quantity
+                                                         TextBlock stays outside that visibility switch
+                                                         and always shows: a bug fix (2026-08-29) for a
+                                                         first version of this that wrapped BOTH the
+                                                         button and the quantity number in the same
+                                                         Visibility binding, which meant opening a
+                                                         superseded bill's history hid the quantity of
+                                                         every line entirely instead of just hiding the
+                                                         return button, per Mahmoud's own report after
+                                                         trying it. -->
                                                     <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                                 VerticalAlignment="Center">
                                                         <Button Content="−"
                                                                 Command="{Binding DataContext.DecrementLineQuantityCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                                 CommandParameter="{Binding}"
                                                                 Width="28" Height="28" Padding="0"
-                                                                Style="{StaticResource ThemeToggleButtonStyle}" />
+                                                                Style="{StaticResource ThemeToggleButtonStyle}"
+                                                                Visibility="{Binding DataContext.IsSelectedBillCurrent, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource BoolToVisibilityConverter}}" />
                                                         <TextBlock Text="{Binding Quantity, StringFormat={}{0:0.##}}"
                                                                    Foreground="{DynamicResource OnSurfaceBrush}"
                                                                    VerticalAlignment="Center"
                                                                    MinWidth="28"
                                                                    TextAlignment="Center"
                                                                    Margin="8,0" />
-                                                        <Button Content="+"
-                                                                Command="{Binding DataContext.IncrementLineQuantityCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                                CommandParameter="{Binding}"
-                                                                Width="28" Height="28" Padding="0"
-                                                                Style="{StaticResource ThemeToggleButtonStyle}" />
                                                     </StackPanel>
 
                                                     <TextBlock Grid.Column="2" Text="{Binding Price, StringFormat={}{0:0.00}}"
@@ -672,25 +725,37 @@
                                                                VerticalAlignment="Center" />
                                                     <Button Grid.Column="3"
                                                             Content="{DynamicResource BillsDetailRemoveLineButton}"
-                                                            Command="{Binding DataContext.DeleteLineCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            Command="{Binding DataContext.ReturnLineCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                             CommandParameter="{Binding}"
                                                             Background="{DynamicResource ErrorContainerBrush}"
                                                             Foreground="{DynamicResource OnErrorContainerBrush}"
                                                             Template="{StaticResource SelectableButtonTemplate}"
-                                                            Padding="12,8" />
+                                                            Padding="12,8"
+                                                            Visibility="{Binding DataContext.IsSelectedBillCurrent, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource BoolToVisibilityConverter}}" />
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <Button Content="{DynamicResource BillsDetailDeleteWholeBillButton}"
-                                        Command="{Binding DeleteWholeBillCommand}"
+                                <!-- Whole-bill return (2026-08-28, receipt revisioning)
+                                     — replaces the old "Delete Whole Bill" button; instead
+                                     of hard-deleting the bills row (which used to erase the
+                                     original sale from history entirely), this now returns
+                                     every line at once through the same revision-creating
+                                     path a single-line return uses, leaving a real (zero-
+                                     item) revision behind as history — see
+                                     BillsBrowserViewModel.ReturnWholeBill. Hidden for a
+                                     superseded/historical bill, same as the line-level
+                                     actions above. -->
+                                <Button Content="{DynamicResource BillsDetailReturnWholeBillButton}"
+                                        Command="{Binding ReturnWholeBillCommand}"
                                         Background="{DynamicResource ErrorBrush}"
                                         Foreground="{DynamicResource OnErrorBrush}"
                                         Template="{StaticResource SelectableButtonTemplate}"
                                         Padding="0,14"
-                                        HorizontalContentAlignment="Center" />
+                                        HorizontalContentAlignment="Center"
+                                        Visibility="{Binding IsSelectedBillCurrent, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                                 <TextBlock Text="{Binding StatusMessage}"
                                            Foreground="{DynamicResource OnSurfaceVariantBrush}"

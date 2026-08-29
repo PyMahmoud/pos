@@ -642,8 +642,19 @@ namespace PosSystem.App.ViewModels
 
             try
             {
-                _cachedBills = _billsData.ReadBills("bills");
-                _cachedSells = _sellsData.ReadPendingSell("sells");
+                // Filtered to IsCurrent = 1 (2026-08-28, receipt revisioning -- see
+                // DatabaseBootstrapper's matching comment): once a receipt has been
+                // returned-from, its original bills row stays in the table as
+                // history, superseded by a new row with the same Billnumber.
+                // Reading every bill unfiltered here would double-count that
+                // receipt's revenue/profit. Sells is filtered to match by BillId
+                // membership, not Billnumber -- a superseded bill's own line items
+                // share the SAME Billnumber as their replacement's, so a Billnumber
+                // filter couldn't tell them apart the way a BillId one can.
+                var currentBills = _billsData.ReadBills("bills").Where(b => b.IsCurrent).ToList();
+                var currentBillIds = new HashSet<int>(currentBills.Select(b => b.Id));
+                _cachedBills = currentBills;
+                _cachedSells = _sellsData.ReadPendingSell("sells").Where(s => currentBillIds.Contains(s.BillId)).ToList();
                 var customers = _customersData.ReadCustomers("customers");
 
                 HasAnyBillsEver = _cachedBills.Count > 0;

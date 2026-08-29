@@ -33,6 +33,17 @@ namespace PosSystem.Core.Models
         // it back until now, since nothing needed to read it before.
         private int? customerId;
 
+        // Added 2026-08-28 for receipt revisioning -- see
+        // DatabaseBootstrapper's matching comment for the full schema
+        // reasoning. IsCurrent defaults to true here so that any code
+        // constructing a Bills object directly (rather than reading one
+        // back from SQLite) gets the safer "this is a normal, current
+        // bill" default rather than silently constructing an
+        // already-superseded one. RevisionSuffix null means "original,
+        // never-edited receipt" -- see DisplayNumber below.
+        private bool isCurrent = true;
+        private string revisionSuffix;
+
         public int Id { get => id; set => id = value; }
         public int Billnumber { get => billnumber; set => billnumber = value; }
         public double Billcost { get => billcost; set => billcost = value; }
@@ -48,6 +59,19 @@ namespace PosSystem.Core.Models
         public double Discount { get => discount; set => discount = value; }
         public string Details { get => details; set => details = value; }
         public int? CustomerId { get => customerId; set => customerId = value; }
+        public bool IsCurrent { get => isCurrent; set => isCurrent = value; }
+        public string RevisionSuffix { get => revisionSuffix; set => revisionSuffix = value; }
+
+        // "210" for an original receipt, "210-e1"/"210-e2"/... once it's
+        // been returned-from one or more times (see BillsBrowserViewModel
+        // for where RevisionSuffix values get assigned) -- what every
+        // screen that shows a bill number to a person should bind to
+        // instead of the raw Billnumber, so the UI never shows two
+        // different receipts both labeled plain "Bill #210" once a return
+        // has happened.
+        public string DisplayNumber => string.IsNullOrEmpty(RevisionSuffix)
+            ? Billnumber.ToString()
+            : Billnumber + "-" + RevisionSuffix;
 
         public event PropertyChangedEventHandler PropertyChanged;
         public void NotifyPropertyChanged(string property)

@@ -63,12 +63,19 @@
     <system:String x:Key="CheckoutPayLaterRequiresCustomer">Select a customer before choosing Pay Later.</system:String>
     <system:String x:Key="CheckoutSaleSuccessCredit">Sale completed — Bill #{0}, added to {1}'s tab.</system:String>
 
-    <!-- Bills browser (#6, 2026-08-27/28) — opened from a button above the
-         customer picker on Checkout. List of saved bills, drill into one
-         to see its line items, delete a single line or the whole bill
-         (both reverse inventory + linked-customer balances, and both
-         require the admin password — see BillsBrowserViewModel's class doc
-         comment for the full reversal design). -->
+    <!-- Bills browser (#6, 2026-08-27/28; reworked 2026-08-28 into
+         receipt revisioning per Mahmoud's explicit request) — opened from
+         a button above the customer picker on Checkout. Shows every bill
+         AND every past revision of it (the receipt's full history), drill
+         into one to see its line items. Returning a product (a single
+         line, part of a line's quantity, or the whole bill) never edits
+         that bill in place any more — it creates a NEW bill carrying the
+         SAME number plus a suffix ("210" -> "210-e1" -> "210-e2"...) and
+         leaves the original exactly as it was, as history. Only the
+         current/latest revision of a receipt can be returned from; an
+         older one opens read-only. All of this requires the admin
+         password — see BillsBrowserViewModel's class doc comment for the
+         full reversal design. -->
     <system:String x:Key="CheckoutBillsButton">Bills</system:String>
     <system:String x:Key="BillsBrowserTitle">Bills</system:String>
     <system:String x:Key="BillsBrowserCloseButton">✕</system:String>
@@ -76,26 +83,39 @@
     <system:String x:Key="BillsBrowserNoResults">No bills yet — completed sales will show up here.</system:String>
     <system:String x:Key="BillsBrowserViewButton">View</system:String>
     <system:String x:Key="BillsBrowserWalkInLabel">Walk-in</system:String>
+    <!-- "Edited" tag shown on a bill list card for a superseded revision
+         (Core.Models.Bills.IsCurrent == false) — makes clear #210 and
+         #210-e1 in the list are the same receipt at two points in time. -->
+    <system:String x:Key="BillsBrowserSupersededTag">Edited — see current version</system:String>
+    <!-- Read-only history banner shown at the top of a superseded bill's
+         detail view, replacing the normal return actions. -->
+    <system:String x:Key="BillsBrowserSupersededBanner">This is an earlier version of this receipt. It's kept as history and can't be changed here.</system:String>
+    <system:String x:Key="BillsBrowserViewCurrentButton">View current version</system:String>
     <system:String x:Key="BillsDetailBackButton">← Back to Bills</system:String>
     <system:String x:Key="BillsDetailItemsTitle">Items</system:String>
-    <system:String x:Key="BillsDetailRemoveLineButton">Remove</system:String>
-    <system:String x:Key="BillsDetailDeleteWholeBillButton">Delete Whole Bill</system:String>
+    <system:String x:Key="BillsDetailRemoveLineButton">Return</system:String>
+    <system:String x:Key="BillsDetailReturnWholeBillButton">Return Whole Bill</system:String>
     <system:String x:Key="BillsAdminLockedTitle">Owner/Manager Access Required</system:String>
-    <system:String x:Key="BillsAdminLockedSubtitle">Deleting a bill or a line from it requires the admin password.</system:String>
+    <system:String x:Key="BillsAdminLockedSubtitle">Returning a product or a whole bill requires the admin password.</system:String>
     <system:String x:Key="BillsAdminRequired">Enter the admin password below to make this change.</system:String>
-    <system:String x:Key="BillsDeleteLineSuccess">{0} removed from Bill #{1}.</system:String>
+    <!-- {0} = product name, {1} = the ORIGINAL bill's display number (e.g.
+         "210") — the new revision this creates always gets the next "eN"
+         suffix automatically, so the message names the receipt someone
+         actually recognizes rather than the freshly-minted "210-e1" they
+         haven't seen yet. -->
+    <system:String x:Key="BillsDeleteLineSuccess">{0} returned from Bill #{1} — a new receipt was created to reflect it.</system:String>
     <system:String x:Key="BillsDeleteLineError">Something went wrong. Please try again.</system:String>
-    <system:String x:Key="BillsDeleteWholeBillSuccess">Bill #{0} deleted.</system:String>
+    <system:String x:Key="BillsDeleteWholeBillSuccess">Bill #{0} fully returned — a new receipt was created to reflect it.</system:String>
     <system:String x:Key="BillsDeleteWholeBillError">Something went wrong. Please try again.</system:String>
 
-    <!-- Per-line +/- quantity adjustment (2026-08-28): lets Mahmoud
-         remove or add back a SPECIFIC amount of a line instead of only
-         being able to delete the whole line via the Remove button above.
-         See BillsBrowserViewModel.IncrementLineQuantity/
-         DecrementLineQuantity for the reversal/stock-check logic. -->
-    <system:String x:Key="BillsLineQuantityIncreased">{0} increased on Bill #{1}.</system:String>
-    <system:String x:Key="BillsLineQuantityDecreased">{0} reduced on Bill #{1}.</system:String>
-    <system:String x:Key="BillsLineOutOfStock">Not enough stock left to add another {0}.</system:String>
+    <!-- Per-line quantity return (2026-08-28, reworked same day into
+         receipt revisioning): returns ONE unit of a line at a time,
+         instead of only being able to return the whole line via the
+         Return button above. No "add back" (+) any more — see
+         BillsBrowserViewModel's class doc comment for why that no longer
+         fits once returns create a new revision rather than editing a
+         bill in place. -->
+    <system:String x:Key="BillsLineQuantityDecreased">{0} reduced on Bill #{1} — a new receipt was created to reflect it.</system:String>
     <system:String x:Key="BillsAdjustLineError">Something went wrong. Please try again.</system:String>
 
     <system:String x:Key="CustomersHeading">Customers</system:String>
@@ -408,14 +428,16 @@ Choose a payment method -- Cash, Card, or Pay Later -- then tap Complete Sale. P
 
 Tax and any discount are applied automatically based on Settings &#8594; Preferences.</system:String>
 
-    <system:String x:Key="HelpBillsTitle">Bills -- Viewing and Editing Past Sales</system:String>
-    <system:String x:Key="HelpBillsBody">Tap the Bills button above the customer dropdown in Checkout to open the list of past bills.
+    <system:String x:Key="HelpBillsTitle">Bills -- Viewing Receipt History and Processing Returns</system:String>
+    <system:String x:Key="HelpBillsBody">Tap the Bills button above the customer dropdown in Checkout to open the list of past bills. This list shows every receipt's full history, including earlier versions of any bill that's been returned from.
 
 Tap any bill to see every product on it, along with quantities, prices, and totals.
 
-From inside a bill you can adjust or remove a single product's quantity (this recalculates the tax, discount, and remaining balance for that bill automatically), or delete the whole bill.
+From inside a bill's CURRENT version you can return a single product, reduce a product's quantity by one unit at a time, or return the whole bill. None of these edit the receipt in place -- each one creates a NEW receipt with the same number plus a suffix (Bill #210 becomes #210-e1 after its first return, #210-e2 after a second, and so on), while the original stays untouched as history. Dashboard's revenue/profit numbers always reflect the current version only, so a return correctly comes back out of today's totals.
 
-This area is admin-gated -- deleting or editing a bill changes real sales history, so it needs the admin password the same way Dashboard and Inventory's admin actions do.</system:String>
+An earlier version of a receipt opens read-only, with a button to jump straight to its current version if you need to make another return.
+
+This area is admin-gated -- returning a product or a whole bill changes real sales history, so it needs the admin password the same way Dashboard and Inventory's admin actions do.</system:String>
 
     <system:String x:Key="HelpCustomersTitle">Customers -- Contacts and Debt</system:String>
     <system:String x:Key="HelpCustomersBody">Add a new customer with their name and phone number from the Customers screen. Tap a customer to open their detail page.

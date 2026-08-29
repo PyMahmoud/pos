@@ -69,14 +69,25 @@ namespace PosSystem.Core.Reporting
             DateTime start = startDate.Date;
             DateTime end = endDate.Date;
 
+            // Filtered to IsCurrent = 1 (2026-08-28, receipt revisioning --
+            // see DatabaseBootstrapper's matching comment), same reasoning
+            // as DashboardViewModel/CustomerDetailViewModel's matching
+            // filters: a returned bill's original row stays in `bills` as
+            // history, so an unfiltered export would report a returned
+            // sale's revenue/profit twice -- once from the now-superseded
+            // original, once from its replacement receipt. Sales Detail is
+            // matched by BillId, not Billnumber, for the same reason those
+            // two ViewModels' filters are -- a superseded bill's own line
+            // items share their replacement's Billnumber, so a Billnumber
+            // filter alone couldn't tell the two apart.
             var billsInRange = billsData.ReadBills("bills")
-                .Where(b => TryParseDatex(b.Datex, out DateTime d) && d.Date >= start && d.Date <= end)
+                .Where(b => b.IsCurrent && TryParseDatex(b.Datex, out DateTime d) && d.Date >= start && d.Date <= end)
                 .OrderBy(b => b.Billnumber)
                 .ToList();
 
-            var billNumbersInRange = new HashSet<int>(billsInRange.Select(b => b.Billnumber));
+            var billIdsInRange = new HashSet<int>(billsInRange.Select(b => b.Id));
             var sellsInRange = sellsData.ReadPendingSell("sells")
-                .Where(s => billNumbersInRange.Contains(s.Billnumber))
+                .Where(s => billIdsInRange.Contains(s.BillId))
                 .OrderBy(s => s.Billnumber)
                 .ToList();
 

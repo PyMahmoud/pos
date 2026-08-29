@@ -200,6 +200,7 @@
     <Compile Include="Converters\PositiveCountToVisibilityConverter.cs" />
     <Compile Include="Converters\PositiveNumberToVisibilityConverter.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
+    <Compile Include="Converters\InverseBoolToVisibilityConverter.cs" />
     <Compile Include="Converters\CustomerBalanceTextConverter.cs" />
     <Compile Include="AppSettings.cs" />
     <Compile Include="AdminSession.cs" />

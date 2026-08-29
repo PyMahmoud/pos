@@ -109,11 +109,21 @@ namespace PosSystem.App.ViewModels
 
         private void LoadSalesHistory()
         {
-            var bills = _billsData.ReadBillsByCustomer("bills", Customer.Id);
-            var billNumbers = new HashSet<int>(bills.Select(b => b.Billnumber));
+            // Filtered to IsCurrent = 1 (2026-08-28, receipt revisioning --
+            // see DatabaseBootstrapper's matching comment), same reasoning
+            // as DashboardViewModel.RefreshDashboard's matching filter: a
+            // returned bill's original row stays in `bills` as history, so
+            // reading every bill for this customer unfiltered would count a
+            // returned medication's revenue/quantity twice -- once from the
+            // now-superseded original, once from its replacement. Matched
+            // by BillId, not Billnumber, for the same reason Dashboard's
+            // filter is -- a superseded bill's lines share their
+            // replacement's Billnumber.
+            var bills = _billsData.ReadBillsByCustomer("bills", Customer.Id).Where(b => b.IsCurrent).ToList();
+            var billIds = new HashSet<int>(bills.Select(b => b.Id));
 
             var lines = _sellsData.ReadPendingSell("sells")
-                .Where(s => billNumbers.Contains(s.Billnumber));
+                .Where(s => billIds.Contains(s.BillId));
 
             var grouped = lines
                 .GroupBy(s => s.Name)

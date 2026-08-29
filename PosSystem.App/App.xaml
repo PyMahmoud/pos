@@ -30,6 +30,7 @@
             <conv:PositiveCountToVisibilityConverter x:Key="PositiveCountToVisibilityConverter" />
             <conv:PositiveNumberToVisibilityConverter x:Key="PositiveNumberToVisibilityConverter" />
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
             <conv:CustomerBalanceTextConverter x:Key="CustomerBalanceTextConverter" />
 
             <ResourceDictionary.MergedDictionaries>

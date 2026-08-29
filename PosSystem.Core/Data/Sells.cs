@@ -26,9 +26,17 @@ namespace PosSystem.Core.Data
         //	`Datee`	TEXT,
         //	`Image`	BLOB
         //);
-        public void InsertSells(string TableName, string Name, string Category, double Quantity, double Cost, double Price, string Type, string Time, string Datex, string Barcode ,int Billnumber, double Earned ,string Returned , string Details)
+        // BillId added 2026-08-28 for receipt revisioning (see
+        // DatabaseBootstrapper's matching comment) -- required, not
+        // optional: every caller from now on knows exactly which bills.ID
+        // row a line belongs to (CheckoutViewModel.CompleteSale has just
+        // inserted that row itself; BillsBrowserViewModel's return flow is
+        // inserting the replacement row right alongside these lines), so
+        // there's no legitimate "don't know it" case the way CustomerId on
+        // InsertBills has for a walk-in sale.
+        public void InsertSells(string TableName, string Name, string Category, double Quantity, double Cost, double Price, string Type, string Time, string Datex, string Barcode ,int Billnumber, double Earned ,string Returned , string Details, int BillId)
         {
-            string insertString = "insert into " + TableName + "(Name ,Category ,Quantity ,Cost ,Price ,Type  , Time ,  Datex ,Barcode ,Billnumber , Earned ,Returned , Details) VALUES (@name , @category , @quantity , @cost , @price ,@type ,@time , @datex ,@barcode , @billnumber ,@earned ,@returned , @details)";
+            string insertString = "insert into " + TableName + "(Name ,Category ,Quantity ,Cost ,Price ,Type  , Time ,  Datex ,Barcode ,Billnumber , Earned ,Returned , Details, BillId) VALUES (@name , @category , @quantity , @cost , @price ,@type ,@time , @datex ,@barcode , @billnumber ,@earned ,@returned , @details, @billid)";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();
@@ -47,6 +55,7 @@ namespace PosSystem.Core.Data
                     cmd.Parameters.AddWithValue("@earned", Earned);
                     cmd.Parameters.AddWithValue("@returned", Returned);
                     cmd.Parameters.AddWithValue("@details", Details);
+                    cmd.Parameters.AddWithValue("@billid", BillId);
                     cmd.ExecuteNonQuery();
                     cmd.Dispose();
                 }
@@ -120,6 +129,7 @@ namespace PosSystem.Core.Data
                         goods_List.Earned = DbNullSafe.ToDouble(reader["Earned"]);
                         goods_List.Returned = DbNullSafe.ToStringSafe(reader["Returned"]);
                         goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
+                        goods_List.BillId = DbNullSafe.ToInt32(reader["BillId"]);
                         goods.Add(goods_List);
                       
                     }
@@ -188,6 +198,53 @@ namespace PosSystem.Core.Data
                         goods_List.Earned = DbNullSafe.ToDouble(reader["Earned"]);
                         goods_List.Returned = DbNullSafe.ToStringSafe(reader["Returned"]);
                         goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
+                        goods_List.BillId = DbNullSafe.ToInt32(reader["BillId"]);
+                        sells.Add(goods_List);
+                    }
+                    return sells;
+                }
+            }
+        }
+
+        // Added 2026-08-28 for receipt revisioning (see
+        // DatabaseBootstrapper's matching comment) -- the per-revision
+        // counterpart to ReadSellsByBillnumber above. Once a receipt has
+        // been returned-from, several bills rows can share one Billnumber
+        // (the original plus every revision), so ReadSellsByBillnumber
+        // would pull in EVERY revision's lines mixed together; this reads
+        // only the lines belonging to one specific bills.ID -- what
+        // BillsBrowserViewModel now uses whenever it needs "exactly this
+        // receipt version's items", whether that's the current revision
+        // (for the return UI) or a superseded one (for read-only history).
+        public List<Models.Sells> ReadSellsByBillId(string TableName, int BillId)
+        {
+            List<Models.Sells> sells = new List<Models.Sells>();
+            string readString = "SELECT * FROM " + TableName + " WHERE BillId = @billid";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(readString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@billid", BillId);
+                    IDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        var goods_List = new Models.Sells();
+                        goods_List.Id = DbNullSafe.ToInt32(reader["ID"]);
+                        goods_List.Name = DbNullSafe.ToStringSafe(reader["Name"]);
+                        goods_List.Category = DbNullSafe.ToStringSafe(reader["Category"]);
+                        goods_List.Quantity = DbNullSafe.ToDouble(reader["Quantity"]);
+                        goods_List.Cost = DbNullSafe.ToDouble(reader["Cost"]);
+                        goods_List.Price = DbNullSafe.ToDouble(reader["Price"]);
+                        goods_List.Type = DbNullSafe.ToStringSafe(reader["Type"]);
+                        goods_List.Time = DbNullSafe.ToStringSafe(reader["Time"]);
+                        goods_List.Datex = DbNullSafe.ToStringSafe(reader["Datex"]);
+                        goods_List.Barcode = DbNullSafe.ToStringSafe(reader["Barcode"]);
+                        goods_List.Billnumber = DbNullSafe.ToInt32(reader["Billnumber"]);
+                        goods_List.Earned = DbNullSafe.ToDouble(reader["Earned"]);
+                        goods_List.Returned = DbNullSafe.ToStringSafe(reader["Returned"]);
+                        goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
+                        goods_List.BillId = DbNullSafe.ToInt32(reader["BillId"]);
                         sells.Add(goods_List);
                     }
                     return sells;

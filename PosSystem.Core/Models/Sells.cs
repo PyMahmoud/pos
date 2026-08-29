@@ -24,6 +24,12 @@ namespace PosSystem.Core.Models
         private double earned;
         private string details;
         private string returned;
+
+        // Added 2026-08-28 for receipt revisioning -- see
+        // DatabaseBootstrapper's matching comment. The specific bills.ID
+        // row this line belongs to, since Billnumber alone can now be
+        // shared by several bills rows (an original plus its revisions).
+        private int billId;
         public event PropertyChangedEventHandler PropertyChanged;
         public void NotifyPropertyChanged(string property)
         {
@@ -113,6 +119,7 @@ namespace PosSystem.Core.Models
 
         public int Billnumber { get => billnumber; set => billnumber = value; }
         public string Returned { get => returned; set => returned = value; }
+        public int BillId { get => billId; set => billId = value; }
     }
        
 }

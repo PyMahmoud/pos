@@ -67,22 +67,23 @@
     <system:String x:Key="BillsBrowserNoResults">لا توجد فواتير بعد — ستظهر هنا عمليات البيع المكتملة.</system:String>
     <system:String x:Key="BillsBrowserViewButton">عرض</system:String>
     <system:String x:Key="BillsBrowserWalkInLabel">زبون عابر</system:String>
+    <system:String x:Key="BillsBrowserSupersededTag">معدّلة — راجع النسخة الحالية</system:String>
+    <system:String x:Key="BillsBrowserSupersededBanner">هذه نسخة سابقة من هذه الفاتورة. محفوظة كسجل تاريخي ولا يمكن تعديلها هنا.</system:String>
+    <system:String x:Key="BillsBrowserViewCurrentButton">عرض النسخة الحالية</system:String>
     <system:String x:Key="BillsDetailBackButton">→ العودة إلى الفواتير</system:String>
     <system:String x:Key="BillsDetailItemsTitle">المنتجات</system:String>
-    <system:String x:Key="BillsDetailRemoveLineButton">إزالة</system:String>
-    <system:String x:Key="BillsDetailDeleteWholeBillButton">حذف الفاتورة بالكامل</system:String>
+    <system:String x:Key="BillsDetailRemoveLineButton">إرجاع</system:String>
+    <system:String x:Key="BillsDetailReturnWholeBillButton">إرجاع الفاتورة بالكامل</system:String>
     <system:String x:Key="BillsAdminLockedTitle">مطلوب صلاحية المالك أو المدير</system:String>
-    <system:String x:Key="BillsAdminLockedSubtitle">حذف فاتورة أو منتج منها يتطلب كلمة مرور المسؤول.</system:String>
+    <system:String x:Key="BillsAdminLockedSubtitle">إرجاع منتج أو فاتورة بالكامل يتطلب كلمة مرور المسؤول.</system:String>
     <system:String x:Key="BillsAdminRequired">أدخل كلمة مرور المسؤول أدناه لإجراء هذا التغيير.</system:String>
-    <system:String x:Key="BillsDeleteLineSuccess">تمت إزالة {0} من الفاتورة رقم {1}.</system:String>
+    <system:String x:Key="BillsDeleteLineSuccess">تم إرجاع {0} من الفاتورة رقم {1} — تم إنشاء فاتورة جديدة لتعكس ذلك.</system:String>
     <system:String x:Key="BillsDeleteLineError">حدث خطأ. حاول مرة أخرى.</system:String>
-    <system:String x:Key="BillsDeleteWholeBillSuccess">تم حذف الفاتورة رقم {0}.</system:String>
+    <system:String x:Key="BillsDeleteWholeBillSuccess">تم إرجاع الفاتورة رقم {0} بالكامل — تم إنشاء فاتورة جديدة لتعكس ذلك.</system:String>
     <system:String x:Key="BillsDeleteWholeBillError">حدث خطأ. حاول مرة أخرى.</system:String>
 
-    <!-- Per-line +/- quantity adjustment (2026-08-28) -->
-    <system:String x:Key="BillsLineQuantityIncreased">تمت زيادة {0} في الفاتورة رقم {1}.</system:String>
-    <system:String x:Key="BillsLineQuantityDecreased">تم تقليل {0} في الفاتورة رقم {1}.</system:String>
-    <system:String x:Key="BillsLineOutOfStock">لا توجد كمية كافية من {0} لإضافتها.</system:String>
+    <!-- إرجاع كمية سطر واحد تلو الآخر (2026-08-28) -->
+    <system:String x:Key="BillsLineQuantityDecreased">تم تقليل {0} في الفاتورة رقم {1} — تم إنشاء فاتورة جديدة لتعكس ذلك.</system:String>
     <system:String x:Key="BillsAdjustLineError">حدث خطأ. حاول مرة أخرى.</system:String>
 
     <system:String x:Key="CustomersHeading">العملاء</system:String>
@@ -323,14 +324,16 @@
 
 يتم تطبيق الضريبة وأي خصم تلقائيًا بناءً على الإعدادات ← التفضيلات.</system:String>
 
-    <system:String x:Key="HelpBillsTitle">الفواتير — عرض وتعديل المبيعات السابقة</system:String>
-    <system:String x:Key="HelpBillsBody">اضغط على زر الفواتير أعلى قائمة العملاء في شاشة الدفع لفتح قائمة الفواتير السابقة.
+    <system:String x:Key="HelpBillsTitle">الفواتير — عرض سجل الفاتورة وإجراء المرتجعات</system:String>
+    <system:String x:Key="HelpBillsBody">اضغط على زر الفواتير أعلى قائمة العملاء في شاشة الدفع لفتح قائمة الفواتير السابقة. تعرض هذه القائمة السجل الكامل لكل فاتورة، بما في ذلك النسخ السابقة لأي فاتورة تم الإرجاع منها.
 
 اضغط على أي فاتورة لعرض كل منتج بها، مع الكميات والأسعار والإجماليات.
 
-من داخل الفاتورة يمكنك تعديل أو إزالة كمية منتج واحد (يعيد هذا حساب الضريبة والخصم والرصيد المتبقي لتلك الفاتورة تلقائيًا)، أو حذف الفاتورة بأكملها.
+من داخل النسخة الحالية للفاتورة يمكنك إرجاع منتج واحد، أو تقليل كمية منتج وحدة واحدة تلو الأخرى، أو إرجاع الفاتورة بأكملها. لا يقوم أي من هذه الإجراءات بتعديل الفاتورة مباشرة — بل ينشئ كل منها فاتورة جديدة بنفس الرقم مع لاحقة (تصبح الفاتورة 210 هي 210-e1 بعد أول إرجاع، و210-e2 بعد الثاني، وهكذا)، بينما تبقى الفاتورة الأصلية كما هي كسجل تاريخي. تعكس أرقام الإيرادات والربح في لوحة التحكم دائمًا النسخة الحالية فقط، لذلك يخرج المرتجع بشكل صحيح من إجماليات اليوم.
 
-هذا القسم محمي بكلمة مرور المسؤول — حذف أو تعديل فاتورة يغيّر سجل المبيعات الفعلي، لذا يتطلب كلمة مرور المسؤول بنفس طريقة إجراءات لوحة التحكم والمخزون الإدارية.</system:String>
+تفتح النسخة السابقة من الفاتورة للقراءة فقط، مع زر ينقلك مباشرة إلى نسختها الحالية إذا احتجت لإجراء أخر.
+
+هذا القسم محمي بكلمة مرور المسؤول — إرجاع منتج أو فاتورة بالكامل يغيّر سجل المبيعات الفعلي، لذا يتطلب كلمة مرور المسؤول بنفس طريقة إجراءات لوحة التحكم والمخزون الإدارية.</system:String>
 
     <system:String x:Key="HelpCustomersTitle">العملاء — جهات الاتصال والديون</system:String>
     <system:String x:Key="HelpCustomersBody">أضف عميلاً جديدًا باسمه ورقم هاتفه من شاشة العملاء. اضغط على عميل لفتح صفحته التفصيلية.
