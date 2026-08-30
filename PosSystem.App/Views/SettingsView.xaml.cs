@@ -32,6 +32,35 @@ namespace PosSystem.App.Views
             // successful save, the two PasswordBox controls need to be
             // cleared too, or the visible boxes would silently keep
             // showing the just-saved password after the button click.
+            //
+            // BUG FIXED (found via Access Control's unlock box not clearing,
+            // reported by Mahmoud with a screenshot -- same family of issue
+            // as DashboardView's PasswordBox-can't-bind fix, but a
+            // different root cause underneath): this used to subscribe via
+            // DataContextChanged instead of the direct call below. That
+            // never actually fired here, because DataContext for this view
+            // is set inline via XAML (<UserControl.DataContext><vm:.../
+            // ></UserControl.DataContext>), which InitializeComponent()
+            // above already applies -- so by the time DataContextChanged
+            // += ran, the one and only DataContext change had already
+            // happened, and the event never fired again for the rest of
+            // this control's lifetime. SettingsViewModel_PropertyChanged
+            // was therefore never actually wired to anything, for ANY of
+            // the five PasswordBoxes below, not just Access Control's -- it
+            // just went unnoticed elsewhere because a successfully-unlocked
+            // section's box gets hidden by its own Visibility binding
+            // right after, so nobody saw the stale dots underneath. Fixed
+            // by subscribing directly against the DataContext that's
+            // already there, right here, instead of waiting for a change
+            // event that will never come.
+            if (DataContext is SettingsViewModel vm0)
+            {
+                vm0.PropertyChanged += SettingsViewModel_PropertyChanged;
+            }
+
+            // Kept as a defensive fallback in case DataContext is ever
+            // reassigned to a different instance later in this control's
+            // lifetime (it isn't today, but costs nothing to keep covered).
             DataContextChanged += (_, __) =>
             {
                 if (DataContext is SettingsViewModel vm)
@@ -77,6 +106,14 @@ namespace PosSystem.App.Views
             {
                 AdminPasswordUnlockPasswordBox.Password = "";
             }
+            // Access Control section's admin-unlock gate (added per
+            // Mahmoud's request) -- same PasswordBox two-way-sync need as
+            // every other unlock box on this screen.
+            if (e.PropertyName == nameof(SettingsViewModel.AccessControlUnlockPasswordInput)
+                && vm.AccessControlUnlockPasswordInput == "")
+            {
+                AccessControlUnlockPasswordBox.Password = "";
+            }
         }
 
         private void NewAdminPasswordBox_PasswordChanged(object sender, System.Windows.RoutedEventArgs e)
@@ -116,6 +153,14 @@ namespace PosSystem.App.Views
             if (DataContext is SettingsViewModel vm)
             {
                 vm.AdminPasswordUnlockPasswordInput = AdminPasswordUnlockPasswordBox.Password;
+            }
+        }
+
+        private void AccessControlUnlockPasswordBox_PasswordChanged(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.AccessControlUnlockPasswordInput = AccessControlUnlockPasswordBox.Password;
             }
         }
     }

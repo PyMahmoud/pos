@@ -125,7 +125,12 @@ namespace PosSystem.App.ViewModels
         // password has ever been set (AppSettings.HasAdminPassword is
         // false), this stays unlocked unconditionally, same as before.
         private bool _isUnlockedThisVisit;
-        public bool IsUnlocked => !AppSettings.HasAdminPassword || _isUnlockedThisVisit;
+        // GateDashboardEnabled (Settings' new Access Control section, added
+        // per Mahmoud's request) -- lets this screen stay open even with a
+        // password set elsewhere, if the owner turns Dashboard's own switch
+        // off. Same short-circuit shape as HasAdminPassword's existing
+        // check, just a second independent reason to skip the prompt.
+        public bool IsUnlocked => !AppSettings.HasAdminPassword || !AppSettings.GateDashboardEnabled || _isUnlockedThisVisit;
         public bool IsLocked => !IsUnlocked;
 
         private string _unlockPasswordInput = "";

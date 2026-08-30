@@ -148,7 +148,11 @@ namespace PosSystem.App.ViewModels
         // the way Dashboard/Inventory/Settings need one, since there's no
         // cached instance to leave unlocked in the background here.
         private bool _isUnlockedThisVisit;
-        public bool IsAdminUnlocked => !AppSettings.HasAdminPassword || _isUnlockedThisVisit;
+        // GateBillsEnabled (Settings' new Access Control section, added per
+        // Mahmoud's request) -- lets returns/revisions stay open even with
+        // a password set elsewhere, if the owner turns Bills' own switch
+        // off.
+        public bool IsAdminUnlocked => !AppSettings.HasAdminPassword || !AppSettings.GateBillsEnabled || _isUnlockedThisVisit;
         public bool IsAdminLocked => !IsAdminUnlocked;
 
         private string _adminUnlockPasswordInput = "";

@@ -527,6 +527,99 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Access Control (added per Mahmoud's request) — which
+                     admin-gated areas actually prompt for the password.
+                     This card's own lock/unlock is deliberately NOT one of
+                     the checkboxes inside it and can't be switched off —
+                     see SettingsViewModel.IsAccessControlUnlocked's doc
+                     comment for why. Same inline-unlock-box pattern as
+                     every other gated section on this screen. -->
+                <Border Background="{DynamicResource SurfaceContainerLowBrush}"
+                        CornerRadius="16"
+                        Padding="24"
+                        Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource SettingsAccessControlTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,8" />
+                        <TextBlock Text="{DynamicResource SettingsAccessControlDescription}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,16" />
+
+                        <!-- Locked state -->
+                        <StackPanel Visibility="{Binding IsAccessControlLocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{DynamicResource SettingsAccessControlUnlockRequired}"
+                                       Style="{StaticResource BodyLarge}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="260" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <PasswordBox Grid.Column="0"
+                                             x:Name="AccessControlUnlockPasswordBox"
+                                             Style="{StaticResource ThemedPasswordBoxStyle}"
+                                             PasswordChanged="AccessControlUnlockPasswordBox_PasswordChanged" />
+                                <Button Grid.Column="2"
+                                        Content="{DynamicResource DashboardUnlockButton}"
+                                        Command="{Binding AccessControlUnlockCommand}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Foreground="{DynamicResource OnPrimaryBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="16,8" />
+                            </Grid>
+                            <TextBlock Text="{Binding AccessControlUnlockError}"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0" />
+                        </StackPanel>
+
+                        <!-- Unlocked state -->
+                        <StackPanel Visibility="{Binding IsAccessControlUnlocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <CheckBox Content="{DynamicResource SettingsAccessControlDashboard}"
+                                      IsChecked="{Binding GateDashboardInput}"
+                                      Style="{StaticResource ThemedCheckBoxStyle}"
+                                      Margin="0,0,0,10" />
+                            <CheckBox Content="{DynamicResource SettingsAccessControlInventory}"
+                                      IsChecked="{Binding GateInventoryInput}"
+                                      Style="{StaticResource ThemedCheckBoxStyle}"
+                                      Margin="0,0,0,10" />
+                            <CheckBox Content="{DynamicResource SettingsAccessControlBills}"
+                                      IsChecked="{Binding GateBillsInput}"
+                                      Style="{StaticResource ThemedCheckBoxStyle}"
+                                      Margin="0,0,0,10" />
+                            <CheckBox Content="{DynamicResource SettingsAccessControlPreferences}"
+                                      IsChecked="{Binding GateSettingsPreferencesInput}"
+                                      Style="{StaticResource ThemedCheckBoxStyle}"
+                                      Margin="0,0,0,10" />
+                            <CheckBox Content="{DynamicResource SettingsAccessControlExport}"
+                                      IsChecked="{Binding GateSettingsExportInput}"
+                                      Style="{StaticResource ThemedCheckBoxStyle}"
+                                      Margin="0,0,0,16" />
+
+                            <TextBlock Text="{DynamicResource SettingsAccessControlAlwaysGatedNote}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,16" />
+
+                            <Button Content="{DynamicResource SettingsAccessControlSaveButton}"
+                                    Command="{Binding SaveAccessControlCommand}"
+                                    Background="{DynamicResource PrimaryBrush}"
+                                    Foreground="{DynamicResource OnPrimaryBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="0,12"
+                                    HorizontalContentAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
                 <!-- Shared status line — every command on this screen
                      (Save, Back Up Now, Open Backups Folder) writes into the
                      same SettingsViewModel.StatusMessage, same one-line-

@@ -334,6 +334,23 @@
          first, same inline-unlock-box pattern as Export/Preferences. -->
     <system:String x:Key="SettingsAdminPasswordUnlockRequired">Enter the current admin password below to change it.</system:String>
 
+    <!-- Access Control (added per Mahmoud's request) — five switches for
+         which admin-gated areas actually prompt for the password. This
+         section's own unlock is not one of the switches and can't be
+         turned off — see SettingsViewModel.IsAccessControlUnlocked's doc
+         comment. -->
+    <system:String x:Key="SettingsAccessControlTitle">Access Control</system:String>
+    <system:String x:Key="SettingsAccessControlDescription">Choose which of the areas below actually require the admin password. A password can still be set even if everything here is switched off.</system:String>
+    <system:String x:Key="SettingsAccessControlUnlockRequired">Enter the admin password below to change these switches.</system:String>
+    <system:String x:Key="SettingsAccessControlDashboard">Dashboard (revenue, profit, charts)</system:String>
+    <system:String x:Key="SettingsAccessControlInventory">Inventory (add, edit, delete products/categories)</system:String>
+    <system:String x:Key="SettingsAccessControlBills">Bills (returns and receipt revisions)</system:String>
+    <system:String x:Key="SettingsAccessControlPreferences">Settings → Preferences (tax rate, low stock threshold)</system:String>
+    <system:String x:Key="SettingsAccessControlExport">Settings → Export to Excel</system:String>
+    <system:String x:Key="SettingsAccessControlAlwaysGatedNote">The Admin Password section and this Access Control section always require the password, whether or not it's set here -- otherwise someone without the password could switch off every other protection.</system:String>
+    <system:String x:Key="SettingsAccessControlSaveButton">Save Access Control</system:String>
+    <system:String x:Key="SettingsAccessControlSaveSuccess">Access control settings saved.</system:String>
+
     <!-- Export to Excel (Phase 11 #3, 2026-08-28) — Settings' Export
          section: quick-range buttons, admin-gated unlock, and the actual
          export/open-folder actions. These same keys also feed
@@ -469,7 +486,9 @@ Data &amp; Backup: see where the database file lives, back it up with one tap, a
 
 Export to Excel: download a spreadsheet of bills and sales for a chosen date range -- admin-gated.
 
-Admin Password: set, change, or remove the password that protects Dashboard, Bills, and Inventory's admin actions. Leave both fields blank and save, or use the Remove Password button, to remove it entirely.</system:String>
+Admin Password: set, change, or remove the password that protects Dashboard, Bills, and Inventory's admin actions. Leave both fields blank and save, or use the Remove Password button, to remove it entirely.
+
+Access Control: choose which of those areas actually require the password -- e.g. keep Dashboard locked but leave Inventory open to any staff member. This section itself always requires the password, so it can't be used to switch off its own protection.</system:String>
 
     <system:String x:Key="HelpNeedMoreTitle">Still Need Help?</system:String>
     <system:String x:Key="HelpNeedMoreBody">If this guide didn't answer your question, use the Contact Support card below to call, WhatsApp, or email us directly.</system:String>

@@ -105,7 +105,11 @@ namespace PosSystem.App.ViewModels
         // gated: AddProduct, StartEdit (which blocks reaching SaveEdit),
         // DeleteProduct, AddCategory, DeleteCategory.
         private bool _isUnlockedThisVisit;
-        public bool IsAdminUnlocked => !AppSettings.HasAdminPassword || _isUnlockedThisVisit;
+        // GateInventoryEnabled (Settings' new Access Control section, added
+        // per Mahmoud's request) -- lets this screen's admin actions stay
+        // open even with a password set elsewhere, if the owner turns
+        // Inventory's own switch off.
+        public bool IsAdminUnlocked => !AppSettings.HasAdminPassword || !AppSettings.GateInventoryEnabled || _isUnlockedThisVisit;
         public bool IsAdminLocked => !IsAdminUnlocked;
 
         private string _adminUnlockPasswordInput = "";

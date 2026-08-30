@@ -65,5 +65,18 @@ namespace PosSystem.Core.Data
 
         public void SetDouble(string key, double value) =>
             SetString(key, value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+        // Added alongside Settings' new Access Control section (per
+        // Mahmoud's request) -- five on/off flags for which admin-gated
+        // areas actually prompt for the password. Same TEXT-column,
+        // parse-on-read approach as GetDouble/SetDouble above.
+        public bool GetBool(string key, bool defaultValue)
+        {
+            string raw = GetString(key, null);
+            if (raw == null) return defaultValue;
+            return raw == "1" || raw.Equals("true", System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        public void SetBool(string key, bool value) => SetString(key, value ? "1" : "0");
     }
 }

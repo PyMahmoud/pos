@@ -311,11 +311,137 @@ namespace PosSystem.App.ViewModels
             StatusMessage = LocalizationManager.GetString("SettingsAdminPasswordCleared");
         }
 
+        // ----- Access Control (added per Mahmoud's request) -----
+        //
+        // Five on/off switches for which admin-gated areas actually prompt
+        // for the password: Dashboard, Inventory, Bills, this screen's own
+        // Preferences section, and this screen's own Export section. A
+        // password can be set (HasAdminPassword true) while some of these
+        // are switched off -- e.g. keep Dashboard and Bills locked but leave
+        // Inventory open to any staff member, without removing the password
+        // entirely and losing protection everywhere at once.
+        //
+        // This section's OWN gate (IsAccessControlUnlocked below) is
+        // deliberately NOT one of the five switches, and is not itself
+        // switchable -- it always requires the admin password whenever one
+        // is set, exactly like the Admin Password section above. If it
+        // could be turned off, anyone reaching this screen without the
+        // password could flip every other switch off too, silently
+        // defeating the whole feature. Same reasoning, same
+        // always-gated-when-a-password-exists shape as
+        // IsAdminPasswordUnlocked just above.
+        private bool _accessControlUnlockedThisVisit;
+        public bool IsAccessControlUnlocked => !AppSettings.HasAdminPassword || _accessControlUnlockedThisVisit;
+        public bool IsAccessControlLocked => !IsAccessControlUnlocked;
+
+        private string _accessControlUnlockPasswordInput = "";
+        public string AccessControlUnlockPasswordInput
+        {
+            get => _accessControlUnlockPasswordInput;
+            set => SetProperty(ref _accessControlUnlockPasswordInput, value);
+        }
+
+        private string _accessControlUnlockError = "";
+        public string AccessControlUnlockError
+        {
+            get => _accessControlUnlockError;
+            set => SetProperty(ref _accessControlUnlockError, value);
+        }
+
+        public ICommand AccessControlUnlockCommand { get; }
+
+        private void AccessControlUnlock()
+        {
+            if (AppSettings.VerifyAdminPassword(AccessControlUnlockPasswordInput))
+            {
+                _accessControlUnlockedThisVisit = true;
+                OnPropertyChanged(nameof(IsAccessControlUnlocked));
+                OnPropertyChanged(nameof(IsAccessControlLocked));
+                AccessControlUnlockError = "";
+                AccessControlUnlockPasswordInput = "";
+            }
+            else
+            {
+                AccessControlUnlockError = LocalizationManager.GetString("DashboardUnlockIncorrect");
+            }
+        }
+
+        // Checkbox-bound input state, loaded from AppSettings in
+        // LoadFromAppSettings and only actually applied on
+        // SaveAccessControlCommand -- same load-into-Input-then-Save shape
+        // as TaxRatePercentInput/LowStockThresholdInput above, so toggling a
+        // checkbox doesn't take effect until explicitly saved (a person
+        // could tick a few boxes, reconsider, and navigate away without
+        // half-applying the change).
+        private bool _gateDashboardInput = true;
+        public bool GateDashboardInput
+        {
+            get => _gateDashboardInput;
+            set => SetProperty(ref _gateDashboardInput, value);
+        }
+
+        private bool _gateInventoryInput = true;
+        public bool GateInventoryInput
+        {
+            get => _gateInventoryInput;
+            set => SetProperty(ref _gateInventoryInput, value);
+        }
+
+        private bool _gateBillsInput = true;
+        public bool GateBillsInput
+        {
+            get => _gateBillsInput;
+            set => SetProperty(ref _gateBillsInput, value);
+        }
+
+        private bool _gateSettingsPreferencesInput = true;
+        public bool GateSettingsPreferencesInput
+        {
+            get => _gateSettingsPreferencesInput;
+            set => SetProperty(ref _gateSettingsPreferencesInput, value);
+        }
+
+        private bool _gateSettingsExportInput = true;
+        public bool GateSettingsExportInput
+        {
+            get => _gateSettingsExportInput;
+            set => SetProperty(ref _gateSettingsExportInput, value);
+        }
+
+        public ICommand SaveAccessControlCommand { get; }
+
+        private void SaveAccessControl()
+        {
+            if (!IsAccessControlUnlocked)
+            {
+                StatusMessage = LocalizationManager.GetString("SettingsAccessControlUnlockRequired");
+                return;
+            }
+
+            AppSettings.SaveGateSettings(
+                GateDashboardInput, GateInventoryInput, GateBillsInput,
+                GateSettingsPreferencesInput, GateSettingsExportInput);
+
+            // Re-locks every gated section on this screen, same reasoning as
+            // SaveAdminPassword's matching call -- the settings just saved
+            // could have just re-enabled a gate on a section that's
+            // currently sitting unlocked from earlier in this visit, and
+            // re-locking everything uniformly is simpler and safer than
+            // working out case-by-case which sections actually need it.
+            LockAllAdminSections();
+
+            StatusMessage = LocalizationManager.GetString("SettingsAccessControlSaveSuccess");
+        }
+
         // Preferences section gate (added per Mahmoud's request, reworked
         // again per his follow-up request) -- fully independent of Export/
         // Admin Password above, same reasoning as those two.
         private bool _preferencesUnlockedThisVisit;
-        public bool IsPreferencesUnlocked => !AppSettings.HasAdminPassword || _preferencesUnlockedThisVisit;
+        // GateSettingsPreferencesEnabled (Access Control section, added per
+        // Mahmoud's request) -- lets Tax Rate/Low Stock Threshold stay
+        // editable even with a password set elsewhere, if the owner turns
+        // this section's own switch off.
+        public bool IsPreferencesUnlocked => !AppSettings.HasAdminPassword || !AppSettings.GateSettingsPreferencesEnabled || _preferencesUnlockedThisVisit;
         public bool IsPreferencesLocked => !IsPreferencesUnlocked;
 
         private string _preferencesUnlockPasswordInput = "";
@@ -358,7 +484,11 @@ namespace PosSystem.App.ViewModels
 
         // ----- Export (Phase 11 #3, 2026-08-28) — see class doc comment -----
 
-        public bool IsExportUnlocked => !AppSettings.HasAdminPassword || _exportUnlockedThisVisit;
+        // GateSettingsExportEnabled (Access Control section, added per
+        // Mahmoud's request) -- lets Export to Excel stay open even with a
+        // password set elsewhere, if the owner turns this section's own
+        // switch off.
+        public bool IsExportUnlocked => !AppSettings.HasAdminPassword || !AppSettings.GateSettingsExportEnabled || _exportUnlockedThisVisit;
         public bool IsExportLocked => !IsExportUnlocked;
 
         private bool _exportUnlockedThisVisit;
@@ -617,6 +747,8 @@ namespace PosSystem.App.ViewModels
             SaveAdminPasswordCommand = new RelayCommand(_ => SaveAdminPassword());
             RemoveAdminPasswordCommand = new RelayCommand(_ => RemoveAdminPassword());
             AdminPasswordUnlockCommand = new RelayCommand(_ => AdminPasswordUnlock());
+            AccessControlUnlockCommand = new RelayCommand(_ => AccessControlUnlock());
+            SaveAccessControlCommand = new RelayCommand(_ => SaveAccessControl());
             PreferencesUnlockCommand = new RelayCommand(_ => PreferencesUnlock());
             ExportUnlockCommand = new RelayCommand(_ => ExportUnlock());
             SetExportQuickRangeCommand = new RelayCommand(p =>
@@ -634,6 +766,8 @@ namespace PosSystem.App.ViewModels
                 OnPropertyChanged(nameof(IsPreferencesLocked));
                 OnPropertyChanged(nameof(IsAdminPasswordUnlocked));
                 OnPropertyChanged(nameof(IsAdminPasswordLocked));
+                OnPropertyChanged(nameof(IsAccessControlUnlocked));
+                OnPropertyChanged(nameof(IsAccessControlLocked));
             };
 
             // Neither manager is owned by this ViewModel -- Theme can
@@ -734,6 +868,12 @@ namespace PosSystem.App.ViewModels
         {
             TaxRatePercentInput = AppSettings.TaxRatePercent.ToString(CultureInfo.InvariantCulture);
             LowStockThresholdInput = AppSettings.LowStockThreshold.ToString(CultureInfo.InvariantCulture);
+
+            GateDashboardInput = AppSettings.GateDashboardEnabled;
+            GateInventoryInput = AppSettings.GateInventoryEnabled;
+            GateBillsInput = AppSettings.GateBillsEnabled;
+            GateSettingsPreferencesInput = AppSettings.GateSettingsPreferencesEnabled;
+            GateSettingsExportInput = AppSettings.GateSettingsExportEnabled;
         }
 
         /// <summary>
@@ -751,11 +891,13 @@ namespace PosSystem.App.ViewModels
         /// </summary>
         public void LockAllAdminSections()
         {
-            bool changed = _preferencesUnlockedThisVisit || _adminPasswordUnlockedThisVisit || _exportUnlockedThisVisit;
+            bool changed = _preferencesUnlockedThisVisit || _adminPasswordUnlockedThisVisit
+                || _exportUnlockedThisVisit || _accessControlUnlockedThisVisit;
 
             _preferencesUnlockedThisVisit = false;
             _adminPasswordUnlockedThisVisit = false;
             _exportUnlockedThisVisit = false;
+            _accessControlUnlockedThisVisit = false;
 
             PreferencesUnlockPasswordInput = "";
             PreferencesUnlockError = "";
@@ -763,8 +905,22 @@ namespace PosSystem.App.ViewModels
             AdminPasswordUnlockError = "";
             ExportUnlockPasswordInput = "";
             ExportUnlockError = "";
+            AccessControlUnlockPasswordInput = "";
+            AccessControlUnlockError = "";
             NewAdminPasswordInput = "";
             ConfirmAdminPasswordInput = "";
+
+            // Re-sync the checkbox inputs back to whatever's actually
+            // saved -- if this was called from SaveAccessControl (not a
+            // navigate-away), the checkboxes already match, but if it's
+            // from an aborted Unloaded before Save was ever pressed, any
+            // ticked-but-unsaved checkbox changes should revert rather than
+            // silently linger in the input fields for next visit.
+            GateDashboardInput = AppSettings.GateDashboardEnabled;
+            GateInventoryInput = AppSettings.GateInventoryEnabled;
+            GateBillsInput = AppSettings.GateBillsEnabled;
+            GateSettingsPreferencesInput = AppSettings.GateSettingsPreferencesEnabled;
+            GateSettingsExportInput = AppSettings.GateSettingsExportEnabled;
 
             if (!changed) return;
             OnPropertyChanged(nameof(IsPreferencesUnlocked));
@@ -773,6 +929,8 @@ namespace PosSystem.App.ViewModels
             OnPropertyChanged(nameof(IsAdminPasswordLocked));
             OnPropertyChanged(nameof(IsExportUnlocked));
             OnPropertyChanged(nameof(IsExportLocked));
+            OnPropertyChanged(nameof(IsAccessControlUnlocked));
+            OnPropertyChanged(nameof(IsAccessControlLocked));
         }
 
         private void Save()

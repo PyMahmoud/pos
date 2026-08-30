@@ -247,6 +247,22 @@
     <system:String x:Key="SettingsAdminPasswordUnlockRequired">أدخل كلمة مرور المسؤول الحالية أدناه لتغييرها.</system:String>
     <system:String x:Key="SettingsAdminPasswordCleared">تمت إزالة كلمة مرور المسؤول — لوحة التحكم مفتوحة الآن للجميع.</system:String>
 
+    <!-- التحكم في الوصول (بناءً على طلب محمود) — خمسة مفاتيح تتحكم في أي
+         من المناطق المحمية تطلب فعليًا كلمة مرور المسؤول. قفل هذا القسم
+         نفسه ليس أحد هذه المفاتيح ولا يمكن إيقافه — راجع تعليق التوثيق
+         الخاص بـ SettingsViewModel.IsAccessControlUnlocked. -->
+    <system:String x:Key="SettingsAccessControlTitle">التحكم في الوصول</system:String>
+    <system:String x:Key="SettingsAccessControlDescription">اختر أي من المناطق أدناه تتطلب فعليًا كلمة مرور المسؤول. يمكن أن تظل كلمة المرور مُعيَّنة حتى لو تم إيقاف كل ما هنا.</system:String>
+    <system:String x:Key="SettingsAccessControlUnlockRequired">أدخل كلمة مرور المسؤول أدناه لتغيير هذه المفاتيح.</system:String>
+    <system:String x:Key="SettingsAccessControlDashboard">لوحة التحكم (الإيرادات، الربح، الرسوم البيانية)</system:String>
+    <system:String x:Key="SettingsAccessControlInventory">المخزون (إضافة/تعديل/حذف المنتجات والفئات)</system:String>
+    <system:String x:Key="SettingsAccessControlBills">الفواتير (المرتجعات ومراجعات الفواتير)</system:String>
+    <system:String x:Key="SettingsAccessControlPreferences">الإعدادات ← التفضيلات (نسبة الضريبة، حد المخزون المنخفض)</system:String>
+    <system:String x:Key="SettingsAccessControlExport">الإعدادات ← التصدير إلى Excel</system:String>
+    <system:String x:Key="SettingsAccessControlAlwaysGatedNote">قسم كلمة مرور المسؤول وقسم التحكم في الوصول هذا يتطلبان دائمًا كلمة المرور، سواء تم تفعيلها هنا أم لا — وإلا فسيتمكن أي شخص لا يملك كلمة المرور من إيقاف كل الحمايات الأخرى.</system:String>
+    <system:String x:Key="SettingsAccessControlSaveButton">حفظ إعدادات التحكم في الوصول</system:String>
+    <system:String x:Key="SettingsAccessControlSaveSuccess">تم حفظ إعدادات التحكم في الوصول.</system:String>
+
     <!-- تصدير إلى Excel (البند 3 من الدفعة 11) — نفس مجموعة المفاتيح الموجودة
          في Strings.English.xaml — يجب أن تطابق مجموعة المفاتيح الإنجليزية تمامًا. -->
     <system:String x:Key="ExportSectionTitle">تصدير إلى Excel</system:String>
@@ -365,7 +381,9 @@
 
 التصدير إلى Excel: نزّل ملف بيانات للفواتير والمبيعات لفترة زمنية محددة — محمي بكلمة مرور المسؤول.
 
-كلمة مرور المسؤول: عيّن أو غيّر أو احذف كلمة المرور التي تحمي إجراءات لوحة التحكم والفواتير والمخزون الإدارية. اترك الحقلين فارغين واحفظ، أو استخدم زر إزالة كلمة المرور، لإزالتها بالكامل.</system:String>
+كلمة مرور المسؤول: عيّن أو غيّر أو احذف كلمة المرور التي تحمي إجراءات لوحة التحكم والفواتير والمخزون الإدارية. اترك الحقلين فارغين واحفظ، أو استخدم زر إزالة كلمة المرور، لإزالتها بالكامل.
+
+التحكم في الوصول: اختر أيًا من هذه المناطق يتطلب فعليًا كلمة المرور — مثلاً أبقِ لوحة التحكم مقفلة واترك المخزون مفتوحًا لأي موظف. هذا القسم نفسه يتطلب دائمًا كلمة المرور، لذا لا يمكن استخدامه لإيقاف حمايته الخاصة.</system:String>
 
     <system:String x:Key="HelpNeedMoreTitle">ما زلت بحاجة إلى مساعدة؟</system:String>
     <system:String x:Key="HelpNeedMoreBody">إذا لم يجب هذا الدليل على سؤالك، استخدم بطاقة التواصل مع الدعم أدناه للاتصال أو المراسلة عبر واتساب أو البريد الإلكتروني مباشرة.</system:String>

@@ -579,4 +579,70 @@
         <Setter Property="Padding" Value="6,4" />
     </Style>
 
+    <!--
+        Themed CheckBox, added alongside Settings' Access Control section
+        (per Mahmoud's request) — the first CheckBox anywhere in this app,
+        so there was no existing style to extend. Same visual language as
+        the rest of this file's themed controls: an 18x18 rounded box
+        (OutlineVariantBrush border, transparent fill) that switches to a
+        solid PrimaryBrush fill with an OnPrimaryBrush checkmark path when
+        checked, sitting next to the normal themed label text — rather
+        than the default WPF CheckBox glyph, which renders in stock system
+        chrome regardless of the active theme (the same category of
+        mismatch ComboBox/DatePicker/ScrollBar had before each got its own
+        style in this file).
+    -->
+    <Style x:Key="ThemedCheckBoxStyle" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="Box"
+                                Grid.Column="0"
+                                Width="18" Height="18"
+                                CornerRadius="4"
+                                Background="Transparent"
+                                BorderBrush="{DynamicResource OutlineVariantBrush}"
+                                BorderThickness="2"
+                                VerticalAlignment="Center">
+                            <Path x:Name="Check"
+                                  Data="M2,6 L6,10 L13,2"
+                                  Stroke="{DynamicResource OnPrimaryBrush}"
+                                  StrokeThickness="2"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round"
+                                  Stretch="Uniform"
+                                  Margin="2"
+                                  Visibility="Collapsed" />
+                        </Border>
+                        <ContentPresenter Grid.Column="2"
+                                           VerticalAlignment="Center"
+                                           TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Box" Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                            <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>
