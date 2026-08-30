@@ -1,0 +1,63 @@
+name: Build Demo (Windows Release)
+
+# Manually trigger from the GitHub Actions tab whenever you need a fresh demo build.
+# Also runs automatically on pushes to any branch starting with "demo/".
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'demo/**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore PosSystem.sln
+
+      - name: Build (Release)
+        run: msbuild PosSystem.sln /p:Configuration=Release /p:Platform="Any CPU" /m
+
+      - name: Stage build output
+        run: |
+          mkdir dist
+          xcopy /E /I /Y "PosSystem.App\bin\Release\*" "dist\"
+        shell: cmd
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RovaShop-POS-Demo
+          path: dist\**
+
+  installer:
+    needs: build
+    runs-on: windows-latest
+    if: false  # flip to `true` once you have an Inno Setup script under installer/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: RovaShop-POS-Demo
+          path: dist
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+      - name: Build installer
+        run: iscc installer\RovaShopSetup.iss
+        shell: cmd
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: RovaShop-POS-Setup
+          path: installer\Output\*.exe
