@@ -87,24 +87,53 @@ namespace PosSystem.Core.Data
 
         static Server()
         {
-            Directory.CreateDirectory(Location);
-
-            if (!File.Exists(fullpath))
+            // Wrapped 2026-08-30: this whole block used to run unguarded.
+            // Any I/O failure here (locked file, permissions, a weird path
+            // resolution under Wine, AV holding a handle, etc.) would throw
+            // inside a static constructor, which C# always rewraps as an
+            // opaque TypeInitializationException — the real cause gets
+            // hidden and the app hard-crashes before a single window shows,
+            // with no chance for App.xaml.cs's handlers to log anything
+            // useful. Migration is a nice-to-have, not something that
+            // should be able to take the whole app down: best effort, log
+            // and continue on failure. If Location itself can't be created,
+            // that's more serious (nothing can be read/written at all) —
+            // still don't crash the static ctor, but that failure will
+            // resurface immediately and loudly the moment any connection
+            // string is actually opened.
+            try
             {
-                string oldAppDataFullPath = Path.Combine(OldAppDataLocation, fileName);
-                string oldExeFullPath = Path.Combine(OldExeLocation, fileName);
+                Directory.CreateDirectory(Location);
 
-                if (File.Exists(oldAppDataFullPath))
+                if (!File.Exists(fullpath))
                 {
-                    // Copy, don't move — leaving the old copy in place is
-                    // deliberately harmless and far safer than deleting a
-                    // client's only copy of their data if the copy
-                    // silently fails partway for some reason.
-                    File.Copy(oldAppDataFullPath, fullpath);
+                    string oldAppDataFullPath = Path.Combine(OldAppDataLocation, fileName);
+                    string oldExeFullPath = Path.Combine(OldExeLocation, fileName);
+
+                    if (File.Exists(oldAppDataFullPath))
+                    {
+                        // Copy, don't move — leaving the old copy in place is
+                        // deliberately harmless and far safer than deleting a
+                        // client's only copy of their data if the copy
+                        // silently fails partway for some reason.
+                        File.Copy(oldAppDataFullPath, fullpath);
+                    }
+                    else if (File.Exists(oldExeFullPath))
+                    {
+                        File.Copy(oldExeFullPath, fullpath);
+                    }
                 }
-                else if (File.Exists(oldExeFullPath))
+            }
+            catch (Exception ex)
+            {
+                try
                 {
-                    File.Copy(oldExeFullPath, fullpath);
+                    string logPath = Path.Combine(Path.GetTempPath(), "RovaShop_migration_error.log");
+                    File.AppendAllText(logPath, DateTime.Now + ": " + ex + Environment.NewLine);
+                }
+                catch
+                {
+                    // Logging itself failing is not something to crash over either.
                 }
             }
         }
