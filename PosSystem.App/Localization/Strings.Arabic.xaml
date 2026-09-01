@@ -47,6 +47,8 @@
     <system:String x:Key="CheckoutCartTitle">الطلب الحالي</system:String>
     <system:String x:Key="CheckoutCartEmpty">السلة فارغة — اضغط على منتج لإضافته.</system:String>
     <system:String x:Key="CheckoutSubtotal">الإجمالي الفرعي</system:String>
+    <system:String x:Key="CheckoutDiscountLabel">الخصم (%)</system:String>
+    <system:String x:Key="CheckoutDiscountAmountLabel">الخصم</system:String>
     <system:String x:Key="CheckoutTax">الضريبة</system:String>
     <system:String x:Key="CheckoutTotal">الإجمالي</system:String>
     <system:String x:Key="CheckoutCash">نقدًا</system:String>
@@ -147,6 +149,16 @@
     <system:String x:Key="CustomerDetailRevertedTag">تم التراجع عنها</system:String>
     <system:String x:Key="CustomerDetailRevertSuccess">تم التراجع عن الدفعة.</system:String>
     <system:String x:Key="CustomerDetailRevertError">حدث خطأ. حاول مرة أخرى.</system:String>
+
+    <!-- الخصم الافتراضي (2026-09-01) -->
+    <system:String x:Key="CustomerDetailDiscountTitle">الخصم الافتراضي</system:String>
+    <system:String x:Key="CustomerDetailDiscountSubtitle">نسبة الخصم الثابتة لهذا العميل — تُملأ تلقائيًا في كل عملية بيع جديدة بشاشة الدفع، وقابلة للتعديل لكل عملية من هناك.</system:String>
+    <system:String x:Key="CustomerDetailDiscountLabel">الخصم (%)</system:String>
+    <system:String x:Key="CustomerDetailDiscountSaveButton">حفظ الخصم</system:String>
+    <system:String x:Key="CustomerDetailDiscountAdminRequired">أدخل كلمة مرور المسؤول أدناه لتغيير خصم هذا العميل.</system:String>
+    <system:String x:Key="CustomerDetailDiscountInvalid">أدخل نسبة خصم صحيحة بين 0 و100.</system:String>
+    <system:String x:Key="CustomerDetailDiscountSuccess">تم تحديث الخصم.</system:String>
+    <system:String x:Key="CustomerDetailDiscountError">حدث خطأ. حاول مرة أخرى.</system:String>
 
     <system:String x:Key="InventoryHeading">المخزون</system:String>
     <system:String x:Key="InventorySearchLabel">ابحث بالاسم أو الباركود</system:String>
@@ -286,6 +298,7 @@
     <system:String x:Key="SettingsAccessControlBills">الفواتير (المرتجعات ومراجعات الفواتير)</system:String>
     <system:String x:Key="SettingsAccessControlPreferences">الإعدادات ← التفضيلات (نسبة الضريبة، حد المخزون المنخفض)</system:String>
     <system:String x:Key="SettingsAccessControlExport">الإعدادات ← التصدير إلى Excel</system:String>
+    <system:String x:Key="SettingsAccessControlDiscount">الخصم (تجاوز شاشة الدفع ونسبة العميل الافتراضية)</system:String>
     <system:String x:Key="SettingsAccessControlAlwaysGatedNote">قسم كلمة مرور المسؤول وقسم التحكم في الوصول هذا يتطلبان دائمًا كلمة المرور، سواء تم تفعيلها هنا أم لا — وإلا فسيتمكن أي شخص لا يملك كلمة المرور من إيقاف كل الحمايات الأخرى.</system:String>
     <system:String x:Key="SettingsAccessControlSaveButton">حفظ إعدادات التحكم في الوصول</system:String>
     <system:String x:Key="SettingsAccessControlSaveSuccess">تم حفظ إعدادات التحكم في الوصول.</system:String>

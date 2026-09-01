@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Input;
 using PosSystem.App.Localization;
@@ -141,6 +142,16 @@ namespace PosSystem.App.ViewModels
                 // with nothing to attach it to.
                 if (!CanPayLater && SelectedPaymentMethod == PaymentMethod.PayLater)
                     SelectedPaymentMethod = PaymentMethod.Cash;
+
+                // Discount (2026-09-01): picking a real customer pre-fills
+                // this bill's discount with THEIR standing default —
+                // overwriting whatever was typed for the previous customer
+                // (or left over from Walk-in) — the cashier can still edit
+                // it for this specific sale from there. Walk-in always
+                // resets to 0, same as every other per-sale field this
+                // screen clears when there's no customer attached.
+                DiscountPercentInput = (value?.Model?.DiscountPercent ?? 0)
+                    .ToString(CultureInfo.InvariantCulture);
             }
         }
 
@@ -167,17 +178,110 @@ namespace PosSystem.App.ViewModels
 
         public double Subtotal => CartLines.Sum(l => l.LineTotal);
 
+        // Discount (2026-09-01) — percentage entered/pre-filled for THIS
+        // bill; see SelectedCustomer's setter above for where it gets
+        // pre-filled, and DiscountPercentInput below for how it's edited.
+        // Applied to Subtotal BEFORE Tax (a pharmacy discount reduces the
+        // taxable amount, not just the final total) — DiscountedSubtotal is
+        // what Tax and Total both actually key off from here on.
+        private double _discountPercent;
+
+        private string _discountPercentInput = "0";
+        public string DiscountPercentInput
+        {
+            get => _discountPercentInput;
+            set
+            {
+                if (!SetProperty(ref _discountPercentInput, value)) return;
+
+                // Invalid/partial typing (e.g. mid-edit "" or "1.") is
+                // treated as 0 for calculation purposes rather than
+                // rejecting the keystroke — same forgiving-while-typing
+                // approach SettingsViewModel's numeric inputs use, just
+                // validated live here instead of only on a Save click,
+                // since this number needs to drive Total on every keystroke.
+                double parsed = double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double result)
+                    ? result
+                    : 0;
+                _discountPercent = Math.Max(0, Math.Min(100, parsed));
+                RaiseTotals();
+            }
+        }
+
+        public double DiscountAmount => Math.Round(Subtotal * _discountPercent / 100.0, 2);
+        public double DiscountedSubtotal => Subtotal - DiscountAmount;
+
         // Settings-driven as of 2026-08-26 (AppSettings.TaxRatePercent) —
         // this is the "gets added there when the client needs it" this
         // property's own comment used to point at; see AppSettings' class
         // doc comment for the full history. 0% (AppSettings' default)
         // reproduces the exact old behavior, so a shop that never touches
-        // the new Settings field sees no change at all.
-        public double TaxAmount => Math.Round(Subtotal * AppSettings.TaxRatePercent / 100.0, 2);
+        // the new Settings field sees no change at all. Computed off
+        // DiscountedSubtotal (2026-09-01) rather than Subtotal — tax applies
+        // to what the customer actually owes after their discount, not the
+        // pre-discount sticker price.
+        public double TaxAmount => Math.Round(DiscountedSubtotal * AppSettings.TaxRatePercent / 100.0, 2);
 
-        // Discount is still genuinely unimplemented (no UI anywhere sets
-        // one) — only Tax moved off the placeholder above.
-        public double Total => Subtotal + TaxAmount;
+        public double Total => DiscountedSubtotal + TaxAmount;
+
+        // Discount admin gate (2026-09-01) — same private, non-shared
+        // "unlocked this visit" flag pattern as every other gated section
+        // in this app (see AdminSession.cs' own doc comment for why there's
+        // no shared session any more). Unlike Dashboard/Inventory/Settings,
+        // this ViewModel has no Unloaded-on-navigate-away hook of its own
+        // today — CheckoutView.xaml.cs adds one alongside this feature so
+        // leaving the Checkout tab re-locks it, same as those three.
+        private bool _isDiscountUnlockedThisVisit;
+        public bool IsDiscountUnlocked => !AppSettings.HasAdminPassword || !AppSettings.GateDiscountEnabled || _isDiscountUnlockedThisVisit;
+        public bool IsDiscountLocked => !IsDiscountUnlocked;
+
+        private string _discountUnlockPasswordInput = "";
+        public string DiscountUnlockPasswordInput
+        {
+            get => _discountUnlockPasswordInput;
+            set => SetProperty(ref _discountUnlockPasswordInput, value);
+        }
+
+        private string _discountUnlockError = "";
+        public string DiscountUnlockError
+        {
+            get => _discountUnlockError;
+            set => SetProperty(ref _discountUnlockError, value);
+        }
+
+        public ICommand DiscountUnlockCommand { get; }
+
+        private void DiscountUnlock()
+        {
+            if (AppSettings.VerifyAdminPassword(DiscountUnlockPasswordInput))
+            {
+                _isDiscountUnlockedThisVisit = true;
+                OnPropertyChanged(nameof(IsDiscountUnlocked));
+                OnPropertyChanged(nameof(IsDiscountLocked));
+                DiscountUnlockError = "";
+                DiscountUnlockPasswordInput = "";
+            }
+            else
+            {
+                DiscountUnlockError = LocalizationManager.GetString("DashboardUnlockIncorrect");
+            }
+        }
+
+        /// <summary>
+        /// Re-locks the discount section — called from CheckoutView's
+        /// Unloaded event when the sidebar selection moves away from
+        /// Checkout, same reasoning as Dashboard/Inventory/Settings' own
+        /// LockAdmin-style methods.
+        /// </summary>
+        public void LockDiscountAdmin()
+        {
+            if (!_isDiscountUnlockedThisVisit) return;
+            _isDiscountUnlockedThisVisit = false;
+            DiscountUnlockPasswordInput = "";
+            DiscountUnlockError = "";
+            OnPropertyChanged(nameof(IsDiscountUnlocked));
+            OnPropertyChanged(nameof(IsDiscountLocked));
+        }
 
         private string _statusMessage = "";
         public string StatusMessage
@@ -236,6 +340,7 @@ namespace PosSystem.App.ViewModels
                 RaiseTotals();
             });
             CompleteSaleCommand = new RelayCommand(_ => CompleteSale());
+            DiscountUnlockCommand = new RelayCommand(_ => DiscountUnlock());
             OpenBillsCommand = new RelayCommand(_ =>
             {
                 var browser = new BillsBrowserViewModel();
@@ -267,6 +372,15 @@ namespace PosSystem.App.ViewModels
             // reload needed, same reasoning as why CartLines.CollectionChanged
             // already calls it above.
             AppSettings.Changed += RaiseTotals;
+            // Discount gate settings (2026-08-26 pattern, extended
+            // 2026-09-01) can change while this screen is already unlocked
+            // — keep the lock UI in sync live, same as every other gated
+            // ViewModel's AppSettings.Changed subscription.
+            AppSettings.Changed += () =>
+            {
+                OnPropertyChanged(nameof(IsDiscountUnlocked));
+                OnPropertyChanged(nameof(IsDiscountLocked));
+            };
 
             LoadGoods();
             RebuildCustomerOptions();
@@ -275,6 +389,8 @@ namespace PosSystem.App.ViewModels
         private void RaiseTotals()
         {
             OnPropertyChanged(nameof(Subtotal));
+            OnPropertyChanged(nameof(DiscountAmount));
+            OnPropertyChanged(nameof(DiscountedSubtotal));
             OnPropertyChanged(nameof(TaxAmount));
             OnPropertyChanged(nameof(Total));
         }
@@ -466,13 +582,17 @@ namespace PosSystem.App.ViewModels
 
                 // Tax (Settings-driven as of 2026-08-26, see TaxAmount's
                 // doc comment) is the actual amount collected as tax on
-                // this bill; Discount stays 0 — still genuinely
-                // unimplemented, no UI anywhere sets one yet.
+                // this bill. Discount (2026-09-01) is the currency amount
+                // actually taken off this bill (DiscountAmount, computed
+                // from _discountPercent against Subtotal) — DiscountPercent
+                // is stored alongside it so a later return's revision math
+                // (BillsBrowserViewModel.CreateReturnRevision) can recover
+                // the exact rate rather than re-deriving it.
                 _billsData.InsertBills(
                     "bills", nextId, nextBillNumber, totalCost, time, date,
                     ownername, ownerid, ownernumber,
-                    billPaid, billRemain, totalEarned, TaxAmount, 0, paymentTag,
-                    linkedCustomer?.Id);
+                    billPaid, billRemain, totalEarned, TaxAmount, DiscountAmount, paymentTag,
+                    linkedCustomer?.Id, DiscountPercent: _discountPercent);
 
                 foreach (var line in CartLines)
                 {
@@ -511,6 +631,12 @@ namespace PosSystem.App.ViewModels
                 StatusMessage = isPayLater
                     ? string.Format(LocalizationManager.GetString("CheckoutSaleSuccessCredit"), nextBillNumber, ownername)
                     : string.Format(LocalizationManager.GetString("CheckoutSaleSuccess"), nextBillNumber);
+
+                // Reset the discount back to the linked customer's
+                // standing default (or 0 for Walk-in) for the NEXT sale —
+                // any manual override just typed was for this one bill
+                // only, same one-sale-at-a-time scope as CartLines itself.
+                DiscountPercentInput = (linkedCustomer?.DiscountPercent ?? 0).ToString(CultureInfo.InvariantCulture);
 
                 CartLines.Clear();
                 LoadGoods();

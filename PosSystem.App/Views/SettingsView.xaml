@@ -601,6 +601,10 @@
                             <CheckBox Content="{DynamicResource SettingsAccessControlExport}"
                                       IsChecked="{Binding GateSettingsExportInput}"
                                       Style="{StaticResource ThemedCheckBoxStyle}"
+                                      Margin="0,0,0,10" />
+                            <CheckBox Content="{DynamicResource SettingsAccessControlDiscount}"
+                                      IsChecked="{Binding GateDiscountInput}"
+                                      Style="{StaticResource ThemedCheckBoxStyle}"
                                       Margin="0,0,0,16" />
 
                             <TextBlock Text="{DynamicResource SettingsAccessControlAlwaysGatedNote}"

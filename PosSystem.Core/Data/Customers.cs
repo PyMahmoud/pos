@@ -62,6 +62,7 @@ namespace PosSystem.Core.Data
                         goods_List.Paid = DbNullSafe.ToDouble(reader["Paid"]);
                         goods_List.Remain = DbNullSafe.ToDouble(reader["Remain"]);
                         goods_List.CreditOwed = DbNullSafe.ToDouble(reader["CreditOwed"]);
+                        goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
                       
                         //goods_List.Details = reader["Details"].ToString();
                         goods.Add(goods_List);
@@ -93,6 +94,7 @@ namespace PosSystem.Core.Data
                         goods_List.Paid = DbNullSafe.ToDouble(reader["Paid"]);
                         goods_List.Remain = DbNullSafe.ToDouble(reader["Remain"]);
                         goods_List.CreditOwed = DbNullSafe.ToDouble(reader["CreditOwed"]);
+                        goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
 
                         //goods_List.Details = reader["Details"].ToString();
                         goods.Add(goods_List);
@@ -166,6 +168,29 @@ namespace PosSystem.Core.Data
                     cmd.Parameters.AddWithValue("@paid", Paid);
                     cmd.Parameters.AddWithValue("@remain", Remain);
                     cmd.Parameters.AddWithValue("@creditowed", CreditOwed);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                    return true;
+                }
+            }
+        }
+
+        // Added for per-customer default discount percentage (2026-09-01)
+        // -- a separate, narrow method rather than widening UpdateCustomers/
+        // UpdateCustomerBalance above, same reasoning as those two: nothing
+        // else about the customer changes when their default discount is
+        // edited from the customer detail page, so every other call site
+        // stays untouched.
+        public bool UpdateCustomerDiscount(string TableName, int ID, double DiscountPercent)
+        {
+            string UpdateString = "UPDATE " + TableName + " SET DiscountPercent=@discountpercent WHERE ID=@id";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(UpdateString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", ID);
+                    cmd.Parameters.AddWithValue("@discountpercent", DiscountPercent);
                     cmd.ExecuteNonQuery();
                     cmd.Dispose();
                     return true;

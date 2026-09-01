@@ -47,6 +47,11 @@
     <system:String x:Key="CheckoutCartTitle">Current Order</system:String>
     <system:String x:Key="CheckoutCartEmpty">Cart is empty — tap an item to add it.</system:String>
     <system:String x:Key="CheckoutSubtotal">Subtotal</system:String>
+    <!-- Discount (2026-09-01) — see CheckoutViewModel.DiscountPercentInput/
+         DiscountAmount doc comments. Amount label only shown once the
+         discount is actually nonzero. -->
+    <system:String x:Key="CheckoutDiscountLabel">Discount (%)</system:String>
+    <system:String x:Key="CheckoutDiscountAmountLabel">Discount</system:String>
     <!-- Added 2026-08-26 alongside Settings' Tax Rate field actually doing
          something — see CheckoutViewModel.TaxAmount's doc comment. Only
          shown on screen when the rate is above 0. -->
@@ -181,6 +186,22 @@
     <system:String x:Key="CustomerDetailRevertedTag">Reverted</system:String>
     <system:String x:Key="CustomerDetailRevertSuccess">Payment reverted.</system:String>
     <system:String x:Key="CustomerDetailRevertError">Something went wrong. Please try again.</system:String>
+
+    <!-- Default discount (2026-09-01) -- this customer's standing discount
+         percentage, pre-filling Checkout's per-bill discount field the
+         moment they're picked there (see CheckoutViewModel.SelectedCustomer's
+         setter) and freely overridable per sale from that screen. Gated
+         behind AppSettings.GateDiscountEnabled, same inline-unlock-box
+         pattern as every other admin-gated section -- see
+         CustomerDetailViewModel's discount fields for the full design. -->
+    <system:String x:Key="CustomerDetailDiscountTitle">Default Discount</system:String>
+    <system:String x:Key="CustomerDetailDiscountSubtitle">This customer's standing discount percentage -- pre-fills every new sale at Checkout, editable per sale from there.</system:String>
+    <system:String x:Key="CustomerDetailDiscountLabel">Discount (%)</system:String>
+    <system:String x:Key="CustomerDetailDiscountSaveButton">Save Discount</system:String>
+    <system:String x:Key="CustomerDetailDiscountAdminRequired">Enter the admin password below to change this customer's discount.</system:String>
+    <system:String x:Key="CustomerDetailDiscountInvalid">Enter a valid discount percentage between 0 and 100.</system:String>
+    <system:String x:Key="CustomerDetailDiscountSuccess">Discount updated.</system:String>
+    <system:String x:Key="CustomerDetailDiscountError">Something went wrong. Please try again.</system:String>
 
     <system:String x:Key="InventoryHeading">Inventory</system:String>
     <system:String x:Key="InventorySearchLabel">Search by name or barcode</system:String>
@@ -379,6 +400,7 @@
     <system:String x:Key="SettingsAccessControlBills">Bills (returns and receipt revisions)</system:String>
     <system:String x:Key="SettingsAccessControlPreferences">Settings → Preferences (tax rate, low stock threshold)</system:String>
     <system:String x:Key="SettingsAccessControlExport">Settings → Export to Excel</system:String>
+    <system:String x:Key="SettingsAccessControlDiscount">Discount (Checkout override and Customers' default %)</system:String>
     <system:String x:Key="SettingsAccessControlAlwaysGatedNote">The Admin Password section and this Access Control section always require the password, whether or not it's set here -- otherwise someone without the password could switch off every other protection.</system:String>
     <system:String x:Key="SettingsAccessControlSaveButton">Save Access Control</system:String>
     <system:String x:Key="SettingsAccessControlSaveSuccess">Access control settings saved.</system:String>

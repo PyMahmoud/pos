@@ -321,6 +321,85 @@
                             </Border>
                         </StackPanel>
 
+                        <!-- Default discount (2026-09-01) -- this customer's
+                             standing discount percentage, gated behind
+                             AppSettings.GateDiscountEnabled the same way as
+                             every other admin-gated section. See
+                             CustomerDetailViewModel's discount fields for
+                             the full design. -->
+                        <TextBlock Text="{DynamicResource CustomerDetailDiscountTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,4" />
+                        <TextBlock Text="{DynamicResource CustomerDetailDiscountSubtitle}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12" />
+                        <Border Background="{DynamicResource SurfaceContainerBrush}"
+                                CornerRadius="14"
+                                Padding="18"
+                                Margin="0,0,0,24">
+                            <StackPanel>
+                                <!-- Locked state -->
+                                <StackPanel Visibility="{Binding IsDiscountLocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <TextBlock Text="{DynamicResource CustomerDetailDiscountAdminRequired}"
+                                               Style="{StaticResource BodyLarge}"
+                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12" />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="16" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <PasswordBox Grid.Column="0"
+                                                     x:Name="DiscountUnlockPasswordBox"
+                                                     Style="{StaticResource ThemedPasswordBoxStyle}"
+                                                     PasswordChanged="DiscountUnlockPasswordBox_PasswordChanged" />
+                                        <Button Grid.Column="2"
+                                                Content="{DynamicResource DashboardUnlockButton}"
+                                                Command="{Binding DiscountUnlockCommand}"
+                                                Background="{DynamicResource PrimaryBrush}"
+                                                Foreground="{DynamicResource OnPrimaryBrush}"
+                                                Template="{StaticResource SelectableButtonTemplate}"
+                                                Padding="16,8" />
+                                    </Grid>
+                                    <TextBlock Text="{Binding DiscountUnlockError}"
+                                               Foreground="{DynamicResource ErrorBrush}"
+                                               TextWrapping="Wrap"
+                                               Margin="0,8,0,0" />
+                                </StackPanel>
+
+                                <!-- Unlocked state -->
+                                <StackPanel Visibility="{Binding IsDiscountUnlocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="16" />
+                                            <ColumnDefinition Width="120" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{DynamicResource CustomerDetailDiscountLabel}"
+                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBox Grid.Column="2"
+                                                 Text="{Binding DiscountPercentInput, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource ThemedTextBoxStyle}"
+                                                 HorizontalContentAlignment="Right" />
+                                    </Grid>
+                                    <Button Content="{DynamicResource CustomerDetailDiscountSaveButton}"
+                                            Command="{Binding SaveDiscountCommand}"
+                                            Background="{DynamicResource PrimaryBrush}"
+                                            Foreground="{DynamicResource OnPrimaryBrush}"
+                                            Template="{StaticResource SelectableButtonTemplate}"
+                                            Padding="0,12"
+                                            HorizontalContentAlignment="Center" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Medications sold -->
                         <TextBlock Text="{DynamicResource CustomerDetailSoldTitle}"
                                    Style="{StaticResource TitleMedium}"

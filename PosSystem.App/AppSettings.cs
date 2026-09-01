@@ -53,6 +53,7 @@ namespace PosSystem.App
         private const string GateBillsKey = "GateBillsEnabled";
         private const string GateSettingsPreferencesKey = "GateSettingsPreferencesEnabled";
         private const string GateSettingsExportKey = "GateSettingsExportEnabled";
+        private const string GateDiscountKey = "GateDiscountEnabled";
 
         // Same defaults each setting effectively had before this existed:
         // 0% tax (Checkout's old hardcoded 0), and 10 units (InventoryRow's
@@ -83,6 +84,7 @@ namespace PosSystem.App
         public static bool GateBillsEnabled { get; private set; } = true;
         public static bool GateSettingsPreferencesEnabled { get; private set; } = true;
         public static bool GateSettingsExportEnabled { get; private set; } = true;
+        public static bool GateDiscountEnabled { get; private set; } = true;
 
         /// <summary>
         /// Fired after a successful save (SettingsViewModel) so any
@@ -104,6 +106,7 @@ namespace PosSystem.App
             GateBillsEnabled = settings.GetBool(GateBillsKey, true);
             GateSettingsPreferencesEnabled = settings.GetBool(GateSettingsPreferencesKey, true);
             GateSettingsExportEnabled = settings.GetBool(GateSettingsExportKey, true);
+            GateDiscountEnabled = settings.GetBool(GateDiscountKey, true);
         }
 
         /// <summary>
@@ -168,7 +171,7 @@ namespace PosSystem.App
         /// making the switch panel itself switchable would let someone
         /// without the password turn off every other switch).
         /// </summary>
-        public static void SaveGateSettings(bool dashboard, bool inventory, bool bills, bool settingsPreferences, bool settingsExport)
+        public static void SaveGateSettings(bool dashboard, bool inventory, bool bills, bool settingsPreferences, bool settingsExport, bool discount)
         {
             var settings = new Core.Data.Settings();
             settings.SetBool(GateDashboardKey, dashboard);
@@ -176,12 +179,14 @@ namespace PosSystem.App
             settings.SetBool(GateBillsKey, bills);
             settings.SetBool(GateSettingsPreferencesKey, settingsPreferences);
             settings.SetBool(GateSettingsExportKey, settingsExport);
+            settings.SetBool(GateDiscountKey, discount);
 
             GateDashboardEnabled = dashboard;
             GateInventoryEnabled = inventory;
             GateBillsEnabled = bills;
             GateSettingsPreferencesEnabled = settingsPreferences;
             GateSettingsExportEnabled = settingsExport;
+            GateDiscountEnabled = discount;
 
             Changed?.Invoke();
         }

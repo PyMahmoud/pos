@@ -15,6 +15,7 @@ namespace PosSystem.Core.Models
         private double paid;
         private double remain;
         private double creditOwed;
+        private double discountPercent;
 
         public Customers()
         {
@@ -41,6 +42,16 @@ namespace PosSystem.Core.Models
             this.creditOwed = creditOwed;
         }
 
+        // Added for per-customer default discount percentage (2026-09-01)
+        // -- a third overload, same reasoning as the CreditOwed one above:
+        // every existing call site that only knows Paid/Remain/CreditOwed
+        // keeps compiling unchanged and just gets DiscountPercent = 0.
+        public Customers(int id, string ownername, string ownerid, string ownernumber, double paid, double remain, double creditOwed, double discountPercent)
+            : this(id, ownername, ownerid, ownernumber, paid, remain, creditOwed)
+        {
+            this.discountPercent = discountPercent;
+        }
+
         public int Id { get => id; set => id = value; }
         public string Ownername { get => ownername; set => ownername = value; }
         public string Ownerid { get => ownerid; set => ownerid = value; }
@@ -52,5 +63,13 @@ namespace PosSystem.Core.Models
         // the customer owes the shop). See DatabaseBootstrapper's
         // customers.CreditOwed comment for how this can grow.
         public double CreditOwed { get => creditOwed; set => creditOwed = value; }
+
+        // This customer's standing default discount percentage (2026-09-01)
+        // -- auto-applied to a new Checkout bill the moment this customer is
+        // selected (CheckoutViewModel.SelectedCustomer), editable per-bill
+        // from there without changing this stored default. Edited from the
+        // customer detail page (CustomerDetailViewModel), gated the same way
+        // as every other sensitive customer-money field in this app.
+        public double DiscountPercent { get => discountPercent; set => discountPercent = value; }
     }
 }

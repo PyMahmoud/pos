@@ -316,6 +316,28 @@ namespace PosSystem.Core.Data
                     cmd.ExecuteNonQuery();
                 }
 
+                // Added for per-customer/per-bill discount percentages
+                // (2026-09-01). customers.DiscountPercent is a customer's
+                // standing default (0 for every customer that existed
+                // before this -- DbNullSafe.ToDouble's null-is-0 fallback
+                // covers the same case belt-and-suspenders style already
+                // used throughout this file); it's read by CheckoutViewModel
+                // to pre-fill a bill's discount the moment that customer is
+                // selected, but never applied automatically beyond that --
+                // the cashier can always override it for one specific sale.
+                // bills.DiscountPercent is the percentage actually applied
+                // to THIS bill (may differ from the customer's default if
+                // overridden, or may exist on a Walk-in sale with no linked
+                // customer at all) -- kept alongside the existing bills.
+                // Discount column (which stores the resulting currency
+                // amount, same convention Tax already uses) so a return's
+                // partial-revision math (see BillsBrowserViewModel.
+                // CreateReturnRevision) can recover the original percentage
+                // exactly rather than re-deriving it from a shrinking
+                // subtotal.
+                EnsureColumn(conn, "customers", "DiscountPercent", "REAL");
+                EnsureColumn(conn, "bills", "DiscountPercent", "REAL");
+
                 // Added 2026-08-28 for receipt revisioning (Mahmoud's
                 // explicit requirement): removing/returning a product from
                 // a bill must no longer rewrite that bill's own row in

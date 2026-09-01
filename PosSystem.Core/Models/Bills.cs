@@ -44,6 +44,15 @@ namespace PosSystem.Core.Models
         private bool isCurrent = true;
         private string revisionSuffix;
 
+        // Added 2026-09-01 alongside per-customer/per-bill discounts -- the
+        // discount PERCENTAGE actually applied to this specific bill (the
+        // existing Discount property above stays the resulting currency
+        // amount, same convention Tax/TaxAmount already split). Kept so a
+        // return's partial-revision math (BillsBrowserViewModel.
+        // CreateReturnRevision) can recover the exact original percentage
+        // rather than re-deriving it from a shrinking subtotal.
+        private double discountPercent;
+
         public int Id { get => id; set => id = value; }
         public int Billnumber { get => billnumber; set => billnumber = value; }
         public double Billcost { get => billcost; set => billcost = value; }
@@ -61,6 +70,7 @@ namespace PosSystem.Core.Models
         public int? CustomerId { get => customerId; set => customerId = value; }
         public bool IsCurrent { get => isCurrent; set => isCurrent = value; }
         public string RevisionSuffix { get => revisionSuffix; set => revisionSuffix = value; }
+        public double DiscountPercent { get => discountPercent; set => discountPercent = value; }
 
         // "210" for an original receipt, "210-e1"/"210-e2"/... once it's
         // been returned-from one or more times (see BillsBrowserViewModel

@@ -403,7 +403,20 @@ namespace PosSystem.App.ViewModels
             double newSubtotal = remainingLines.Sum(l => l.Price * l.Quantity);
             double taxRatio = oldSubtotal > 0 ? sourceBill.Tax / oldSubtotal : 0;
             double newTax = Math.Round(newSubtotal * taxRatio, 2);
-            double newBillcost = newSubtotal + newTax;
+
+            // Discount (2026-09-01, added alongside per-customer/per-bill
+            // discounts) -- same ratio-recovery approach as Tax just above:
+            // sourceBill.Discount was stored as an absolute currency amount
+            // (see DatabaseBootstrapper's DiscountPercent comment), so the
+            // EFFECTIVE ratio against the pre-return subtotal is recovered
+            // and re-applied to the new, smaller subtotal. DiscountPercent
+            // itself (the number shown to a cashier) doesn't need this
+            // ratio trick -- it's a rate, not an amount, so it carries
+            // forward unchanged onto the new revision.
+            double discountRatio = oldSubtotal > 0 ? sourceBill.Discount / oldSubtotal : 0;
+            double newDiscount = Math.Round(newSubtotal * discountRatio, 2);
+
+            double newBillcost = newSubtotal - newDiscount + newTax;
             double newEarned = remainingLines.Sum(l => l.Earned);
 
             double ratioPaid = sourceBill.Billcost > 0 ? sourceBill.Paid / sourceBill.Billcost : 0;
@@ -416,8 +429,8 @@ namespace PosSystem.App.ViewModels
             _billsData.InsertBills(
                 "bills", newBillId, sourceBill.Billnumber, newBillcost, sourceBill.Time, sourceBill.Datex,
                 sourceBill.Ownername, sourceBill.Ownerid, sourceBill.Ownernumber,
-                newPaid, newRemain, newEarned, newTax, sourceBill.Discount, sourceBill.Details,
-                sourceBill.CustomerId, IsCurrent: true, RevisionSuffix: suffix);
+                newPaid, newRemain, newEarned, newTax, newDiscount, sourceBill.Details,
+                sourceBill.CustomerId, IsCurrent: true, RevisionSuffix: suffix, DiscountPercent: sourceBill.DiscountPercent);
 
             foreach (var line in remainingLines)
             {

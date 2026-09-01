@@ -255,6 +255,73 @@
                                    Foreground="{DynamicResource OnSurfaceVariantBrush}" />
                     </Grid>
 
+                    <!-- Discount (2026-09-01) — editable percentage,
+                         pre-filled from the linked customer's standing
+                         default the moment they're picked (see
+                         CheckoutViewModel.SelectedCustomer's setter) and
+                         freely overridable for this one bill. Gated behind
+                         AppSettings.GateDiscountEnabled, same inline-
+                         unlock-box pattern as every other admin-gated
+                         section, just compact enough to fit this 360px
+                         cart panel. -->
+                    <Grid Margin="0,0,0,8"
+                          Visibility="{Binding IsDiscountUnlocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="70" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{DynamicResource CheckoutDiscountLabel}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{Binding DiscountPercentInput, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ThemedTextBoxStyle}"
+                                 HorizontalContentAlignment="Right" />
+                    </Grid>
+
+                    <StackPanel Margin="0,0,0,8"
+                                Visibility="{Binding IsDiscountLocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox Grid.Column="0"
+                                         x:Name="DiscountUnlockPasswordBox"
+                                         Style="{StaticResource ThemedPasswordBoxStyle}"
+                                         PasswordChanged="DiscountUnlockPasswordBox_PasswordChanged" />
+                            <Button Grid.Column="2"
+                                    Content="{DynamicResource DashboardUnlockButton}"
+                                    Command="{Binding DiscountUnlockCommand}"
+                                    Background="{DynamicResource PrimaryBrush}"
+                                    Foreground="{DynamicResource OnPrimaryBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="12,8" />
+                        </Grid>
+                        <TextBlock Text="{Binding DiscountUnlockError}"
+                                   Foreground="{DynamicResource ErrorBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,4,0,0" />
+                    </StackPanel>
+
+                    <!-- Discount amount line, only shown once it's actually
+                         nonzero — a shop that never sets a discount sees no
+                         change from before this feature. -->
+                    <Grid Margin="0,0,0,8"
+                          Visibility="{Binding DiscountAmount, Converter={StaticResource PositiveNumberToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{DynamicResource CheckoutDiscountAmountLabel}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                        <TextBlock Grid.Column="1" Text="{Binding DiscountAmount, StringFormat={}-{0:0.00}}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource TertiaryBrush}" />
+                    </Grid>
+
                     <!-- Tax line (2026-08-26), only shown when there's
                          actually a rate set (AppSettings.TaxRatePercent via
                          CheckoutViewModel.TaxAmount), so a shop that never

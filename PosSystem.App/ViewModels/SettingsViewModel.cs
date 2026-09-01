@@ -408,6 +408,17 @@ namespace PosSystem.App.ViewModels
             set => SetProperty(ref _gateSettingsExportInput, value);
         }
 
+        // Added 2026-09-01 alongside per-customer/per-bill discounts --
+        // whether editing a bill's discount % at Checkout, or a customer's
+        // default discount % on their detail page, prompts for the admin
+        // password.
+        private bool _gateDiscountInput = true;
+        public bool GateDiscountInput
+        {
+            get => _gateDiscountInput;
+            set => SetProperty(ref _gateDiscountInput, value);
+        }
+
         public ICommand SaveAccessControlCommand { get; }
 
         private void SaveAccessControl()
@@ -420,7 +431,7 @@ namespace PosSystem.App.ViewModels
 
             AppSettings.SaveGateSettings(
                 GateDashboardInput, GateInventoryInput, GateBillsInput,
-                GateSettingsPreferencesInput, GateSettingsExportInput);
+                GateSettingsPreferencesInput, GateSettingsExportInput, GateDiscountInput);
 
             // Re-locks every gated section on this screen, same reasoning as
             // SaveAdminPassword's matching call -- the settings just saved
@@ -874,6 +885,7 @@ namespace PosSystem.App.ViewModels
             GateBillsInput = AppSettings.GateBillsEnabled;
             GateSettingsPreferencesInput = AppSettings.GateSettingsPreferencesEnabled;
             GateSettingsExportInput = AppSettings.GateSettingsExportEnabled;
+            GateDiscountInput = AppSettings.GateDiscountEnabled;
         }
 
         /// <summary>
@@ -921,6 +933,7 @@ namespace PosSystem.App.ViewModels
             GateBillsInput = AppSettings.GateBillsEnabled;
             GateSettingsPreferencesInput = AppSettings.GateSettingsPreferencesEnabled;
             GateSettingsExportInput = AppSettings.GateSettingsExportEnabled;
+            GateDiscountInput = AppSettings.GateDiscountEnabled;
 
             if (!changed) return;
             OnPropertyChanged(nameof(IsPreferencesUnlocked));

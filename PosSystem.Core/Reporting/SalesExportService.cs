@@ -195,15 +195,13 @@ namespace PosSystem.Core.Reporting
                 ws.Cell(row, 7).Value = PaymentStatusLabel(labels, bill);
                 ws.Cell(row, 8).Value = itemsByBill.TryGetValue(bill.Billnumber, out string items) ? items : "";
 
-                // Billcost is always subtotal + tax (see CheckoutViewModel.
-                // CompleteSale and BillsBrowserViewModel.
-                // RecomputeBillAfterLineChange — both compute it exactly
-                // this way, so subtracting Tax back out here is exact, not
-                // an approximation). Discount is reported separately
-                // (currently always 0 — see SalesExportLabels.ColDiscount's
-                // doc comment) rather than subtracted from Subtotal, since
-                // Billcost/Total was never actually reduced by it.
-                ws.Cell(row, 9).Value = bill.Billcost - bill.Tax;
+                // Billcost is always subtotal − discount + tax (2026-09-01,
+                // per-customer/per-bill discounts — see CheckoutViewModel.
+                // CompleteSale and BillsBrowserViewModel.CreateReturnRevision,
+                // both compute it exactly this way), so adding Discount back
+                // in and subtracting Tax back out here recovers the original
+                // pre-discount Subtotal exactly, not an approximation.
+                ws.Cell(row, 9).Value = bill.Billcost + bill.Discount - bill.Tax;
                 ws.Cell(row, 10).Value = bill.Discount;
                 ws.Cell(row, 11).Value = bill.Tax;
                 ws.Cell(row, 12).Value = bill.Billcost;

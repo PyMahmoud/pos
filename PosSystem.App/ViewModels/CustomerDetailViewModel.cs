@@ -88,6 +88,97 @@ namespace PosSystem.App.ViewModels
         public ICommand AddManualCreditCommand { get; }
         public ICommand RevertPaymentCommand { get; }
 
+        // Default discount % (added 2026-09-01) -- this customer's standing
+        // discount, auto-applied to a new Checkout bill the moment they're
+        // selected there (see CheckoutViewModel.SelectedCustomer's setter),
+        // editable per-bill from there without changing what's saved here.
+        // Gated the same way as every other admin-gated section in this
+        // app -- a private, non-shared "unlocked this visit" flag, no
+        // Unloaded-on-navigate-away hook needed since this whole ViewModel
+        // is already fresh every time "View Details" is opened (see class
+        // doc comment).
+        private double _discountPercent;
+        public double DiscountPercent { get => _discountPercent; private set => SetProperty(ref _discountPercent, value); }
+
+        private string _discountPercentInput = "";
+        public string DiscountPercentInput
+        {
+            get => _discountPercentInput;
+            set => SetProperty(ref _discountPercentInput, value);
+        }
+
+        private bool _isDiscountUnlockedThisVisit;
+        public bool IsDiscountUnlocked => !AppSettings.HasAdminPassword || !AppSettings.GateDiscountEnabled || _isDiscountUnlockedThisVisit;
+        public bool IsDiscountLocked => !IsDiscountUnlocked;
+
+        private string _discountUnlockPasswordInput = "";
+        public string DiscountUnlockPasswordInput
+        {
+            get => _discountUnlockPasswordInput;
+            set => SetProperty(ref _discountUnlockPasswordInput, value);
+        }
+
+        private string _discountUnlockError = "";
+        public string DiscountUnlockError
+        {
+            get => _discountUnlockError;
+            set => SetProperty(ref _discountUnlockError, value);
+        }
+
+        public ICommand DiscountUnlockCommand { get; }
+        public ICommand SaveDiscountCommand { get; }
+
+        private void DiscountUnlock()
+        {
+            if (AppSettings.VerifyAdminPassword(DiscountUnlockPasswordInput))
+            {
+                _isDiscountUnlockedThisVisit = true;
+                OnPropertyChanged(nameof(IsDiscountUnlocked));
+                OnPropertyChanged(nameof(IsDiscountLocked));
+                DiscountUnlockError = "";
+                DiscountUnlockPasswordInput = "";
+            }
+            else
+            {
+                DiscountUnlockError = LocalizationManager.GetString("DashboardUnlockIncorrect");
+            }
+        }
+
+        private void SaveDiscount()
+        {
+            if (!IsDiscountUnlocked)
+            {
+                StatusMessage = LocalizationManager.GetString("CustomerDetailDiscountAdminRequired");
+                return;
+            }
+
+            if (!double.TryParse(DiscountPercentInput, System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out double value) || value < 0 || value > 100)
+            {
+                StatusMessage = LocalizationManager.GetString("CustomerDetailDiscountInvalid");
+                return;
+            }
+
+            try
+            {
+                _customersData.UpdateCustomerDiscount("customers", Customer.Id, value);
+                Customer.DiscountPercent = value;
+                DiscountPercent = value;
+                DiscountPercentInput = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                StatusMessage = LocalizationManager.GetString("CustomerDetailDiscountSuccess");
+
+                // Checkout's customer picker doesn't re-read this customer's
+                // model until it rebuilds its own list -- same reasoning as
+                // every other write here raising CustomerDataEvents.
+                CustomerDataEvents.RaiseCustomersChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = LocalizationManager.GetString("CustomerDetailDiscountError") + " (" + ex.Message + ")";
+            }
+        }
+
         // CustomersViewModel subscribes to this (alongside CloseRequested)
         // to know a payment/credit/revert here changed this customer's
         // balance, so the list card behind this detail page shows the
@@ -151,6 +242,8 @@ namespace PosSystem.App.ViewModels
             _paid = customer.Paid;
             _remain = customer.Remain;
             _creditOwed = customer.CreditOwed;
+            _discountPercent = customer.DiscountPercent;
+            _discountPercentInput = customer.DiscountPercent.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
             SaveStockCheckCommand = new RelayCommand(_ => SaveStockCheck());
             CloseCommand = new RelayCommand(_ => CloseRequested?.Invoke());
@@ -159,6 +252,8 @@ namespace PosSystem.App.ViewModels
             {
                 if (p is Payment payment) RevertPayment(payment);
             });
+            DiscountUnlockCommand = new RelayCommand(_ => DiscountUnlock());
+            SaveDiscountCommand = new RelayCommand(_ => SaveDiscount());
 
             LoadSalesHistory();
             LoadStockCheckHistory();
