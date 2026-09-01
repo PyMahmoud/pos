@@ -100,6 +100,7 @@
     <system:String x:Key="CustomersNoResults">لا يوجد عملاء بعد — أضف أول عميل على اليسار.</system:String>
     <system:String x:Key="CustomersBalancePaidUp">لا يوجد رصيد مستحق</system:String>
     <system:String x:Key="CustomersBalanceOwes">مستحق {0:0.00}</system:String>
+    <system:String x:Key="CustomersWeOweLabel">مستحق لنا عليه</system:String>
     <system:String x:Key="CustomersPaymentAmountLabel">مبلغ الدفعة</system:String>
     <system:String x:Key="CustomersRecordPaymentButton">تسجيل الدفعة</system:String>
     <system:String x:Key="CustomersPaymentSuccess">تم تسجيل الدفعة لـ {0}.</system:String>
@@ -131,6 +132,22 @@
     <system:String x:Key="StockCheckSaveSuccess">تم حفظ الجرد.</system:String>
     <system:String x:Key="StockCheckSaveError">حدث خطأ أثناء الحفظ. حاول مرة أخرى.</system:String>
 
+    <!-- ملخص الرصيد + سجل الدفعات + التراجع + إضافة رصيد يدوي (2026-08-31) -->
+    <system:String x:Key="CustomerDetailOwesLabel">مستحق عليه</system:String>
+    <system:String x:Key="CustomerDetailAddCreditTitle">إضافة رصيد</system:String>
+    <system:String x:Key="CustomerDetailCreditAmountLabel">المبلغ</system:String>
+    <system:String x:Key="CustomerDetailCreditNoteLabel">السبب (اختياري)</system:String>
+    <system:String x:Key="CustomerDetailAddCreditButton">إضافة الرصيد</system:String>
+    <system:String x:Key="CustomerDetailCreditInvalid">أدخل مبلغ رصيد صحيح.</system:String>
+    <system:String x:Key="CustomerDetailCreditSuccess">تمت إضافة الرصيد.</system:String>
+    <system:String x:Key="CustomerDetailCreditError">حدث خطأ. حاول مرة أخرى.</system:String>
+    <system:String x:Key="CustomerDetailPaymentHistoryTitle">سجل الدفعات</system:String>
+    <system:String x:Key="CustomerDetailPaymentHistoryNone">لا توجد دفعات أو أرصدة مسجّلة بعد.</system:String>
+    <system:String x:Key="CustomerDetailRevertButton">تراجع</system:String>
+    <system:String x:Key="CustomerDetailRevertedTag">تم التراجع عنها</system:String>
+    <system:String x:Key="CustomerDetailRevertSuccess">تم التراجع عن الدفعة.</system:String>
+    <system:String x:Key="CustomerDetailRevertError">حدث خطأ. حاول مرة أخرى.</system:String>
+
     <system:String x:Key="InventoryHeading">المخزون</system:String>
     <system:String x:Key="InventorySearchLabel">ابحث بالاسم أو الباركود</system:String>
     <system:String x:Key="InventoryStockFilterLabel">حالة المخزون</system:String>
@@ -147,6 +164,16 @@
     <system:String x:Key="InventoryAdjustInvalid">أدخل كمية صحيحة (0 أو أكثر).</system:String>
     <system:String x:Key="InventoryAdjustError">حدث خطأ. حاول مرة أخرى.</system:String>
     <system:String x:Key="InventoryNoResults">لا توجد منتجات مطابقة للفلاتر المحددة.</system:String>
+
+    <!-- التحديد الجماعي (2026-08-31) -->
+    <system:String x:Key="InventorySelectAllLabel">تحديد الكل</system:String>
+    <system:String x:Key="InventorySelectedCountLabel">المحدد:</system:String>
+    <system:String x:Key="InventoryBulkChangeCategoryButton">تغيير الفئة</system:String>
+    <system:String x:Key="InventoryBulkDeleteButton">حذف المحدد</system:String>
+    <system:String x:Key="InventoryBulkNoSelection">حدد منتجًا واحدًا على الأقل أولاً.</system:String>
+    <system:String x:Key="InventoryBulkMissingCategory">اختر فئة لنقل المنتجات المحددة إليها.</system:String>
+    <system:String x:Key="InventoryBulkDeleteSuccess">تم حذف {0} منتج.</system:String>
+    <system:String x:Key="InventoryBulkCategoryChangeSuccess">تم نقل {0} منتج إلى {1}.</system:String>
 
     <system:String x:Key="InventoryListTitle">كل المنتجات</system:String>
     <system:String x:Key="InventoryAddSectionTitle">إضافة منتج</system:String>

@@ -110,6 +110,7 @@
     <Compile Include="Models\Counter.cs" />
     <Compile Include="Models\Customers.cs" />
     <Compile Include="Models\Expenses.cs" />
+    <Compile Include="Models\Payment.cs" />
     <Compile Include="Models\Goods.cs" />
     <Compile Include="Models\GoodsR.cs" />
     <Compile Include="Models\Info.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="Data\Categories.cs" />
     <Compile Include="Data\Customers.cs" />
     <Compile Include="Data\DatabaseBootstrapper.cs" />
+    <Compile Include="Data\Payments.cs" />
     <Compile Include="Data\DbNullSafe.cs" />
     <Compile Include="Data\Expense.cs" />
     <Compile Include="Data\Goods.cs" />

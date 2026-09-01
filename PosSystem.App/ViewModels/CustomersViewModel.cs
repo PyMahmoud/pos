@@ -24,6 +24,7 @@ namespace PosSystem.App.ViewModels
     public class CustomersViewModel : ViewModelBase
     {
         private readonly Core.Data.Customers _customersData = new Core.Data.Customers();
+        private readonly Core.Data.Payments _paymentsData = new Core.Data.Payments();
 
         private List<CustomerRow> _allCustomers = new List<CustomerRow>();
         public ObservableCollection<CustomerRow> Customers { get; } = new ObservableCollection<CustomerRow>();
@@ -100,9 +101,10 @@ namespace PosSystem.App.ViewModels
             {
                 if (!(p is CustomerRow row)) return;
 
-                var model = new Core.Models.Customers(row.Id, row.Ownername, row.Ownerid, row.Ownernumber, row.Paid, row.Remain);
+                var model = new Core.Models.Customers(row.Id, row.Ownername, row.Ownerid, row.Ownernumber, row.Paid, row.Remain, row.CreditOwed);
                 var detail = new CustomerDetailViewModel(model);
                 detail.CloseRequested += () => SelectedDetail = null;
+                detail.BalanceChanged += () => LoadCustomers();
                 SelectedDetail = detail;
             });
 
@@ -162,6 +164,15 @@ namespace PosSystem.App.ViewModels
             }
         }
 
+        // Rewritten 2026-08-31: previously capped `amount` at row.Remain,
+        // silently discarding any excess a customer overpaid by -- real
+        // money the shop had actually received but never recorded owing
+        // back. Now splits the entered amount into whatever pays down the
+        // existing debt (AppliedToRemain) and whatever's left over past
+        // that (AppliedToCredit, added to CreditOwed instead of vanishing).
+        // Every payment -- overpaying or not -- is logged to `payments` so
+        // it shows up in the customer's detail-page history and can be
+        // reverted from there (see CustomerDetailViewModel.RevertPayment).
         private void RecordPayment(CustomerRow row)
         {
             if (!double.TryParse(row.PaymentInput, out double amount) || amount <= 0)
@@ -170,19 +181,33 @@ namespace PosSystem.App.ViewModels
                 return;
             }
 
-            // Cap at the outstanding balance rather than rejecting an
-            // over-entry — a customer paying off a rounded-up amount
-            // shouldn't block clearing their tab.
-            if (amount > row.Remain) amount = row.Remain;
+            double appliedToRemain = Math.Min(amount, row.Remain);
+            double appliedToCredit = amount - appliedToRemain;
 
             try
             {
-                double newPaid = row.Paid + amount;
-                double newRemain = row.Remain - amount;
+                double previousPaid = row.Paid;
+                double previousRemain = row.Remain;
+                double previousCredit = row.CreditOwed;
 
-                _customersData.UpdateCustomers(
+                double newPaid = previousPaid + amount;
+                double newRemain = previousRemain - appliedToRemain;
+                double newCredit = previousCredit + appliedToCredit;
+
+                _customersData.UpdateCustomerBalance(
                     "customers", row.Id, row.Ownername, row.Ownerid, row.Ownernumber,
-                    newPaid, newRemain);
+                    newPaid, newRemain, newCredit);
+
+                DateTime now = DateTime.Now;
+                _paymentsData.InsertPayment(
+                    row.Id, "Payment", amount, appliedToRemain, appliedToCredit,
+                    previousPaid, previousRemain, previousCredit,
+                    "", now.ToString("dd/MM/yyyy"), now.ToString("HH:mm"));
+
+                row.Paid = newPaid;
+                row.Remain = newRemain;
+                row.CreditOwed = newCredit;
+                row.PaymentInput = "";
 
                 StatusMessage = string.Format(LocalizationManager.GetString("CustomersPaymentSuccess"), row.Ownername);
 

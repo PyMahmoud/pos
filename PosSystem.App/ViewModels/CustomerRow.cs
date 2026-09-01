@@ -40,6 +40,24 @@ namespace PosSystem.App.ViewModels
 
         public bool HasDebt => Remain > 0;
 
+        // Added for "money we owe the customer" (2026-08-31) -- the flip
+        // side of Remain/HasDebt above. See DatabaseBootstrapper's
+        // customers.CreditOwed comment for how this can grow.
+        private double _creditOwed;
+        public double CreditOwed
+        {
+            get => _creditOwed;
+            set
+            {
+                if (_creditOwed == value) return;
+                _creditOwed = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasCredit));
+            }
+        }
+
+        public bool HasCredit => CreditOwed > 0;
+
         private string _paymentInput = "";
         public string PaymentInput
         {
@@ -55,6 +73,7 @@ namespace PosSystem.App.ViewModels
             Ownernumber = model.Ownernumber;
             _paid = model.Paid;
             _remain = model.Remain;
+            _creditOwed = model.CreditOwed;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

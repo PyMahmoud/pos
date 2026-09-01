@@ -94,6 +94,68 @@ namespace PosSystem.Core.Data
 
                 EnsureColumn(conn, "bills", "CustomerId", "INTEGER");
 
+                // Added for Customers' payment-history / revert-payment /
+                // "money we owe the customer" features (2026-08-31).
+                // CreditOwed is the flip side of the existing Remain column
+                // (Remain = what the customer owes the shop; CreditOwed =
+                // what the shop owes the customer) -- it can only ever grow
+                // through two paths: a payment that exceeds the customer's
+                // Remain (the old RecordPayment simply discarded that
+                // excess by capping the accepted amount at Remain; it now
+                // carries the excess into CreditOwed instead -- see
+                // CustomersViewModel.RecordPayment), or a manual credit
+                // entry from the customer detail page (e.g. a refund or
+                // goodwill credit not tied to any payment).
+                //
+                // `payments` is the append-only history backing both of
+                // those and the revert feature -- see Models.Payment's own
+                // doc comment for the full column-by-column reasoning.
+                EnsureColumn(conn, "customers", "CreditOwed", "REAL");
+
+                using (var cmd = new SQLiteCommand(
+                    @"CREATE TABLE IF NOT EXISTS payments (
+                        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                        CustomerId INTEGER,
+                        Type TEXT,
+                        Amount REAL,
+                        AppliedToRemain REAL,
+                        AppliedToCredit REAL,
+                        PreviousPaid REAL,
+                        PreviousRemain REAL,
+                        PreviousCredit REAL,
+                        IsReverted INTEGER,
+                        Notes TEXT,
+                        PaymentDate TEXT,
+                        PaymentTime TEXT
+                    )", conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                // ALTER TABLE ADD COLUMN always inserts NULL for existing
+                // rows (see the matching bills.IsCurrent backfill comment
+                // above for why this can't rely on a retroactive DEFAULT) --
+                // every customer that existed before this feature needs an
+                // explicit one-time backfill to CreditOwed = 0.
+                // DbNullSafe.ToDouble already treats NULL as 0 everywhere
+                // this column is read, so this is belt-and-suspenders (a
+                // real 0 in the row itself) rather than strictly required,
+                // same reasoning as the bills.IsCurrent backfill.
+                try
+                {
+                    using (var cmd = new SQLiteCommand(
+                        "UPDATE customers SET CreditOwed = 0 WHERE CreditOwed IS NULL", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    // Not fatal -- see comment above; DbNullSafe.ToDouble's
+                    // own null-is-0 fallback still covers any row this
+                    // somehow missed.
+                }
+
                 // Added for Inventory's Add Product feature: barcode is
                 // optional on a product, but two DIFFERENT products must
                 // never share the same non-empty barcode. A partial unique

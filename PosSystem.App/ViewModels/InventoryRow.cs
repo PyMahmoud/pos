@@ -96,6 +96,17 @@ namespace PosSystem.App.ViewModels
             set { if (_adjustInput == value) return; _adjustInput = value; OnPropertyChanged(); }
         }
 
+        // Batch selection (added 2026-08-31) -- backs a checkbox on each
+        // card. InventoryViewModel listens for this specific property to
+        // change (see its Row_PropertyChanged) to keep SelectedCount and
+        // the bulk-action bar's visibility current without a full reload.
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set { if (_isSelected == value) return; _isSelected = value; OnPropertyChanged(); }
+        }
+
         // Edit-mode state, added 2026-08-25 for the per-card Edit button.
         // IsEditing toggles which half of the card's DataTemplate is
         // visible (InventoryView.xaml, via BoolToVisibilityConverter — the

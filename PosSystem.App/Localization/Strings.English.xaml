@@ -132,6 +132,7 @@
     <system:String x:Key="CustomersNoResults">No customers yet — add the first one on the left.</system:String>
     <system:String x:Key="CustomersBalancePaidUp">Paid up</system:String>
     <system:String x:Key="CustomersBalanceOwes">Owes {0:0.00}</system:String>
+    <system:String x:Key="CustomersWeOweLabel">We owe</system:String>
     <system:String x:Key="CustomersPaymentAmountLabel">Payment amount</system:String>
     <system:String x:Key="CustomersRecordPaymentButton">Record payment</system:String>
     <system:String x:Key="CustomersPaymentSuccess">Payment recorded for {0}.</system:String>
@@ -163,6 +164,24 @@
     <system:String x:Key="StockCheckSaveSuccess">Stock check saved.</system:String>
     <system:String x:Key="StockCheckSaveError">Something went wrong saving this. Please try again.</system:String>
 
+    <!-- Balance summary + payment history + revert + manual credit
+         (added 2026-08-31) -- see CustomerDetailViewModel's doc comment
+         on Paid/Remain/CreditOwed for the design. -->
+    <system:String x:Key="CustomerDetailOwesLabel">Owes</system:String>
+    <system:String x:Key="CustomerDetailAddCreditTitle">Add a credit</system:String>
+    <system:String x:Key="CustomerDetailCreditAmountLabel">Amount</system:String>
+    <system:String x:Key="CustomerDetailCreditNoteLabel">Reason (optional)</system:String>
+    <system:String x:Key="CustomerDetailAddCreditButton">Add credit</system:String>
+    <system:String x:Key="CustomerDetailCreditInvalid">Enter a valid credit amount.</system:String>
+    <system:String x:Key="CustomerDetailCreditSuccess">Credit added.</system:String>
+    <system:String x:Key="CustomerDetailCreditError">Something went wrong. Please try again.</system:String>
+    <system:String x:Key="CustomerDetailPaymentHistoryTitle">Payment History</system:String>
+    <system:String x:Key="CustomerDetailPaymentHistoryNone">No payments or credits recorded yet.</system:String>
+    <system:String x:Key="CustomerDetailRevertButton">Revert</system:String>
+    <system:String x:Key="CustomerDetailRevertedTag">Reverted</system:String>
+    <system:String x:Key="CustomerDetailRevertSuccess">Payment reverted.</system:String>
+    <system:String x:Key="CustomerDetailRevertError">Something went wrong. Please try again.</system:String>
+
     <system:String x:Key="InventoryHeading">Inventory</system:String>
     <system:String x:Key="InventorySearchLabel">Search by name or barcode</system:String>
     <system:String x:Key="InventoryStockFilterLabel">Stock status</system:String>
@@ -179,6 +198,19 @@
     <system:String x:Key="InventoryAdjustInvalid">Enter a valid quantity (0 or more).</system:String>
     <system:String x:Key="InventoryAdjustError">Something went wrong. Please try again.</system:String>
     <system:String x:Key="InventoryNoResults">No products match your filters.</system:String>
+
+    <!-- Batch selection (added 2026-08-31): select-all + bulk-action bar
+         above the product grid, and a per-card checkbox (uses the shared
+         InventoryEditButton/InventoryDeleteProductButton styling, no new
+         keys needed for the checkbox itself). -->
+    <system:String x:Key="InventorySelectAllLabel">Select all</system:String>
+    <system:String x:Key="InventorySelectedCountLabel">Selected:</system:String>
+    <system:String x:Key="InventoryBulkChangeCategoryButton">Change Category</system:String>
+    <system:String x:Key="InventoryBulkDeleteButton">Delete Selected</system:String>
+    <system:String x:Key="InventoryBulkNoSelection">Select at least one product first.</system:String>
+    <system:String x:Key="InventoryBulkMissingCategory">Choose a category to move the selected products to.</system:String>
+    <system:String x:Key="InventoryBulkDeleteSuccess">{0} product(s) deleted.</system:String>
+    <system:String x:Key="InventoryBulkCategoryChangeSuccess">{0} product(s) moved to {1}.</system:String>
 
     <system:String x:Key="InventoryListTitle">All products</system:String>
     <system:String x:Key="InventoryAddSectionTitle">Add a product</system:String>

@@ -307,6 +307,66 @@
                                   Style="{StaticResource ThemedComboBoxStyle}" />
                     </StackPanel>
                 </Border>
+
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <CheckBox Grid.Column="0"
+                              IsChecked="{Binding IsAllVisibleSelected, Mode=TwoWay}"
+                              Content="{DynamicResource InventorySelectAllLabel}"
+                              Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                              VerticalAlignment="Center" />
+                </Grid>
+
+                <Border Background="{DynamicResource SurfaceContainerHighBrush}"
+                        CornerRadius="12"
+                        Padding="16"
+                        Margin="0,10,0,0"
+                        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="{DynamicResource InventorySelectedCountLabel}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceBrush}"
+                                       Margin="0,0,4,0" />
+                            <TextBlock Text="{Binding SelectedCount}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceBrush}"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+
+                        <ComboBox ItemsSource="{Binding AllCategoryNames}"
+                                  SelectedItem="{Binding BulkCategoryTarget, Mode=TwoWay}"
+                                  Style="{StaticResource ThemedComboBoxStyle}"
+                                  Margin="0,0,0,10" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0"
+                                    Content="{DynamicResource InventoryBulkChangeCategoryButton}"
+                                    Command="{Binding BulkChangeCategoryCommand}"
+                                    Background="{DynamicResource PrimaryBrush}"
+                                    Foreground="{DynamicResource OnPrimaryBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="0,10"
+                                    HorizontalContentAlignment="Center" />
+                            <Button Grid.Column="2"
+                                    Content="{DynamicResource InventoryBulkDeleteButton}"
+                                    Command="{Binding BulkDeleteCommand}"
+                                    Background="{DynamicResource ErrorContainerBrush}"
+                                    Foreground="{DynamicResource OnErrorContainerBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="0,10"
+                                    HorizontalContentAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
             </StackPanel>
 
             <!-- Product grid -->
@@ -346,15 +406,21 @@
                                     <StackPanel Visibility="{Binding IsNotEditing, Converter={StaticResource BoolToVisibilityConverter}}">
                                         <Grid Margin="0,0,0,2">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0"
+                                            <!-- Batch selection checkbox (added 2026-08-31) -->
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      VerticalAlignment="Center"
+                                                      Margin="0,0,8,0" />
+                                            <TextBlock Grid.Column="1"
                                                        Text="{Binding Category}"
                                                        Style="{StaticResource LabelSmall}"
                                                        Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                                        VerticalAlignment="Center" />
-                                            <Button Grid.Column="1"
+                                            <Button Grid.Column="2"
                                                     Content="{DynamicResource InventoryEditButton}"
                                                     Command="{Binding DataContext.StartEditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"

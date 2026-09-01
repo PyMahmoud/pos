@@ -61,6 +61,7 @@ namespace PosSystem.Core.Data
                       
                         goods_List.Paid = DbNullSafe.ToDouble(reader["Paid"]);
                         goods_List.Remain = DbNullSafe.ToDouble(reader["Remain"]);
+                        goods_List.CreditOwed = DbNullSafe.ToDouble(reader["CreditOwed"]);
                       
                         //goods_List.Details = reader["Details"].ToString();
                         goods.Add(goods_List);
@@ -91,6 +92,7 @@ namespace PosSystem.Core.Data
 
                         goods_List.Paid = DbNullSafe.ToDouble(reader["Paid"]);
                         goods_List.Remain = DbNullSafe.ToDouble(reader["Remain"]);
+                        goods_List.CreditOwed = DbNullSafe.ToDouble(reader["CreditOwed"]);
 
                         //goods_List.Details = reader["Details"].ToString();
                         goods.Add(goods_List);
@@ -140,7 +142,36 @@ namespace PosSystem.Core.Data
                 }
             }
         }
-      
+
+        // Added for "money we owe the customer" / payment revert
+        // (2026-08-31) -- a separate method rather than widening
+        // UpdateCustomers above, so every existing call site (which knows
+        // nothing about CreditOwed) keeps compiling and behaving exactly as
+        // before. Used by CustomersViewModel.RecordPayment, 
+        // CustomerDetailViewModel.AddManualCredit, and 
+        // CustomerDetailViewModel.RevertPayment -- anywhere Paid/Remain/
+        // CreditOwed need to move together as one atomic balance update.
+        public bool UpdateCustomerBalance(string TableName, int ID, string Ownername, string Ownerid, string Ownernumber, double Paid, double Remain, double CreditOwed)
+        {
+            string UpdateString = "UPDATE " + TableName + " SET Ownername=@ownername, Ownerid=@ownerid, Ownernumber=@ownernumber, Paid=@paid, Remain=@remain, CreditOwed=@creditowed WHERE ID=@id";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(UpdateString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", ID);
+                    cmd.Parameters.AddWithValue("@ownername", Ownername);
+                    cmd.Parameters.AddWithValue("@ownerid", Ownerid);
+                    cmd.Parameters.AddWithValue("@ownernumber", Ownernumber);
+                    cmd.Parameters.AddWithValue("@paid", Paid);
+                    cmd.Parameters.AddWithValue("@remain", Remain);
+                    cmd.Parameters.AddWithValue("@creditowed", CreditOwed);
+                    cmd.ExecuteNonQuery();
+                    cmd.Dispose();
+                    return true;
+                }
+            }
+        }
 
     }
 }

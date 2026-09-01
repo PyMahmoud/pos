@@ -406,6 +406,33 @@ namespace PosSystem.App.ViewModels
         public ICommand SaveEditCommand { get; }
         public ICommand DeleteProductCommand { get; }
 
+        // Batch selection (added 2026-08-31) -- lets someone select several
+        // products at once (checkbox per card, see InventoryRow.IsSelected)
+        // and either delete all of them or move them all to a different
+        // category in one action. Both bulk actions are admin-gated, same
+        // reasoning as the existing single-product Edit/Delete.
+        public int SelectedCount => _allRows.Count(r => r.IsSelected);
+        public bool HasSelection => SelectedCount > 0;
+
+        private string _bulkCategoryTarget;
+        public string BulkCategoryTarget
+        {
+            get => _bulkCategoryTarget;
+            set => SetProperty(ref _bulkCategoryTarget, value);
+        }
+
+        // Bound to a select-all checkbox above the grid. Reads/writes
+        // against whatever's currently VISIBLE (Rows, post-filter) rather
+        // than every product in _allRows.
+        public bool IsAllVisibleSelected
+        {
+            get => Rows.Count > 0 && Rows.All(r => r.IsSelected);
+            set { foreach (var row in Rows) row.IsSelected = value; }
+        }
+
+        public ICommand BulkDeleteCommand { get; }
+        public ICommand BulkChangeCategoryCommand { get; }
+
         public InventoryViewModel()
         {
             AdjustQuantityCommand = new RelayCommand(p =>
@@ -431,6 +458,8 @@ namespace PosSystem.App.ViewModels
             {
                 if (p is InventoryRow row) DeleteProduct(row);
             });
+            BulkDeleteCommand = new RelayCommand(_ => BulkDelete());
+            BulkChangeCategoryCommand = new RelayCommand(_ => BulkChangeCategory());
             AdminUnlockCommand = new RelayCommand(_ => AdminUnlock());
             AppSettings.Changed += () =>
             {
@@ -470,9 +499,29 @@ namespace PosSystem.App.ViewModels
             _allRows = models.Select(m => new InventoryRow(new Core.Models.GoodsR(
                 m.Id, m.Name, m.Category, m.Quantity, m.Cost, m.Price, m.Type, m.Barcode, m.Earned, m.Datex, m.Datee))).ToList();
 
+            // Batch selection -- every fresh InventoryRow starts unselected
+            // by construction, but this ViewModel still needs to hear about
+            // a checkbox toggling on any of them to keep SelectedCount/
+            // HasSelection/IsAllVisibleSelected current. No unsubscribe: a
+            // reload replaces _allRows wholesale, and the old rows (with
+            // this subscription pointing outward at this still-alive VM)
+            // simply fall out of scope and become collectible.
+            foreach (var row in _allRows) row.PropertyChanged += Row_PropertyChanged;
+
             RebuildCategoryChips();
             RebuildStockFilterChips();
             ApplyFilter();
+            OnPropertyChanged(nameof(SelectedCount));
+            OnPropertyChanged(nameof(HasSelection));
+            OnPropertyChanged(nameof(IsAllVisibleSelected));
+        }
+
+        private void Row_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(InventoryRow.IsSelected)) return;
+            OnPropertyChanged(nameof(SelectedCount));
+            OnPropertyChanged(nameof(HasSelection));
+            OnPropertyChanged(nameof(IsAllVisibleSelected));
         }
 
         // Reads the real category list from the `categories` table — see
@@ -946,6 +995,97 @@ namespace PosSystem.App.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = LocalizationManager.GetString("InventoryDeleteError") + " (" + ex.Message + ")";
+            }
+        }
+
+        // Batch selection: bulk delete (added 2026-08-31) -- same no-
+        // confirmation-modal directness as the single-product Delete above.
+        // Selection is read from _allRows (not just the filtered Rows) so a
+        // selection made before the filter changed is still honored.
+        private void BulkDelete()
+        {
+            if (!RequireAdminUnlocked()) return;
+
+            var selected = _allRows.Where(r => r.IsSelected).ToList();
+            if (selected.Count == 0)
+            {
+                StatusMessage = LocalizationManager.GetString("InventoryBulkNoSelection");
+                return;
+            }
+
+            try
+            {
+                foreach (var row in selected)
+                {
+                    _goodsData.RemoveGoodsById("goods", row.Id);
+                    _allRows.Remove(row);
+                    Rows.Remove(row);
+                }
+
+                StatusMessage = string.Format(LocalizationManager.GetString("InventoryBulkDeleteSuccess"), selected.Count);
+
+                RebuildCategoryChips();
+                OnPropertyChanged(nameof(SelectedCount));
+                OnPropertyChanged(nameof(HasSelection));
+                OnPropertyChanged(nameof(IsAllVisibleSelected));
+
+                InventoryDataEvents.RaiseGoodsChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = LocalizationManager.GetString("InventoryDeleteError") + " (" + ex.Message + ")";
+            }
+        }
+
+        // Batch selection: bulk category change (added 2026-08-31) -- moves
+        // every currently-selected row to BulkCategoryTarget. Goes through
+        // Goods.UpdateGoodsById one row at a time -- there's no bulk-update
+        // method on that class, and this app's product count is small
+        // enough (per LoadGoods' own "281 rows is nothing" precedent) that
+        // a loop of single-row updates costs nothing noticeable. Each call
+        // carries the row's own existing Name/Cost/Price/Barcode forward
+        // unchanged -- only Category actually changes.
+        private void BulkChangeCategory()
+        {
+            if (!RequireAdminUnlocked()) return;
+
+            var selected = _allRows.Where(r => r.IsSelected).ToList();
+            if (selected.Count == 0)
+            {
+                StatusMessage = LocalizationManager.GetString("InventoryBulkNoSelection");
+                return;
+            }
+
+            string category = BulkCategoryTarget?.Trim() ?? "";
+            if (string.IsNullOrWhiteSpace(category) || !AllCategoryNames.Any(c => string.Equals(c, category, StringComparison.OrdinalIgnoreCase)))
+            {
+                StatusMessage = LocalizationManager.GetString("InventoryBulkMissingCategory");
+                return;
+            }
+
+            try
+            {
+                foreach (var row in selected)
+                {
+                    _goodsData.UpdateGoodsById("goods", row.Id, row.Name, category, row.Cost, row.Price, row.Barcode);
+                    row.Category = category;
+                    row.IsSelected = false;
+                }
+
+                StatusMessage = string.Format(LocalizationManager.GetString("InventoryBulkCategoryChangeSuccess"), selected.Count, category);
+
+                BulkCategoryTarget = null;
+                RebuildCategoryChips();
+                ApplyFilter();
+                OnPropertyChanged(nameof(SelectedCount));
+                OnPropertyChanged(nameof(HasSelection));
+                OnPropertyChanged(nameof(IsAllVisibleSelected));
+
+                InventoryDataEvents.RaiseGoodsChanged();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = LocalizationManager.GetString("InventoryEditError") + " (" + ex.Message + ")";
             }
         }
     }

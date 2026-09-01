@@ -177,6 +177,29 @@
                                                 </TextBlock>
                                             </Border>
 
+                                            <!-- "Money we owe the customer" badge (added 2026-08-31) -- the
+                                                 flip side of the debt badge above. Only shown once CreditOwed
+                                                 is actually above 0 (PositiveNumberToVisibilityConverter),
+                                                 so a customer with no credit looks exactly as before. Uses a
+                                                 plain StringFormat rather than a converter like
+                                                 CustomerBalanceTextConverter -- there's no "zero" case to
+                                                 special-case in text the way "Paid up" is for Remain, since
+                                                 this badge is hidden entirely at zero. -->
+                                            <Border CornerRadius="8" Padding="10,6" Margin="0,8,0,0"
+                                                    HorizontalAlignment="Left"
+                                                    Background="{DynamicResource PrimaryContainerBrush}"
+                                                    Visibility="{Binding CreditOwed, Converter={StaticResource PositiveNumberToVisibilityConverter}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{DynamicResource CustomersWeOweLabel}"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource OnPrimaryContainerBrush}"
+                                                               Margin="0,0,4,0" />
+                                                    <TextBlock Text="{Binding CreditOwed, StringFormat={}{0:0.00}}"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource OnPrimaryContainerBrush}" />
+                                                </StackPanel>
+                                            </Border>
+
                                             <!-- Record payment (only meaningful when there's a balance) -->
                                             <Grid Margin="0,14,0,0"
                                                   Visibility="{Binding HasDebt, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -263,6 +286,40 @@
                                     Padding="14,10"
                                     VerticalAlignment="Top" />
                         </Grid>
+
+                        <!-- Balance summary (added 2026-08-31) -- both
+                             directions of balance in one place: what this
+                             customer owes the shop (Remain) and what the
+                             shop owes them back (CreditOwed), each only
+                             shown when actually nonzero. -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                            <Border CornerRadius="8" Padding="12,8" Margin="0,0,10,0"
+                                    Background="{DynamicResource TertiaryContainerBrush}"
+                                    Visibility="{Binding HasDebt, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{DynamicResource CustomerDetailOwesLabel}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource OnTertiaryContainerBrush}"
+                                               Margin="0,0,4,0" />
+                                    <TextBlock Text="{Binding Remain, StringFormat={}{0:0.00}}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource OnTertiaryContainerBrush}" />
+                                </StackPanel>
+                            </Border>
+                            <Border CornerRadius="8" Padding="12,8"
+                                    Background="{DynamicResource PrimaryContainerBrush}"
+                                    Visibility="{Binding HasCredit, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{DynamicResource CustomersWeOweLabel}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource OnPrimaryContainerBrush}"
+                                               Margin="0,0,4,0" />
+                                    <TextBlock Text="{Binding CreditOwed, StringFormat={}{0:0.00}}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource OnPrimaryContainerBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
 
                         <!-- Medications sold -->
                         <TextBlock Text="{DynamicResource CustomerDetailSoldTitle}"
@@ -444,6 +501,118 @@
                                 </ItemsControl>
                             </StackPanel>
                         </Border>
+
+                        <!-- Add a manual credit (added 2026-08-31) -- e.g. a
+                             refund or goodwill credit not tied to any actual
+                             payment. See CustomerDetailViewModel.
+                             AddManualCreditCommand. -->
+                        <TextBlock Text="{DynamicResource CustomerDetailAddCreditTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,12" />
+                        <Border Background="{DynamicResource SurfaceContainerBrush}"
+                                CornerRadius="14"
+                                Padding="18"
+                                Margin="0,0,0,24">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="16" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{DynamicResource CustomerDetailCreditAmountLabel}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding CreditAmountInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="{DynamicResource CustomerDetailCreditNoteLabel}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding CreditNoteInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Button Content="{DynamicResource CustomerDetailAddCreditButton}"
+                                        Command="{Binding AddManualCreditCommand}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Foreground="{DynamicResource OnPrimaryBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="0,12"
+                                        HorizontalContentAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Payment history (added 2026-08-31) -- every
+                             payment/credit ever recorded for this customer,
+                             newest first, each with a Revert button unless
+                             it's already been reverted. See
+                             CustomerDetailViewModel.PaymentHistory/
+                             RevertPaymentCommand. -->
+                        <TextBlock Text="{DynamicResource CustomerDetailPaymentHistoryTitle}"
+                                   Style="{StaticResource TitleMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                   Margin="0,0,0,10" />
+
+                        <TextBlock Text="{DynamicResource CustomerDetailPaymentHistoryNone}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,20"
+                                   Visibility="{Binding PaymentHistory.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+
+                        <Border Background="{DynamicResource SurfaceContainerBrush}"
+                                CornerRadius="14"
+                                Padding="18"
+                                Margin="0,0,0,20"
+                                Visibility="{Binding PaymentHistory.Count, Converter={StaticResource PositiveCountToVisibilityConverter}}">
+                            <ItemsControl ItemsSource="{Binding PaymentHistory}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{DynamicResource OutlineVariantBrush}"
+                                                BorderThickness="0,0,0,1"
+                                                Padding="0,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Type}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceBrush}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                                                        <TextBlock Text="{Binding Amount, StringFormat={}{0:0.00}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceBrush}" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding PaymentDate}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" Margin="0,0,8,0" />
+                                                        <TextBlock Text="{Binding PaymentTime}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding Notes}"
+                                                               Style="{StaticResource LabelSmall}"
+                                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Text="{DynamicResource CustomerDetailRevertedTag}"
+                                                               Style="{StaticResource LabelSmall}"
+                                                               Foreground="{DynamicResource ErrorBrush}"
+                                                               Visibility="{Binding IsReverted, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                </StackPanel>
+                                                <Button Grid.Column="1"
+                                                        Content="{DynamicResource CustomerDetailRevertButton}"
+                                                        Command="{Binding DataContext.RevertPaymentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Background="{DynamicResource ErrorContainerBrush}"
+                                                        Foreground="{DynamicResource OnErrorContainerBrush}"
+                                                        Template="{StaticResource SelectableButtonTemplate}"
+                                                        Padding="10,6"
+                                                        VerticalAlignment="Top"
+                                                        Visibility="{Binding IsReverted, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+
+                        <TextBlock Text="{Binding StatusMessage}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,10" />
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

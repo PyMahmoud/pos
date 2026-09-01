@@ -38,12 +38,62 @@ namespace PosSystem.App.ViewModels
         private readonly Core.Data.Sells _sellsData = new Core.Data.Sells();
         private readonly Core.Data.Goods _goodsData = new Core.Data.Goods();
         private readonly Core.Data.StockChecks _stockChecksData = new Core.Data.StockChecks();
+        private readonly Core.Data.Customers _customersData = new Core.Data.Customers();
+        private readonly Core.Data.Payments _paymentsData = new Core.Data.Payments();
 
         public Customers Customer { get; }
 
         public ObservableCollection<SoldMedicationSummary> SoldMedications { get; } = new ObservableCollection<SoldMedicationSummary>();
         public ObservableCollection<StockCheck> StockCheckHistory { get; } = new ObservableCollection<StockCheck>();
         public ObservableCollection<GoodsR> AvailableMedications { get; } = new ObservableCollection<GoodsR>();
+
+        // Balance + payment history (added 2026-08-31). Kept as this
+        // ViewModel's OWN observable properties, not read straight off
+        // Customer above -- Customers (Core.Models) has plain get/set
+        // properties with no INotifyPropertyChanged, so a revert or a new
+        // manual credit wouldn't repaint the balance summary on screen
+        // unless something here actually raises PropertyChanged. Customer
+        // itself is also kept in sync (see RefreshBalance below) so
+        // anything that reads Customer.Paid/Remain/CreditOwed directly
+        // (there is none today, but a future addition might) doesn't see a
+        // stale snapshot from construction time.
+        private double _paid;
+        public double Paid { get => _paid; private set => SetProperty(ref _paid, value); }
+
+        private double _remain;
+        public double Remain { get => _remain; private set { if (SetProperty(ref _remain, value)) OnPropertyChanged(nameof(HasDebt)); } }
+
+        private double _creditOwed;
+        public double CreditOwed { get => _creditOwed; private set { if (SetProperty(ref _creditOwed, value)) OnPropertyChanged(nameof(HasCredit)); } }
+
+        public bool HasDebt => Remain > 0;
+        public bool HasCredit => CreditOwed > 0;
+
+        public ObservableCollection<Payment> PaymentHistory { get; } = new ObservableCollection<Payment>();
+
+        private string _creditAmountInput = "";
+        public string CreditAmountInput
+        {
+            get => _creditAmountInput;
+            set => SetProperty(ref _creditAmountInput, value);
+        }
+
+        private string _creditNoteInput = "";
+        public string CreditNoteInput
+        {
+            get => _creditNoteInput;
+            set => SetProperty(ref _creditNoteInput, value);
+        }
+
+        public ICommand AddManualCreditCommand { get; }
+        public ICommand RevertPaymentCommand { get; }
+
+        // CustomersViewModel subscribes to this (alongside CloseRequested)
+        // to know a payment/credit/revert here changed this customer's
+        // balance, so the list card behind this detail page shows the
+        // current numbers the moment the person goes back to it instead of
+        // whatever was cached when "View Details" was first clicked.
+        public event Action BalanceChanged;
 
         private GoodsR _selectedMedication;
         public GoodsR SelectedMedication
@@ -98,13 +148,136 @@ namespace PosSystem.App.ViewModels
         public CustomerDetailViewModel(Customers customer)
         {
             Customer = customer;
+            _paid = customer.Paid;
+            _remain = customer.Remain;
+            _creditOwed = customer.CreditOwed;
 
             SaveStockCheckCommand = new RelayCommand(_ => SaveStockCheck());
             CloseCommand = new RelayCommand(_ => CloseRequested?.Invoke());
+            AddManualCreditCommand = new RelayCommand(_ => AddManualCredit());
+            RevertPaymentCommand = new RelayCommand(p =>
+            {
+                if (p is Payment payment) RevertPayment(payment);
+            });
 
             LoadSalesHistory();
             LoadStockCheckHistory();
             LoadAvailableMedications();
+            LoadPaymentHistory();
+        }
+
+        private void LoadPaymentHistory()
+        {
+            PaymentHistory.Clear();
+            foreach (var payment in _paymentsData.ReadByCustomer(Customer.Id))
+                PaymentHistory.Add(payment);
+        }
+
+        // Writes a new Paid/Remain/CreditOwed triple to both the database
+        // and this ViewModel's own observable properties (see those
+        // properties' doc comment for why a plain assignment to Customer
+        // alone wouldn't repaint anything), then tells CustomersViewModel
+        // the list needs refreshing too.
+        private void PersistBalance(double newPaid, double newRemain, double newCredit)
+        {
+            _customersData.UpdateCustomerBalance(
+                "customers", Customer.Id, Customer.Ownername, Customer.Ownerid, Customer.Ownernumber,
+                newPaid, newRemain, newCredit);
+
+            Customer.Paid = newPaid;
+            Customer.Remain = newRemain;
+            Customer.CreditOwed = newCredit;
+
+            Paid = newPaid;
+            Remain = newRemain;
+            CreditOwed = newCredit;
+
+            CustomerDataEvents.RaiseCustomersChanged();
+            BalanceChanged?.Invoke();
+        }
+
+        // Manual credit entry (added 2026-08-31) -- e.g. a refund or
+        // goodwill credit that isn't tied to any payment the customer
+        // actually made. Never touches Paid/Remain, only CreditOwed --
+        // see Models.Payment's doc comment on the "Credit" Type.
+        private void AddManualCredit()
+        {
+            if (!double.TryParse(CreditAmountInput, out double amount) || amount <= 0)
+            {
+                StatusMessage = LocalizationManager.GetString("CustomerDetailCreditInvalid");
+                return;
+            }
+
+            try
+            {
+                double previousPaid = Paid;
+                double previousRemain = Remain;
+                double previousCredit = CreditOwed;
+                double newCredit = previousCredit + amount;
+
+                PersistBalance(previousPaid, previousRemain, newCredit);
+
+                DateTime now = DateTime.Now;
+                _paymentsData.InsertPayment(
+                    Customer.Id, "Credit", amount, 0, amount,
+                    previousPaid, previousRemain, previousCredit,
+                    (CreditNoteInput ?? "").Trim(), now.ToString("dd/MM/yyyy"), now.ToString("HH:mm"));
+
+                CreditAmountInput = "";
+                CreditNoteInput = "";
+                StatusMessage = LocalizationManager.GetString("CustomerDetailCreditSuccess");
+                LoadPaymentHistory();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = LocalizationManager.GetString("CustomerDetailCreditError") + " (" + ex.Message + ")";
+            }
+        }
+
+        // Revert (added 2026-08-31) -- reverses this SPECIFIC payment's
+        // effect by subtracting its Amount/AppliedToRemain/AppliedToCredit
+        // back out of the customer's CURRENT balances, not by restoring
+        // that row's Previous* snapshot -- see Models.Payment's doc comment
+        // for why subtracting is the one that stays correct regardless of
+        // which order payments get reverted in. Clamped at 0: a payment
+        // reverted after some OTHER change already moved the balance below
+        // what a raw subtraction would produce (e.g. more debt added since,
+        // or credit already spent down some other way this app doesn't
+        // model yet) should floor at 0 rather than go negative, which has
+        // no real-world meaning for either Remain or CreditOwed.
+        private void RevertPayment(Payment payment)
+        {
+            if (payment.IsReverted) return;
+
+            try
+            {
+                double newPaid = Paid;
+                double newRemain = Remain;
+                double newCredit = CreditOwed;
+
+                if (string.Equals(payment.Type, "Credit", StringComparison.OrdinalIgnoreCase))
+                {
+                    newCredit = Math.Max(0, CreditOwed - payment.Amount);
+                }
+                else
+                {
+                    newPaid = Math.Max(0, Paid - payment.Amount);
+                    newRemain = Math.Max(0, Remain + payment.AppliedToRemain);
+                    newCredit = Math.Max(0, CreditOwed - payment.AppliedToCredit);
+                }
+
+                PersistBalance(newPaid, newRemain, newCredit);
+
+                _paymentsData.MarkReverted(payment.Id);
+                payment.IsReverted = true;
+
+                StatusMessage = LocalizationManager.GetString("CustomerDetailRevertSuccess");
+                LoadPaymentHistory();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = LocalizationManager.GetString("CustomerDetailRevertError") + " (" + ex.Message + ")";
+            }
         }
 
         private void LoadSalesHistory()
