@@ -170,7 +170,7 @@
     <system:String x:Key="StockCheckSaveError">Something went wrong saving this. Please try again.</system:String>
 
     <!-- Balance summary + payment history + revert + manual credit
-         (added 2026-08-31) -- see CustomerDetailViewModel's doc comment
+         (added 2026-08-31) - see CustomerDetailViewModel's doc comment
          on Paid/Remain/CreditOwed for the design. -->
     <system:String x:Key="CustomerDetailOwesLabel">Owes</system:String>
     <system:String x:Key="CustomerDetailAddCreditTitle">Add a credit</system:String>
@@ -187,12 +187,12 @@
     <system:String x:Key="CustomerDetailRevertSuccess">Payment reverted.</system:String>
     <system:String x:Key="CustomerDetailRevertError">Something went wrong. Please try again.</system:String>
 
-    <!-- Default discount (2026-09-01) -- this customer's standing discount
+    <!-- Default discount (2026-09-01) - this customer's standing discount
          percentage, pre-filling Checkout's per-bill discount field the
          moment they're picked there (see CheckoutViewModel.SelectedCustomer's
          setter) and freely overridable per sale from that screen. Gated
          behind AppSettings.GateDiscountEnabled, same inline-unlock-box
-         pattern as every other admin-gated section -- see
+         pattern as every other admin-gated section - see
          CustomerDetailViewModel's discount fields for the full design. -->
     <system:String x:Key="CustomerDetailDiscountTitle">Default Discount</system:String>
     <system:String x:Key="CustomerDetailDiscountSubtitle">This customer's standing discount percentage -- pre-fills every new sale at Checkout, editable per sale from there.</system:String>

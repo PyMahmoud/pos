@@ -177,12 +177,12 @@
                                                 </TextBlock>
                                             </Border>
 
-                                            <!-- "Money we owe the customer" badge (added 2026-08-31) -- the
+                                            <!-- "Money we owe the customer" badge (added 2026-08-31) - the
                                                  flip side of the debt badge above. Only shown once CreditOwed
                                                  is actually above 0 (PositiveNumberToVisibilityConverter),
                                                  so a customer with no credit looks exactly as before. Uses a
                                                  plain StringFormat rather than a converter like
-                                                 CustomerBalanceTextConverter -- there's no "zero" case to
+                                                 CustomerBalanceTextConverter - there's no "zero" case to
                                                  special-case in text the way "Paid up" is for Remain, since
                                                  this badge is hidden entirely at zero. -->
                                             <Border CornerRadius="8" Padding="10,6" Margin="0,8,0,0"
@@ -287,7 +287,7 @@
                                     VerticalAlignment="Top" />
                         </Grid>
 
-                        <!-- Balance summary (added 2026-08-31) -- both
+                        <!-- Balance summary (added 2026-08-31) - both
                              directions of balance in one place: what this
                              customer owes the shop (Remain) and what the
                              shop owes them back (CreditOwed), each only
@@ -321,7 +321,7 @@
                             </Border>
                         </StackPanel>
 
-                        <!-- Default discount (2026-09-01) -- this customer's
+                        <!-- Default discount (2026-09-01) - this customer's
                              standing discount percentage, gated behind
                              AppSettings.GateDiscountEnabled the same way as
                              every other admin-gated section. See
@@ -581,7 +581,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Add a manual credit (added 2026-08-31) -- e.g. a
+                        <!-- Add a manual credit (added 2026-08-31) - e.g. a
                              refund or goodwill credit not tied to any actual
                              payment. See CustomerDetailViewModel.
                              AddManualCreditCommand. -->
@@ -619,7 +619,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Payment history (added 2026-08-31) -- every
+                        <!-- Payment history (added 2026-08-31) - every
                              payment/credit ever recorded for this customer,
                              newest first, each with a Revert button unless
                              it's already been reverted. See
