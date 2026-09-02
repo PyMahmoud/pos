@@ -128,10 +128,25 @@ namespace PosSystem.Core.Data
         // duplicates ('Snacks' / 'snacks') into one row here too, same as
         // CategoryExists' comparison already does; MIN(Name) picks a single
         // consistent spelling to display for each group.
+        //
+        // Widened 2026-09-03 (bug report: category picker showing
+        // near-identical "duplicate" entries, and phantom chips in
+        // Inventory/Checkout's category filter) -- COLLATE NOCASE alone
+        // doesn't fold WHITESPACE-variant duplicates ("Antibiotics" vs
+        // "Antibiotics " are different strings to GROUP BY even with
+        // NOCASE), and DatabaseBootstrapper's own de-dup pass didn't used
+        // to TRIM() either -- see that method's matching 2026-09-03 comment
+        // for the full fix on the write side. This is the read-side half:
+        // group by TRIM(Name) COLLATE NOCASE instead of just Name, and
+        // return MIN(TRIM(Name)) rather than MIN(Name) so a row that's
+        // still untrimmed on disk (e.g. this runs before
+        // DatabaseBootstrapper's own migration ever has, or against some
+        // other .db this app didn't create) never surfaces a leading/
+        // trailing space in the picker regardless.
         public List<string> ReadAllCategoryNames()
         {
             var names = new List<string>();
-            string readString = "SELECT MIN(Name) AS Name FROM categories GROUP BY Name COLLATE NOCASE ORDER BY Name ASC";
+            string readString = "SELECT MIN(TRIM(Name)) AS Name FROM categories GROUP BY TRIM(Name) COLLATE NOCASE ORDER BY Name ASC";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();
@@ -150,10 +165,18 @@ namespace PosSystem.Core.Data
         // Case-insensitive on purpose — matches the COLLATE NOCASE unique
         // constraint DatabaseBootstrapper defines (when it's the one that
         // actually created the table) and every other category comparison
-        // already in this app.
+        // already in this app. Trim-insensitive as of 2026-09-03 for the
+        // same reason as ReadAllCategoryNames above -- callers already trim
+        // their own input (InventoryViewModel.AddCategory does
+        // NewCategoryName?.Trim() before this is ever called), but the
+        // STORED Name being compared against might still be untrimmed on a
+        // database DatabaseBootstrapper's migration hasn't reached yet, and
+        // this method existing specifically to catch "already exists" is
+        // exactly the wrong place for that gap to let a whitespace-variant
+        // duplicate slip through.
         public bool CategoryExists(string name)
         {
-            string readString = "SELECT COUNT(*) FROM categories WHERE Name = @name COLLATE NOCASE";
+            string readString = "SELECT COUNT(*) FROM categories WHERE TRIM(Name) = TRIM(@name) COLLATE NOCASE";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();
@@ -171,7 +194,11 @@ namespace PosSystem.Core.Data
         // just does the insert. Not wrapped in try/catch here the way
         // DatabaseBootstrapper's backfill is: a failure on an explicit,
         // user-initiated "add this category" click should surface as an
-        // error to that user, not be silently swallowed.
+        // error to that user, not be silently swallowed. Trims the value
+        // itself as of 2026-09-03 (belt-and-suspenders alongside the
+        // caller's own Trim()) so this table can never grow a new
+        // untrimmed row through this path again, regardless of what any
+        // future caller passes in.
         public void InsertCategoryName(string name)
         {
             string insertString = "INSERT INTO categories (Name) VALUES (@name)";
@@ -180,7 +207,7 @@ namespace PosSystem.Core.Data
                 conn.Open();
                 using (SQLiteCommand cmd = new SQLiteCommand(insertString, conn))
                 {
-                    cmd.Parameters.AddWithValue("@name", name);
+                    cmd.Parameters.AddWithValue("@name", (name ?? "").Trim());
                     cmd.ExecuteNonQuery();
                     cmd.Dispose();
                 }
@@ -192,12 +219,12 @@ namespace PosSystem.Core.Data
         // message if any product still uses this category — deleting it
         // out from under existing products would leave their Category
         // field pointing at a name that no longer appears anywhere in the
-        // picker, with no UI path back to it. This method itself has no
-        // such guard, so it must not be called directly from XAML/without
-        // that check.
+        // picker. This method itself has no such guard, so it must not be
+        // called directly from XAML/without that check. Trim-insensitive
+        // as of 2026-09-03, same reasoning as CategoryExists above.
         public bool DeleteCategoryByName(string name)
         {
-            string deleteString = "DELETE FROM categories WHERE Name = @name COLLATE NOCASE";
+            string deleteString = "DELETE FROM categories WHERE TRIM(Name) = TRIM(@name) COLLATE NOCASE";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();

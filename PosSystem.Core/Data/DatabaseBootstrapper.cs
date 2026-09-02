@@ -230,6 +230,19 @@ namespace PosSystem.Core.Data
                 // Inventory's Add Product / Edit Product forms now enforce.
                 // INSERT OR IGNORE makes this safe to run on every startup
                 // — a no-op once every existing category has been migrated.
+                // TRIM()'d as of 2026-09-03 (bug report: "dropdown shows
+                // products that aren't there" / "categories are duplicated
+                // when adding a product") — this used to SELECT DISTINCT
+                // the raw, un-trimmed Category value, so a goods row with
+                // accidental leading/trailing whitespace ("Antibiotics "
+                // vs "Antibiotics") produced a SEPARATE categories row that
+                // COLLATE NOCASE alone can't fold together (it only ignores
+                // case, not whitespace) — surfacing as a near-identical
+                // "duplicate" entry in every category picker, and as a
+                // phantom extra chip in Inventory/Checkout's category
+                // filter (see RebuildCategoryChips in both ViewModels,
+                // which Distinct()s goods.Category directly with no
+                // trim/case folding of its own).
                 //
                 // Wrapped in try/catch for the same reason as the barcode
                 // index above, and a real possibility here specifically: if
@@ -254,7 +267,7 @@ namespace PosSystem.Core.Data
                 {
                     using (var cmd = new SQLiteCommand(
                         @"INSERT OR IGNORE INTO categories (Name)
-                          SELECT DISTINCT Category FROM goods
+                          SELECT DISTINCT TRIM(Category) FROM goods
                           WHERE Category IS NOT NULL AND TRIM(Category) <> ''", conn))
                     {
                         cmd.ExecuteNonQuery();
@@ -268,7 +281,39 @@ namespace PosSystem.Core.Data
                     // CategoryExists check is the real guarantee either way.
                 }
 
-                // One-time de-duplication pass (2026-08-25): this database
+                // Whitespace normalization (2026-09-03, same bug report as
+                // the TRIM() above) -- fixes up rows that already made it
+                // into `categories` BEFORE that fix existed, i.e. every
+                // startup before this one. UPDATE OR IGNORE: trimming a row
+                // can collide with an already-trimmed row that has the same
+                // name (COLLATE NOCASE unique constraint) -- IGNORE just
+                // skips that one row rather than aborting the whole
+                // statement, leaving it for the de-dup DELETE immediately
+                // below (now keyed on TRIM(Name), not just Name) to remove
+                // outright.
+                try
+                {
+                    using (var cmd = new SQLiteCommand(
+                        "UPDATE OR IGNORE categories SET Name = TRIM(Name) WHERE Name <> TRIM(Name)", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    // Same pre-existing-schema caveat as the other
+                    // categories try/catch blocks in this method.
+                }
+
+                // One-time de-duplication pass (2026-08-25, widened
+                // 2026-09-03 from "Name COLLATE NOCASE" to
+                // "TRIM(Name) COLLATE NOCASE" -- the original version only
+                // folded case-variant duplicates, not whitespace-variant
+                // ones; the UPDATE OR IGNORE just above already normalizes
+                // most rows in place, but any row it couldn't touch because
+                // trimming collided with another row is still sitting here
+                // untrimmed, so the GROUP BY key itself has to tolerate
+                // that too or this pass leaves it behind): this database
                 // already had duplicate/case-variant rows in `categories`
                 // before this feature's UNIQUE COLLATE NOCASE constraint
                 // existed (confirmed from a live screenshot showing the same
@@ -281,18 +326,20 @@ namespace PosSystem.Core.Data
                 // duplicated forever would still be wrong for anything else
                 // that ever reads this table directly, and it means Delete
                 // Category only fully removes a name if this cleanup ran.
-                // Keeps the lowest ID per case-insensitive name and removes
-                // the rest -- safe to re-run every startup (a no-op once
-                // there is nothing left to de-duplicate), and goods.Category
-                // is a plain string column, not a foreign key to a specific
-                // categories.ID, so deleting the extra duplicate ID rows
-                // here has no effect on any product's own Category value.
+                // Keeps the lowest ID per case/whitespace-insensitive name
+                // and removes the rest -- safe to re-run every startup (a
+                // no-op once there is nothing left to de-duplicate), and
+                // goods.Category is a plain string column, not a foreign
+                // key to a specific categories.ID, so deleting the extra
+                // duplicate ID rows here has no effect on any product's own
+                // Category value (that's what the NEXT step, immediately
+                // below, actually fixes).
                 try
                 {
                     using (var cmd = new SQLiteCommand(
                         @"DELETE FROM categories
                           WHERE ID NOT IN (
-                              SELECT MIN(ID) FROM categories GROUP BY Name COLLATE NOCASE
+                              SELECT MIN(ID) FROM categories GROUP BY TRIM(Name) COLLATE NOCASE
                           )", conn))
                     {
                         cmd.ExecuteNonQuery();
@@ -302,6 +349,60 @@ namespace PosSystem.Core.Data
                 {
                     // Same pre-existing-schema caveat as the two try/catch
                     // blocks above -- not fatal either way.
+                }
+
+                // Normalizes goods.Category to match its canonical
+                // categories.Name spelling (2026-09-03, same bug report as
+                // the steps above) -- everything above cleans up the
+                // `categories` table itself, but does nothing about
+                // goods.Category, which is a plain denormalized string
+                // column with its own independent whitespace/casing per
+                // row (some products entered as "Antibiotics", others as
+                // " antibiotics" from before Add/Edit Product enforced
+                // picking from a known list). InventoryViewModel/
+                // CheckoutViewModel's own category filter chips are built
+                // by calling plain .Distinct() directly on goods.Category
+                // values (see RebuildCategoryChips in both classes) with NO
+                // case/whitespace folding of their own — so those
+                // inconsistent goods rows were exactly what surfaced as
+                // extra "phantom" chips in the category filter dropdown
+                // (each one really the same category, split across however
+                // many spellings happened to exist), and as products
+                // appearing to vanish when a chip only matched a subset of
+                // them. Matches case/whitespace-insensitively against the
+                // now-cleaned categories table and rewrites goods.Category
+                // to that table's canonical (trimmed) spelling wherever it
+                // differs — after this, .Distinct() on goods.Category
+                // naturally produces exactly one chip per real category,
+                // by construction, with no further code change needed in
+                // either ViewModel.
+                try
+                {
+                    using (var cmd = new SQLiteCommand(
+                        @"UPDATE goods
+                          SET Category = (
+                              SELECT c.Name FROM categories c
+                              WHERE TRIM(c.Name) = TRIM(goods.Category) COLLATE NOCASE
+                              LIMIT 1
+                          )
+                          WHERE Category IS NOT NULL
+                            AND TRIM(Category) <> ''
+                            AND Category <> (
+                                SELECT c.Name FROM categories c
+                                WHERE TRIM(c.Name) = TRIM(goods.Category) COLLATE NOCASE
+                                LIMIT 1
+                            )", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    // Not fatal -- a row this misses just keeps showing its
+                    // own separate chip until fixed by hand or re-saved via
+                    // Edit Product (whose category field is selection-only
+                    // against the categories table, so re-saving any one
+                    // product in a mismatched category corrects it).
                 }
                 // Added for the Settings screen's Tax Rate / Low Stock
                 // Threshold fields (2026-08-26) -- see Core.Data.Settings'
