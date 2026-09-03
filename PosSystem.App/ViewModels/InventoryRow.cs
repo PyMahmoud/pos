@@ -27,7 +27,16 @@ namespace PosSystem.App.ViewModels
         // captured at construction time.
         public static double LowStockThreshold => PosSystem.App.AppSettings.LowStockThreshold;
 
-        public int Id { get; }
+        // Settable as of 2026-09-03 (Inventory's staged-edits feature) --
+        // a newly-Added-but-not-yet-Saved row is given a temporary,
+        // negative placeholder ID (see InventoryViewModel.NextTempId) since
+        // it doesn't exist in the database yet; SaveChanges() sets this to
+        // the real, positive, database-assigned ID once the INSERT actually
+        // runs. Every other row (loaded from the database, or a temp row
+        // before Save) never has this touched after construction -- this
+        // is not a general-purpose settable property for casual use
+        // elsewhere, just what the staging/commit flow specifically needs.
+        public int Id { get; internal set; }
 
         // Name/Category/Cost/Price/Barcode were plain get-only properties
         // until Inventory's Edit Product feature (2026-08-25) — settable +

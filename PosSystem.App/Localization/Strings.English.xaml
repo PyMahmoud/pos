@@ -233,6 +233,22 @@
     <system:String x:Key="InventoryBulkDeleteSuccess">{0} product(s) deleted.</system:String>
     <system:String x:Key="InventoryBulkCategoryChangeSuccess">{0} product(s) moved to {1}.</system:String>
 
+    <system:String x:Key="InventoryPendingSaveNote">Not saved yet - use Save Changes.</system:String>
+    <system:String x:Key="InventoryUndoButton">Undo</system:String>
+    <system:String x:Key="InventoryRedoButton">Redo</system:String>
+    <system:String x:Key="InventorySaveChangesButton">Save Changes</system:String>
+    <system:String x:Key="InventoryDiscardChangesButton">Discard</system:String>
+    <system:String x:Key="InventoryUndoStatus">Undone.</system:String>
+    <system:String x:Key="InventoryRedoStatus">Redone.</system:String>
+    <system:String x:Key="InventorySaveChangesSuccess">Changes saved.</system:String>
+    <system:String x:Key="InventorySaveChangesError">Something went wrong saving your changes. Please try again.</system:String>
+    <system:String x:Key="InventoryDiscardSuccess">Pending changes discarded.</system:String>
+    <system:String x:Key="InventoryUnsavedChangesTitle">Unsaved Changes</system:String>
+    <system:String x:Key="InventoryUnsavedChangesMessage">You have changes on Inventory that haven't been saved yet. Save them, discard them, or stay on this screen.</system:String>
+    <system:String x:Key="InventoryUnsavedChangesSaveButton">Save Changes</system:String>
+    <system:String x:Key="InventoryUnsavedChangesDiscardButton">Discard</system:String>
+    <system:String x:Key="InventoryUnsavedChangesCancelButton">Stay Here</system:String>
+
     <system:String x:Key="InventoryListTitle">All products</system:String>
     <system:String x:Key="InventoryAddSectionTitle">Add a product</system:String>
     <system:String x:Key="InventoryProductNameLabel">Name</system:String>

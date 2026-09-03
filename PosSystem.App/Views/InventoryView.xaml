@@ -252,6 +252,62 @@
                            Foreground="{DynamicResource OnSurfaceBrush}"
                            Margin="0,0,0,12" />
 
+                <!-- Undo / Redo / Save Changes / Discard (2026-09-03,
+                     explicit request) -- see InventoryViewModel's
+                     class doc comment on the staging model these drive.
+                     Undo/Redo stay visible but disable themselves
+                     (IsEnabled bound to CanUndo/CanRedo) since "nothing to
+                     undo right now" is a normal, expected state, not
+                     something to hide -- but Save/Discard only appear at
+                     all once there's actually something pending
+                     (Visibility bound to HasUnsavedChanges), since an
+                     always-visible disabled Save button next to a product
+                     grid with nothing pending would look like it's
+                     offering to save something that doesn't exist. -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0"
+                            Content="{DynamicResource InventoryUndoButton}"
+                            Command="{Binding UndoCommand}"
+                            IsEnabled="{Binding CanUndo}"
+                            Background="{DynamicResource SurfaceContainerHighBrush}"
+                            Foreground="{DynamicResource OnSurfaceBrush}"
+                            Template="{StaticResource SelectableButtonTemplate}"
+                            Padding="14,8" />
+                    <Button Grid.Column="2"
+                            Content="{DynamicResource InventoryRedoButton}"
+                            Command="{Binding RedoCommand}"
+                            IsEnabled="{Binding CanRedo}"
+                            Background="{DynamicResource SurfaceContainerHighBrush}"
+                            Foreground="{DynamicResource OnSurfaceBrush}"
+                            Template="{StaticResource SelectableButtonTemplate}"
+                            Padding="14,8" />
+                    <Button Grid.Column="4"
+                            Content="{DynamicResource InventoryDiscardChangesButton}"
+                            Command="{Binding DiscardChangesCommand}"
+                            Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Background="{DynamicResource ErrorContainerBrush}"
+                            Foreground="{DynamicResource OnErrorContainerBrush}"
+                            Template="{StaticResource SelectableButtonTemplate}"
+                            Padding="14,8" />
+                    <Button Grid.Column="6"
+                            Content="{DynamicResource InventorySaveChangesButton}"
+                            Command="{Binding SaveChangesCommand}"
+                            Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Background="{DynamicResource PrimaryBrush}"
+                            Foreground="{DynamicResource OnPrimaryBrush}"
+                            Template="{StaticResource SelectableButtonTemplate}"
+                            Padding="14,8" />
+                </Grid>
+
                 <Border Background="{DynamicResource SurfaceContainerLowBrush}" CornerRadius="16" Padding="20">
                     <StackPanel>
                         <TextBlock Text="{DynamicResource InventorySearchLabel}"

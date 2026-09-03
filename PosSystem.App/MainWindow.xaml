@@ -68,5 +68,66 @@
 
         <!-- Active screen -->
         <ContentControl Grid.Column="1" Content="{Binding CurrentView}" />
+
+        <!-- Unsaved Inventory changes confirmation (2026-09-03) -- see
+             MainViewModel.SelectedNavItem's setter for when this shows.
+             Spans both columns (sidebar + content), not just the content
+             area, since leaving the sidebar clickable underneath would let
+             someone pick yet another item while this is already open. -->
+        <Border Grid.Column="0" Grid.ColumnSpan="2"
+                Background="#99000000"
+                Visibility="{Binding IsShowingUnsavedChangesPrompt, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border Background="{DynamicResource SurfaceContainerHighBrush}"
+                    CornerRadius="16"
+                    Padding="24"
+                    MaxWidth="420"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource InventoryUnsavedChangesTitle}"
+                               Style="{StaticResource TitleMedium}"
+                               Foreground="{DynamicResource OnSurfaceBrush}"
+                               Margin="0,0,0,8" />
+                    <TextBlock Text="{DynamicResource InventoryUnsavedChangesMessage}"
+                               Style="{StaticResource BodyLarge}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,20" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0"
+                                Content="{DynamicResource InventoryUnsavedChangesCancelButton}"
+                                Command="{Binding ConfirmCancelCommand}"
+                                Background="{DynamicResource SurfaceContainerHighestBrush}"
+                                Foreground="{DynamicResource OnSurfaceBrush}"
+                                Template="{StaticResource SelectableButtonTemplate}"
+                                Padding="0,10"
+                                HorizontalContentAlignment="Center" />
+                        <Button Grid.Column="2"
+                                Content="{DynamicResource InventoryUnsavedChangesDiscardButton}"
+                                Command="{Binding ConfirmDiscardCommand}"
+                                Background="{DynamicResource ErrorContainerBrush}"
+                                Foreground="{DynamicResource OnErrorContainerBrush}"
+                                Template="{StaticResource SelectableButtonTemplate}"
+                                Padding="0,10"
+                                HorizontalContentAlignment="Center" />
+                        <Button Grid.Column="4"
+                                Content="{DynamicResource InventoryUnsavedChangesSaveButton}"
+                                Command="{Binding ConfirmSaveCommand}"
+                                Background="{DynamicResource PrimaryBrush}"
+                                Foreground="{DynamicResource OnPrimaryBrush}"
+                                Template="{StaticResource SelectableButtonTemplate}"
+                                Padding="0,10"
+                                HorizontalContentAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Border>
     </Grid>
 </Window>

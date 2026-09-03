@@ -50,6 +50,41 @@ namespace PosSystem.Core.Data
                 }
             }
         }
+        // Added 2026-09-03 for Inventory's staged-edits/undo-redo/Save-
+        // Changes feature -- InsertGoods above (immediate-write era) never
+        // needed to know the assigned ID, since nothing downstream in the
+        // same operation ever referenced the new row again. Now it does:
+        // InventoryViewModel stages an Add as a plain in-memory InventoryRow
+        // with a temporary (negative, never persisted) placeholder ID, and
+        // only finds out the real one at Save Changes time -- SQLiteConnection
+        // .LastInsertRowId (same connection, right after the INSERT, before
+        // it's closed) is the standard, reliable way to get that back without
+        // a second round-trip query. See InventoryViewModel's class doc
+        // comment on the staging model for the full picture.
+        public int InsertGoodsReturningId(string TableName, string Name, string Category, double Quantity, double Cost, double Price, string Type, string Barcode, double Earned, string Datex, string Datee)
+        {
+            string insertString = "insert into " + TableName + "(Name ,Category ,Quantity ,Cost ,Price ,Type ,Barcode , Earned , Datex , Datee) VALUES (@name , @category , @quantity , @cost , @price ,@type ,@barcode ,@earned ,@datex , @datee)";
+            using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
+            {
+                conn.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand(insertString, conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", Name);
+                    cmd.Parameters.AddWithValue("@category", Category);
+                    cmd.Parameters.AddWithValue("@quantity", Quantity);
+                    cmd.Parameters.AddWithValue("@cost", Cost);
+                    cmd.Parameters.AddWithValue("@price", Price);
+                    cmd.Parameters.AddWithValue("@type", Type);
+                    cmd.Parameters.AddWithValue("@barcode", Barcode);
+                    cmd.Parameters.AddWithValue("@earned", Earned);
+                    cmd.Parameters.AddWithValue("@datex", Datex);
+                    cmd.Parameters.AddWithValue("@datee", Datee);
+
+                    cmd.ExecuteNonQuery();
+                    return (int)conn.LastInsertRowId;
+                }
+            }
+        }
         public string ReadString(string TableName , string FieldValue , double ID)
         {
             string value;

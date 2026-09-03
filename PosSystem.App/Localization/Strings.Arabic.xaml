@@ -187,6 +187,22 @@
     <system:String x:Key="InventoryBulkDeleteSuccess">تم حذف {0} منتج.</system:String>
     <system:String x:Key="InventoryBulkCategoryChangeSuccess">تم نقل {0} منتج إلى {1}.</system:String>
 
+    <system:String x:Key="InventoryPendingSaveNote">لم يُحفظ بعد - استخدم "حفظ التغييرات".</system:String>
+    <system:String x:Key="InventoryUndoButton">تراجع</system:String>
+    <system:String x:Key="InventoryRedoButton">إعادة</system:String>
+    <system:String x:Key="InventorySaveChangesButton">حفظ التغييرات</system:String>
+    <system:String x:Key="InventoryDiscardChangesButton">تجاهل</system:String>
+    <system:String x:Key="InventoryUndoStatus">تم التراجع.</system:String>
+    <system:String x:Key="InventoryRedoStatus">تمت الإعادة.</system:String>
+    <system:String x:Key="InventorySaveChangesSuccess">تم حفظ التغييرات.</system:String>
+    <system:String x:Key="InventorySaveChangesError">حدث خطأ أثناء حفظ التغييرات. حاول مرة أخرى.</system:String>
+    <system:String x:Key="InventoryDiscardSuccess">تم تجاهل التغييرات المعلّقة.</system:String>
+    <system:String x:Key="InventoryUnsavedChangesTitle">تغييرات غير محفوظة</system:String>
+    <system:String x:Key="InventoryUnsavedChangesMessage">لديك تغييرات في المخزون لم تُحفظ بعد. احفظها أو تجاهلها أو ابقَ في هذه الشاشة.</system:String>
+    <system:String x:Key="InventoryUnsavedChangesSaveButton">حفظ التغييرات</system:String>
+    <system:String x:Key="InventoryUnsavedChangesDiscardButton">تجاهل</system:String>
+    <system:String x:Key="InventoryUnsavedChangesCancelButton">البقاء هنا</system:String>
+
     <system:String x:Key="InventoryListTitle">كل المنتجات</system:String>
     <system:String x:Key="InventoryAddSectionTitle">إضافة منتج</system:String>
     <system:String x:Key="InventoryProductNameLabel">الاسم</system:String>

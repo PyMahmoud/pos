@@ -177,6 +177,291 @@ namespace PosSystem.App.ViewModels
         private readonly Core.Data.Goods _goodsData = new Core.Data.Goods();
         private readonly Core.Data.Categories _categoriesData = new Core.Data.Categories();
 
+        // Staged edits / Undo / Redo / Save Changes (2026-09-03, explicit
+        // request) -- every mutating action on this screen (Add/Edit/
+        // Delete/Adjust-quantity a product, bulk delete/re-category, Add/
+        // Delete a category) used to write straight to the database the
+        // moment its button was clicked. That's gone now: every action
+        // below instead mutates _allRows/AllCategoryNames (the SAME
+        // in-memory collections the UI already reads from -- nothing new
+        // there) through PushChange, which records a paired Apply/Revert
+        // closure on _undoStack so Undo/Redo can walk back and forth
+        // through the pending session's history, and nothing touches the
+        // database until SaveChanges() actually runs.
+        //
+        // Why a plain Apply/Revert closure pair per action rather than one
+        // command class per action type (AddProductCommand,
+        // DeleteProductCommand, ...): every action already computes
+        // exactly what changed as local variables right where it validates
+        // its input (e.g. SaveEdit already has oldName/newName in scope) --
+        // wrapping that in a closure costs nothing extra there, while 8
+        // separate command classes would mean 8 separate files' worth of
+        // ceremony for what's fundamentally "mutate these fields, know how
+        // to put them back."
+        //
+        // Why SaveChanges() diffs the final in-memory state against a
+        // baseline snapshot instead of literally replaying each
+        // action's own database write in order: replaying runs into a real
+        // ordering problem the moment one staged action targets a row
+        // another staged action created (e.g. Add a product, then Edit
+        // that same not-yet-saved product's price, all before ever
+        // clicking Save) -- the Edit would need to reference a database ID
+        // that doesn't exist until the Add's own commit step runs first,
+        // and Undo/Redo reordering the timeline makes tracking "what order
+        // do these need to commit in" genuinely hard to get right. Diffing
+        // sidesteps all of that: _allRows/AllCategoryNames are already the
+        // single, correct, fully up-to-date picture of "what should be
+        // true after Save" REGARDLESS of how many actions or undo/redo
+        // cycles produced them, so Save only ever needs to ask "how does
+        // this differ from what's actually in the database right now" once,
+        // at the end. This does mean every validation check that used to
+        // query the database directly (BarcodeExists, CategoryExists,
+        // CountByCategory) had to move to checking _allRows/AllCategoryNames
+        // instead -- the database is now stale relative to pending local
+        // edits until Save runs, so a database-only check would both miss a
+        // same-session duplicate and wrongly block a since-staged-deleted
+        // value being reused. See each rewritten method below for its own
+        // version of this.
+        //
+        // Undo/Redo does NOT survive a Save: Revert only ever mutates
+        // in-memory state, never the database (that's the whole point of
+        // the diff-based commit above) -- if undo history stayed alive
+        // across a save boundary, undoing a change from before the save
+        // would silently desync the UI from what's actually on disk again,
+        // with no re-diff to catch it. SaveChanges() clears both stacks
+        // once it's done.
+        private sealed class PendingChange
+        {
+            public readonly Action Apply;
+            public readonly Action Revert;
+            public PendingChange(Action apply, Action revert) { Apply = apply; Revert = revert; }
+        }
+
+        private readonly List<PendingChange> _undoStack = new List<PendingChange>();
+        private readonly List<PendingChange> _redoStack = new List<PendingChange>();
+
+        // Baseline: a snapshot of exactly what's in the database as of the
+        // last load or last successful Save -- SaveChanges() diffs the
+        // CURRENT _allRows/AllCategoryNames against this to know what to
+        // actually write. Re-captured at the end of the constructor (after
+        // the very first LoadGoods/LoadCategories) and again right after
+        // every successful SaveChanges().
+        private struct GoodsBaselineSnapshot
+        {
+            public int Id;
+            public string Name;
+            public string Category;
+            public double Quantity;
+            public double Cost;
+            public double Price;
+            public string Barcode;
+        }
+
+        private List<GoodsBaselineSnapshot> _baselineRows = new List<GoodsBaselineSnapshot>();
+        private HashSet<string> _baselineCategoryNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Temporary IDs for staged-but-not-yet-saved new products -- always
+        // negative (real database IDs, INTEGER PRIMARY KEY AUTOINCREMENT,
+        // are always positive), so "row.Id <= 0" reliably means "this
+        // doesn't exist in the database yet" everywhere below and in
+        // SaveChanges(). Monotonically decreasing per InventoryViewModel
+        // instance -- this screen's ViewModel lives for the app's whole
+        // lifetime once MainViewModel caches its View (same lifetime rule
+        // as every event subscription elsewhere in this class), so a
+        // simple never-reset counter can't collide with itself.
+        private int _nextTempId;
+        private int NextTempId() => --_nextTempId;
+
+        public bool CanUndo => _undoStack.Count > 0;
+        public bool CanRedo => _redoStack.Count > 0;
+
+        // Drives both the Save/Discard buttons' visibility and
+        // MainViewModel's "leaving Inventory with unsaved changes" guard
+        // (SelectedNavItem's setter) -- reaching zero (via Undo, Discard,
+        // or Save) means _allRows/AllCategoryNames are back to exactly
+        // matching the database, so there is nothing left to warn about or
+        // commit.
+        public bool HasUnsavedChanges => _undoStack.Count > 0;
+
+        public ICommand UndoCommand { get; }
+        public ICommand RedoCommand { get; }
+        public ICommand SaveChangesCommand { get; }
+        public ICommand DiscardChangesCommand { get; }
+
+        // Every staged action funnels through here. Applies immediately
+        // (so the UI reflects it right away, same as the pre-staging
+        // immediate-write behavior looked to the user), records it for
+        // Undo, and -- same as every other user-initiated change on this
+        // screen -- clears the redo stack: once a NEW action happens, the
+        // timeline has branched, and whatever was available to redo no
+        // longer has a consistent "future" to redo into.
+        private void PushChange(Action apply, Action revert)
+        {
+            apply();
+            _undoStack.Add(new PendingChange(apply, revert));
+            _redoStack.Clear();
+            RefreshDerivedCollections();
+            RaiseUndoRedoState();
+        }
+
+        private void Undo()
+        {
+            if (_undoStack.Count == 0) return;
+            var change = _undoStack[_undoStack.Count - 1];
+            _undoStack.RemoveAt(_undoStack.Count - 1);
+            change.Revert();
+            _redoStack.Add(change);
+            RefreshDerivedCollections();
+            RaiseUndoRedoState();
+            StatusMessage = LocalizationManager.GetString("InventoryUndoStatus");
+        }
+
+        private void Redo()
+        {
+            if (_redoStack.Count == 0) return;
+            var change = _redoStack[_redoStack.Count - 1];
+            _redoStack.RemoveAt(_redoStack.Count - 1);
+            change.Apply();
+            _undoStack.Add(change);
+            RefreshDerivedCollections();
+            RaiseUndoRedoState();
+            StatusMessage = LocalizationManager.GetString("InventoryRedoStatus");
+        }
+
+        // Undoes every pending action, oldest-effect-last (same order Undo()
+        // itself already walks), then throws away the redo history too --
+        // unlike a plain Undo-to-empty, Discard is a deliberate "throw all
+        // of this away" action, so whatever was just discarded should not
+        // be redo-able back in afterward.
+        private void DiscardChanges()
+        {
+            if (_undoStack.Count == 0) return;
+            while (_undoStack.Count > 0) Undo();
+            _redoStack.Clear();
+            RaiseUndoRedoState();
+            StatusMessage = LocalizationManager.GetString("InventoryDiscardSuccess");
+        }
+
+        private void RaiseUndoRedoState()
+        {
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
+            OnPropertyChanged(nameof(HasUnsavedChanges));
+        }
+
+        // Every collection/derived-property that could be affected by ANY
+        // staged action -- called uniformly after PushChange/Undo/Redo
+        // rather than each call site picking and choosing which of these
+        // its specific change actually touched. Slightly more work than
+        // strictly necessary on, say, a quantity-only Adjust, but this
+        // app's own "281 rows is nothing" precedent (LoadGoods' doc
+        // comment) applies just as well here, and uniform beats
+        // per-call-site bookkeeping bugs.
+        private void RefreshDerivedCollections()
+        {
+            RebuildCategoryChips();
+            ApplyFilter();
+            RebuildFilteredNewProductCategories();
+            RebuildFilteredCategoryToDeleteOptions();
+            OnPropertyChanged(nameof(SelectedCount));
+            OnPropertyChanged(nameof(HasSelection));
+            OnPropertyChanged(nameof(IsAllVisibleSelected));
+        }
+
+        private void CaptureBaseline()
+        {
+            _baselineRows = _allRows.Select(r => new GoodsBaselineSnapshot
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Category = r.Category,
+                Quantity = r.Quantity,
+                Cost = r.Cost,
+                Price = r.Price,
+                Barcode = r.Barcode
+            }).ToList();
+            _baselineCategoryNames = new HashSet<string>(AllCategoryNames, StringComparer.OrdinalIgnoreCase);
+        }
+
+        // Commits every pending change to the database in one pass, via a
+        // diff against _baselineRows/_baselineCategoryNames -- see this
+        // class's staging-model doc comment above for why a diff instead
+        // of replaying each staged action's own write. Order: new rows
+        // first (so they have a real ID before anything downstream could
+        // need it), then deletes, then field/quantity edits on surviving
+        // rows, then categories. Wrapped as one method-level try/catch
+        // rather than per-row: a partial failure here would leave the
+        // database and the in-memory baseline out of sync with no clean
+        // way to know which rows actually made it, so this reports the
+        // failure and leaves everything pending (nothing's cleared from
+        // the undo stack) rather than guessing.
+        private void SaveChanges()
+        {
+            if (!HasUnsavedChanges) return;
+
+            try
+            {
+                foreach (var row in _allRows.Where(r => r.Id <= 0).ToList())
+                {
+                    string today = DateTime.Now.ToString("dd/MM/yyyy");
+                    row.Id = _goodsData.InsertGoodsReturningId(
+                        "goods", row.Name, row.Category, row.Quantity, row.Cost, row.Price,
+                        "", row.Barcode, 0, today, today);
+                }
+
+                var currentIds = new HashSet<int>(_allRows.Where(r => r.Id > 0).Select(r => r.Id));
+                foreach (var baseline in _baselineRows.Where(b => !currentIds.Contains(b.Id)))
+                {
+                    _goodsData.RemoveGoodsById("goods", baseline.Id);
+                }
+
+                var baselineById = _baselineRows.ToDictionary(b => b.Id);
+                foreach (var row in _allRows.Where(r => r.Id > 0))
+                {
+                    if (!baselineById.TryGetValue(row.Id, out var baseline)) continue;
+
+                    bool fieldsChanged = baseline.Name != row.Name || baseline.Category != row.Category ||
+                                          baseline.Cost != row.Cost || baseline.Price != row.Price ||
+                                          baseline.Barcode != row.Barcode;
+                    if (fieldsChanged)
+                        _goodsData.UpdateGoodsById("goods", row.Id, row.Name, row.Category, row.Cost, row.Price, row.Barcode);
+
+                    if (baseline.Quantity != row.Quantity)
+                        _goodsData.UpdateGoodCountById("goods", row.Id, row.Quantity);
+                }
+
+                var currentCategories = new HashSet<string>(AllCategoryNames, StringComparer.OrdinalIgnoreCase);
+                foreach (var added in currentCategories.Except(_baselineCategoryNames, StringComparer.OrdinalIgnoreCase))
+                    _categoriesData.InsertCategoryName(added);
+                foreach (var removed in _baselineCategoryNames.Except(currentCategories, StringComparer.OrdinalIgnoreCase))
+                    _categoriesData.DeleteCategoryByName(removed);
+
+                _undoStack.Clear();
+                _redoStack.Clear();
+
+                // Reloads _allRows/AllCategoryNames fresh from the database
+                // (this VM's own LoadGoods subscription runs synchronously
+                // as part of this call) -- self-corrects against anything
+                // subtle the diff above might have missed, and is also how
+                // Checkout's cached goods list picks up these changes, same
+                // as every other write on this screen already did before
+                // staging existed. CaptureBaseline() below has to run AFTER
+                // this, not before, so it snapshots the just-reloaded
+                // canonical state rather than the pre-reload one.
+                InventoryDataEvents.RaiseGoodsChanged();
+                LoadCategories();
+
+                CaptureBaseline();
+                RaiseUndoRedoState();
+
+                StatusMessage = LocalizationManager.GetString("InventorySaveChangesSuccess");
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = LocalizationManager.GetString("InventorySaveChangesError") + " (" + ex.Message + ")";
+            }
+        }
+
         private List<InventoryRow> _allRows = new List<InventoryRow>();
         public ObservableCollection<InventoryRow> Rows { get; } = new ObservableCollection<InventoryRow>();
         public ObservableCollection<CategoryChip> Categories { get; } = new ObservableCollection<CategoryChip>();
@@ -460,6 +745,10 @@ namespace PosSystem.App.ViewModels
             });
             BulkDeleteCommand = new RelayCommand(_ => BulkDelete());
             BulkChangeCategoryCommand = new RelayCommand(_ => BulkChangeCategory());
+            UndoCommand = new RelayCommand(_ => Undo());
+            RedoCommand = new RelayCommand(_ => Redo());
+            SaveChangesCommand = new RelayCommand(_ => SaveChanges());
+            DiscardChangesCommand = new RelayCommand(_ => DiscardChanges());
             AdminUnlockCommand = new RelayCommand(_ => AdminUnlock());
             AppSettings.Changed += () =>
             {
@@ -467,7 +756,7 @@ namespace PosSystem.App.ViewModels
                 OnPropertyChanged(nameof(IsAdminLocked));
             };
 
-            InventoryDataEvents.GoodsChanged += LoadGoods;
+            InventoryDataEvents.GoodsChanged += ReloadIfNoUnsavedChanges;
             LocalizationManager.LanguageChanged += _ => RebuildStockFilterChips();
 
             // Settings screen (2026-08-26): a saved Low Stock Threshold
@@ -482,9 +771,35 @@ namespace PosSystem.App.ViewModels
             // follows (see CheckoutViewModel's InventoryDataEvents.GoodsChanged
             // comment) -- each screen's ViewModel lives for the app's
             // lifetime once MainViewModel caches its View.
-            AppSettings.Changed += LoadGoods;
+            //
+            // Routed through ReloadIfNoUnsavedChanges rather than LoadGoods
+            // directly as of 2026-09-03 (staged edits) -- see that method's
+            // comment for why a direct LoadGoods() here would risk silently
+            // discarding a pending, not-yet-saved edit.
+            AppSettings.Changed += ReloadIfNoUnsavedChanges;
 
             LoadCategories();
+            LoadGoods();
+            CaptureBaseline();
+        }
+
+        // Guards the two CROSS-SCREEN triggers of a reload (a Checkout sale
+        // via InventoryDataEvents.GoodsChanged, a Settings threshold change
+        // via AppSettings.Changed) against destroying pending, not-yet-saved
+        // edits -- added 2026-09-03 alongside staged edits/Undo/Redo/Save
+        // Changes. LoadGoods() rebuilds _allRows entirely from the database,
+        // which is exactly right for THIS screen's own writes (SaveChanges
+        // clears the undo stack before triggering its own reload, so
+        // HasUnsavedChanges is already false by the time this check runs
+        // there) but would silently discard anything still staged if some
+        // OTHER screen's change reached here first. Accepted trade-off:
+        // this screen's grid can go stale relative to a sale that just
+        // happened elsewhere until the pending edits are Saved or
+        // Discarded, which is a far smaller cost than losing unsaved work
+        // out from under someone without warning.
+        private void ReloadIfNoUnsavedChanges()
+        {
+            if (HasUnsavedChanges) return;
             LoadGoods();
         }
 
@@ -683,23 +998,17 @@ namespace PosSystem.App.ViewModels
                 return;
             }
 
-            try
-            {
-                // ID-based, not Barcode-based — see the class-level doc
-                // comment. row.Barcode may be "" (no barcode), and Barcode
-                // is no longer guaranteed unique in that case.
-                _goodsData.UpdateGoodCountById("goods", row.Id, newQuantity);
-                row.Quantity = newQuantity;
-                row.AdjustInput = "";
+            double oldQuantity = row.Quantity;
+            string name = row.Name;
 
-                StatusMessage = string.Format(LocalizationManager.GetString("InventoryAdjustSuccess"), row.Name, newQuantity);
+            PushChange(
+                apply: () => row.Quantity = newQuantity,
+                revert: () => row.Quantity = oldQuantity);
 
-                InventoryDataEvents.RaiseGoodsChanged();
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = LocalizationManager.GetString("InventoryAdjustError") + " (" + ex.Message + ")";
-            }
+            row.AdjustInput = "";
+
+            StatusMessage = string.Format(LocalizationManager.GetString("InventoryAdjustSuccess"), name, newQuantity)
+                + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
         }
 
         private void AddProduct()
@@ -745,50 +1054,40 @@ namespace PosSystem.App.ViewModels
                 return;
             }
 
-            // Barcode optional; when present, must be unique. "" (no
-            // barcode) is deliberately never checked here — the partial
-            // unique index only constrains non-empty values, so any number
-            // of barcode-less products is fine.
-            if (!string.IsNullOrEmpty(barcode) && _goodsData.BarcodeExists("goods", barcode))
+            // Barcode optional; when present, must be unique. Checked
+            // against the LOCAL, in-memory state (_allRows) as of
+            // 2026-09-03, not the database -- see this class's staging-
+            // model doc comment for why a database-only check would miss a
+            // duplicate barcode between two products both staged in the
+            // same not-yet-saved session. "" (no barcode) is deliberately
+            // never checked here -- the partial unique index (and this
+            // check) only constrains non-empty values, so any number of
+            // barcode-less products is fine.
+            if (!string.IsNullOrEmpty(barcode) && _allRows.Any(r => string.Equals(r.Barcode, barcode, StringComparison.Ordinal)))
             {
                 StatusMessage = LocalizationManager.GetString("InventoryAddDuplicateBarcode");
                 return;
             }
 
-            try
-            {
-                string today = DateTime.Now.ToString("dd/MM/yyyy");
+            string today = DateTime.Now.ToString("dd/MM/yyyy");
+            var newRow = new InventoryRow(new Core.Models.GoodsR(
+                NextTempId(), name, category, quantity, cost, price, "", barcode, 0, today, today));
+            newRow.PropertyChanged += Row_PropertyChanged;
 
-                _goodsData.InsertGoods(
-                    "goods",
-                    name,
-                    category,
-                    quantity,
-                    cost,
-                    price,
-                    "",       // Type — legacy field, unused by any current screen; no established meaning to fill in
-                    barcode,  // "" when omitted
-                    0,        // Earned — no sales yet
-                    today,
-                    today);
+            PushChange(
+                apply: () => _allRows.Insert(0, newRow),
+                revert: () => _allRows.Remove(newRow));
 
-                NewProductName = "";
-                NewProductBarcode = "";
-                NewProductCategoryInput = "";
-                RebuildFilteredNewProductCategories(); // reset the narrowed list back to full after the field clears
-                NewProductQuantity = "";
-                NewProductCost = "";
-                NewProductPrice = "";
+            NewProductName = "";
+            NewProductBarcode = "";
+            NewProductCategoryInput = "";
+            RebuildFilteredNewProductCategories(); // reset the narrowed list back to full after the field clears
+            NewProductQuantity = "";
+            NewProductCost = "";
+            NewProductPrice = "";
 
-                StatusMessage = string.Format(LocalizationManager.GetString("InventoryAddSuccess"), name);
-
-                LoadGoods();
-                InventoryDataEvents.RaiseGoodsChanged();
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = LocalizationManager.GetString("InventoryAddError") + " (" + ex.Message + ")";
-            }
+            StatusMessage = string.Format(LocalizationManager.GetString("InventoryAddSuccess"), name)
+                + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
         }
 
         // Category management (added 2026-08-25) — see class doc comment.
@@ -805,23 +1104,40 @@ namespace PosSystem.App.ViewModels
                 return;
             }
 
-            if (_categoriesData.CategoryExists(name))
+            // Checked against the LOCAL AllCategoryNames list, not the
+            // database, as of 2026-09-03 -- see this class's staging-model
+            // doc comment. AllCategoryNames is already kept live-correct by
+            // every staged action (PushChange/Undo/Redo all funnel through
+            // RefreshDerivedCollections), so it's the right thing to check
+            // regardless of what's actually committed to the database yet.
+            if (AllCategoryNames.Any(c => string.Equals(c, name, StringComparison.OrdinalIgnoreCase)))
             {
                 StatusMessage = LocalizationManager.GetString("InventoryCategoryAddDuplicate");
                 return;
             }
 
-            try
+            PushChange(
+                apply: () => InsertCategorySorted(name),
+                revert: () => AllCategoryNames.Remove(name));
+
+            NewCategoryName = "";
+            StatusMessage = string.Format(LocalizationManager.GetString("InventoryCategoryAddSuccess"), name)
+                + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
+        }
+
+        // Keeps AllCategoryNames alphabetically ordered after a staged
+        // add, matching what LoadCategories()' own "ORDER BY Name ASC"
+        // query would produce -- a plain .Add() would tack the new name
+        // onto the end instead, out of order until the next full reload.
+        private void InsertCategorySorted(string name)
+        {
+            int index = 0;
+            while (index < AllCategoryNames.Count &&
+                   string.Compare(AllCategoryNames[index], name, StringComparison.OrdinalIgnoreCase) < 0)
             {
-                _categoriesData.InsertCategoryName(name);
-                NewCategoryName = "";
-                StatusMessage = string.Format(LocalizationManager.GetString("InventoryCategoryAddSuccess"), name);
-                LoadCategories();
+                index++;
             }
-            catch (Exception ex)
-            {
-                StatusMessage = LocalizationManager.GetString("InventoryAddError") + " (" + ex.Message + ")";
-            }
+            AllCategoryNames.Insert(index, name);
         }
 
         private void DeleteCategory()
@@ -849,28 +1165,36 @@ namespace PosSystem.App.ViewModels
             }
 
             // Refuse rather than silently orphan every product still in
-            // this category — see Core.Data.Categories.DeleteCategoryByName's
-            // comment. The only way to clear this block right now is
-            // editing each of those products to a different category first
-            // (Edit Product, this same session's other addition).
-            int inUseCount = _goodsData.CountByCategory("goods", name);
+            // this category. Checked against the LOCAL _allRows as of
+            // 2026-09-03, not the database -- see this class's staging-
+            // model doc comment: a product bulk-moved out of this category
+            // earlier in the same pending session must actually unblock
+            // this delete, and one moved INTO it must still block it,
+            // neither of which the database yet knows about. The only way
+            // to clear this block right now is editing each of those
+            // products to a different category first (Edit Product, or
+            // Bulk Change Category).
+            int inUseCount = _allRows.Count(r => string.Equals(r.Category, name, StringComparison.OrdinalIgnoreCase));
             if (inUseCount > 0)
             {
                 StatusMessage = string.Format(LocalizationManager.GetString("InventoryCategoryDeleteInUse"), name, inUseCount);
                 return;
             }
 
-            try
-            {
-                _categoriesData.DeleteCategoryByName(name);
-                StatusMessage = string.Format(LocalizationManager.GetString("InventoryCategoryDeleteSuccess"), name);
-                CategoryToDelete = null;
-                LoadCategories(); // also re-runs both Rebuild*Options against the now-updated AllCategoryNames
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = LocalizationManager.GetString("InventoryAddError") + " (" + ex.Message + ")";
-            }
+            string exact = AllCategoryNames.First(c => string.Equals(c, name, StringComparison.OrdinalIgnoreCase));
+            int index = AllCategoryNames.IndexOf(exact);
+
+            PushChange(
+                apply: () => AllCategoryNames.Remove(exact),
+                revert: () =>
+                {
+                    if (!AllCategoryNames.Contains(exact))
+                        AllCategoryNames.Insert(Math.Min(index, AllCategoryNames.Count), exact);
+                });
+
+            CategoryToDelete = null;
+            StatusMessage = string.Format(LocalizationManager.GetString("InventoryCategoryDeleteSuccess"), name)
+                + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
         }
 
         // Edit Product (added 2026-08-25) — see class doc comment.
@@ -922,39 +1246,38 @@ namespace PosSystem.App.ViewModels
                 return;
             }
 
-            if (!string.IsNullOrEmpty(barcode) && _goodsData.BarcodeExistsExcludingId("goods", barcode, row.Id))
+            // Checked against the LOCAL _allRows, not the database, as of
+            // 2026-09-03 -- see this class's staging-model doc comment.
+            if (!string.IsNullOrEmpty(barcode) && _allRows.Any(r => r != row && string.Equals(r.Barcode, barcode, StringComparison.Ordinal)))
             {
                 StatusMessage = LocalizationManager.GetString("InventoryEditDuplicateBarcode");
                 return;
             }
 
-            try
-            {
-                _goodsData.UpdateGoodsById("goods", row.Id, name, category, cost, price, barcode);
+            string oldName = row.Name, oldCategory = row.Category, oldBarcode = row.Barcode;
+            double oldCost = row.Cost, oldPrice = row.Price;
 
-                row.Name = name;
-                row.Category = category;
-                row.Cost = cost;
-                row.Price = price;
-                row.Barcode = barcode;
-                row.IsEditing = false;
+            PushChange(
+                apply: () =>
+                {
+                    row.Name = name;
+                    row.Category = category;
+                    row.Cost = cost;
+                    row.Price = price;
+                    row.Barcode = barcode;
+                    row.IsEditing = false;
+                },
+                revert: () =>
+                {
+                    row.Name = oldName;
+                    row.Category = oldCategory;
+                    row.Cost = oldCost;
+                    row.Price = oldPrice;
+                    row.Barcode = oldBarcode;
+                });
 
-                StatusMessage = string.Format(LocalizationManager.GetString("InventoryEditSuccess"), name);
-
-                // Category and/or Name may have changed, and the filter
-                // chips / search results are built from _allRows'
-                // snapshot of those same fields — a full reload keeps them
-                // correct rather than trying to patch RebuildCategoryChips
-                // and ApplyFilter's in-memory query by hand.
-                RebuildCategoryChips();
-                ApplyFilter();
-
-                InventoryDataEvents.RaiseGoodsChanged();
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = LocalizationManager.GetString("InventoryEditError") + " (" + ex.Message + ")";
-            }
+            StatusMessage = string.Format(LocalizationManager.GetString("InventoryEditSuccess"), name)
+                + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
         }
 
         // Delete Product (added 2026-08-25) -- same directness as
@@ -974,28 +1297,19 @@ namespace PosSystem.App.ViewModels
         {
             if (!RequireAdminUnlocked()) return;
 
-            try
-            {
-                string name = row.Name;
-                _goodsData.RemoveGoodsById("goods", row.Id);
+            string name = row.Name;
+            int index = _allRows.IndexOf(row);
 
-                _allRows.Remove(row);
-                Rows.Remove(row);
+            PushChange(
+                apply: () => _allRows.Remove(row),
+                revert: () =>
+                {
+                    if (!_allRows.Contains(row))
+                        _allRows.Insert(Math.Min(index, _allRows.Count), row);
+                });
 
-                StatusMessage = string.Format(LocalizationManager.GetString("InventoryDeleteSuccess"), name);
-
-                // Category chips are built from _allRows' distinct
-                // categories (RebuildCategoryChips' own comment) -- a
-                // deleted product may have been the last one in its
-                // category, so that chip needs to disappear too.
-                RebuildCategoryChips();
-
-                InventoryDataEvents.RaiseGoodsChanged();
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = LocalizationManager.GetString("InventoryDeleteError") + " (" + ex.Message + ")";
-            }
+            StatusMessage = string.Format(LocalizationManager.GetString("InventoryDeleteSuccess"), name)
+                + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
         }
 
         // Batch selection: bulk delete (added 2026-08-31) -- same no-
@@ -1013,28 +1327,26 @@ namespace PosSystem.App.ViewModels
                 return;
             }
 
-            try
-            {
-                foreach (var row in selected)
+            var snapshot = selected.Select(r => (Row: r, Index: _allRows.IndexOf(r))).ToList();
+
+            PushChange(
+                apply: () =>
                 {
-                    _goodsData.RemoveGoodsById("goods", row.Id);
-                    _allRows.Remove(row);
-                    Rows.Remove(row);
-                }
+                    foreach (var entry in snapshot) _allRows.Remove(entry.Row);
+                },
+                revert: () =>
+                {
+                    foreach (var entry in snapshot.OrderBy(e => e.Index))
+                    {
+                        if (!_allRows.Contains(entry.Row))
+                            _allRows.Insert(Math.Min(entry.Index, _allRows.Count), entry.Row);
+                    }
+                });
 
-                StatusMessage = string.Format(LocalizationManager.GetString("InventoryBulkDeleteSuccess"), selected.Count);
+            foreach (var row in selected) row.IsSelected = false;
 
-                RebuildCategoryChips();
-                OnPropertyChanged(nameof(SelectedCount));
-                OnPropertyChanged(nameof(HasSelection));
-                OnPropertyChanged(nameof(IsAllVisibleSelected));
-
-                InventoryDataEvents.RaiseGoodsChanged();
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = LocalizationManager.GetString("InventoryDeleteError") + " (" + ex.Message + ")";
-            }
+            StatusMessage = string.Format(LocalizationManager.GetString("InventoryBulkDeleteSuccess"), selected.Count)
+                + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
         }
 
         // Batch selection: bulk category change (added 2026-08-31) -- moves
@@ -1063,30 +1375,23 @@ namespace PosSystem.App.ViewModels
                 return;
             }
 
-            try
-            {
-                foreach (var row in selected)
+            var snapshot = selected.Select(r => (Row: r, OldCategory: r.Category)).ToList();
+
+            PushChange(
+                apply: () =>
                 {
-                    _goodsData.UpdateGoodsById("goods", row.Id, row.Name, category, row.Cost, row.Price, row.Barcode);
-                    row.Category = category;
-                    row.IsSelected = false;
-                }
+                    foreach (var entry in snapshot) entry.Row.Category = category;
+                },
+                revert: () =>
+                {
+                    foreach (var entry in snapshot) entry.Row.Category = entry.OldCategory;
+                });
 
-                StatusMessage = string.Format(LocalizationManager.GetString("InventoryBulkCategoryChangeSuccess"), selected.Count, category);
+            foreach (var row in selected) row.IsSelected = false;
+            BulkCategoryTarget = null;
 
-                BulkCategoryTarget = null;
-                RebuildCategoryChips();
-                ApplyFilter();
-                OnPropertyChanged(nameof(SelectedCount));
-                OnPropertyChanged(nameof(HasSelection));
-                OnPropertyChanged(nameof(IsAllVisibleSelected));
-
-                InventoryDataEvents.RaiseGoodsChanged();
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = LocalizationManager.GetString("InventoryEditError") + " (" + ex.Message + ")";
-            }
+            StatusMessage = string.Format(LocalizationManager.GetString("InventoryBulkCategoryChangeSuccess"), selected.Count, category)
+                + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
         }
     }
 }
