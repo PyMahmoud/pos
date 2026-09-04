@@ -61,9 +61,20 @@ namespace PosSystem.Core.Data
         // it's closed) is the standard, reliable way to get that back without
         // a second round-trip query. See InventoryViewModel's class doc
         // comment on the staging model for the full picture.
-        public int InsertGoodsReturningId(string TableName, string Name, string Category, double Quantity, double Cost, double Price, string Type, string Barcode, double Earned, string Datex, string Datee)
+        // Signature widened 2026-09-04 to accept DiscountPercent -- see
+        // this method's original 2026-09-03 doc comment above for why the
+        // ID needs to come back at all. Needed here (not just on
+        // UpdateGoodsById below) for a real edge case: a product can be
+        // Added AND given a discount (via the bulk "Add Discounts" button
+        // or the Discounts page) in the SAME pending session, before ever
+        // clicking Save Changes -- SaveChanges()'s field-update loop only
+        // ever touches rows already present in the pre-Save baseline
+        // snapshot (see that method's own comment), so a brand-new row's
+        // DiscountPercent has no later UPDATE that would ever write it;
+        // it has to go in on the initial INSERT or it's silently lost.
+        public int InsertGoodsReturningId(string TableName, string Name, string Category, double Quantity, double Cost, double Price, string Type, string Barcode, double Earned, string Datex, string Datee, double DiscountPercent)
         {
-            string insertString = "insert into " + TableName + "(Name ,Category ,Quantity ,Cost ,Price ,Type ,Barcode , Earned , Datex , Datee) VALUES (@name , @category , @quantity , @cost , @price ,@type ,@barcode ,@earned ,@datex , @datee)";
+            string insertString = "insert into " + TableName + "(Name ,Category ,Quantity ,Cost ,Price ,Type ,Barcode , Earned , Datex , Datee , DiscountPercent) VALUES (@name , @category , @quantity , @cost , @price ,@type ,@barcode ,@earned ,@datex , @datee , @discountpercent)";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();
@@ -79,6 +90,7 @@ namespace PosSystem.Core.Data
                     cmd.Parameters.AddWithValue("@earned", Earned);
                     cmd.Parameters.AddWithValue("@datex", Datex);
                     cmd.Parameters.AddWithValue("@datee", Datee);
+                    cmd.Parameters.AddWithValue("@discountpercent", DiscountPercent);
 
                     cmd.ExecuteNonQuery();
                     return (int)conn.LastInsertRowId;
@@ -292,6 +304,15 @@ namespace PosSystem.Core.Data
                         goods_List.Datee = reader["Datee"].ToString();
                         goods_List.Barcode = reader["Barcode"].ToString();
                         goods_List.Earned = Convert.ToDouble(reader["Earned"]);
+                        // DiscountPercent added 2026-09-04 (Inventory's
+                        // Discounts feature) -- DbNullSafe.ToDouble, not a
+                        // raw Convert.ToDouble, since a database that
+                        // hasn't been through DatabaseBootstrapper's
+                        // backfill yet (or somehow missed a row) would
+                        // otherwise crash this entire read on a NULL cell,
+                        // same reasoning as every other DbNullSafe usage in
+                        // this file's newer methods.
+                        goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
                         //goods_List.Details = reader["Details"].ToString();
                         //if (!Convert.IsDBNull(reader["Image"]))
                         //{
@@ -647,9 +668,19 @@ namespace PosSystem.Core.Data
         // going out of date if an Adjust happens while an Edit is open) for
         // no real benefit — Type and Earned are left alone for the same
         // "don't touch a field this feature has no UI for" reasoning.
-        public bool UpdateGoodsById(string TableName, int Id, string Name, string Category, double Cost, double Price, string Barcode)
+        // Widened 2026-09-04 to also accept DiscountPercent, for
+        // Inventory's Discounts feature (bulk "Add Discounts" button + the
+        // Discounts management page) -- both of those stage their change
+        // through this same InventoryViewModel PushChange/Undo/Redo/Save
+        // Changes pipeline everything else on this screen already goes
+        // through (see that class's staging-model doc comment), rather
+        // than writing to the database immediately on their own separate
+        // path, so a pending discount change and a pending Name/Category/
+        // Cost/Price/Barcode edit on the very same not-yet-saved row can
+        // never race or partially commit against each other.
+        public bool UpdateGoodsById(string TableName, int Id, string Name, string Category, double Cost, double Price, string Barcode, double DiscountPercent)
         {
-            string UpdateString = "UPDATE " + TableName + " SET Name = @name, Category = @category, Cost = @cost, Price = @price, Barcode = @barcode WHERE ID = @id";
+            string UpdateString = "UPDATE " + TableName + " SET Name = @name, Category = @category, Cost = @cost, Price = @price, Barcode = @barcode, DiscountPercent = @discountpercent WHERE ID = @id";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();
@@ -660,6 +691,7 @@ namespace PosSystem.Core.Data
                     cmd.Parameters.AddWithValue("@cost", Cost);
                     cmd.Parameters.AddWithValue("@price", Price);
                     cmd.Parameters.AddWithValue("@barcode", Barcode);
+                    cmd.Parameters.AddWithValue("@discountpercent", DiscountPercent);
                     cmd.Parameters.AddWithValue("@id", Id);
                     cmd.ExecuteNonQuery();
                     cmd.Dispose();

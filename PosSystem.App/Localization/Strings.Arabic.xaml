@@ -200,6 +200,23 @@
     <system:String x:Key="InventoryBulkDeleteSuccess">تم حذف {0} منتج.</system:String>
     <system:String x:Key="InventoryBulkCategoryChangeSuccess">تم نقل {0} منتج إلى {1}.</system:String>
 
+    <!-- الخصومات (2026-09-04) -->
+    <system:String x:Key="InventoryDiscountsButton">الخصومات</system:String>
+    <system:String x:Key="InventoryBulkDiscountPercentLabel">الخصم (%)</system:String>
+    <system:String x:Key="InventoryBulkAddDiscountsButton">إضافة خصم</system:String>
+    <system:String x:Key="InventoryBulkDiscountInvalid">أدخل نسبة خصم صحيحة بين 0 و100.</system:String>
+    <system:String x:Key="InventoryBulkDiscountSuccess">تم خصم {0} منتج بنسبة {1:0.##}%.</system:String>
+    <system:String x:Key="InventoryDiscountBadge">خصم</system:String>
+
+    <!-- صفحة إدارة الخصومات (2026-09-04) -->
+    <system:String x:Key="DiscountsBrowserTitle">الخصومات</system:String>
+    <system:String x:Key="DiscountsBrowserCloseButton">✕</system:String>
+    <system:String x:Key="DiscountsBrowserNoResults">لا توجد منتجات مخصومة بعد — حدد منتجات في المخزون واستخدم إضافة خصم، أو عيّن خصماً من بطاقة المنتج نفسه.</system:String>
+    <system:String x:Key="DiscountsBrowserSaveButton">حفظ</system:String>
+    <system:String x:Key="DiscountsBrowserRemoveButton">إزالة</system:String>
+    <system:String x:Key="DiscountsBrowserSaveSuccess">تم تحديث خصم {0}.</system:String>
+    <system:String x:Key="DiscountsBrowserRemoveSuccess">تمت إزالة خصم {0}.</system:String>
+
     <system:String x:Key="InventoryPendingSaveNote">لم يُحفظ بعد - استخدم "حفظ التغييرات".</system:String>
     <system:String x:Key="InventoryUndoButton">تراجع</system:String>
     <system:String x:Key="InventoryRedoButton">إعادة</system:String>

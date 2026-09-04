@@ -254,6 +254,32 @@
     <system:String x:Key="InventoryBulkDeleteSuccess">{0} product(s) deleted.</system:String>
     <system:String x:Key="InventoryBulkCategoryChangeSuccess">{0} product(s) moved to {1}.</system:String>
 
+    <!-- Discounts (added 2026-09-04) - product-level standing discounts,
+         separate from Checkout's existing per-bill/per-customer discount.
+         See Core.Models.Goods.DiscountPercent's doc comment for the full
+         design and InventoryViewModel's Bulk/Save/Remove-Discount methods
+         for where each of these is used. -->
+    <system:String x:Key="InventoryDiscountsButton">Discounts</system:String>
+    <system:String x:Key="InventoryBulkDiscountPercentLabel">Discount (%)</system:String>
+    <system:String x:Key="InventoryBulkAddDiscountsButton">Add Discounts</system:String>
+    <system:String x:Key="InventoryBulkDiscountInvalid">Enter a valid discount percentage between 0 and 100.</system:String>
+    <system:String x:Key="InventoryBulkDiscountSuccess">{0} product(s) discounted by {1:0.##}%.</system:String>
+    <system:String x:Key="InventoryDiscountBadge">Discount</system:String>
+
+    <!-- Discounts management page (added 2026-09-04) - opened via the
+         Discounts button above the product grid. Lists every currently-
+         discounted product with its own editable % and a Remove button;
+         see InventoryViewModel.IsDiscountsBrowserOpen's doc comment for
+         why this is a plain overlay on InventoryViewModel rather than its
+         own separate ViewModel/View pair. -->
+    <system:String x:Key="DiscountsBrowserTitle">Discounts</system:String>
+    <system:String x:Key="DiscountsBrowserCloseButton">✕</system:String>
+    <system:String x:Key="DiscountsBrowserNoResults">No discounted products yet -- select products on Inventory and use Add Discounts, or set one from a product's own card.</system:String>
+    <system:String x:Key="DiscountsBrowserSaveButton">Save</system:String>
+    <system:String x:Key="DiscountsBrowserRemoveButton">Remove</system:String>
+    <system:String x:Key="DiscountsBrowserSaveSuccess">{0}'s discount updated.</system:String>
+    <system:String x:Key="DiscountsBrowserRemoveSuccess">{0}'s discount removed.</system:String>
+
     <system:String x:Key="InventoryPendingSaveNote">Not saved yet - use Save Changes.</system:String>
     <system:String x:Key="InventoryUndoButton">Undo</system:String>
     <system:String x:Key="InventoryRedoButton">Redo</system:String>

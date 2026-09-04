@@ -255,6 +255,7 @@ namespace PosSystem.App.ViewModels
             public double Cost;
             public double Price;
             public string Barcode;
+            public double DiscountPercent;
         }
 
         private List<GoodsBaselineSnapshot> _baselineRows = new List<GoodsBaselineSnapshot>();
@@ -363,6 +364,7 @@ namespace PosSystem.App.ViewModels
             ApplyFilter();
             RebuildFilteredNewProductCategories();
             RebuildFilteredCategoryToDeleteOptions();
+            RebuildDiscountedRows();
             OnPropertyChanged(nameof(SelectedCount));
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(IsAllVisibleSelected));
@@ -378,7 +380,8 @@ namespace PosSystem.App.ViewModels
                 Quantity = r.Quantity,
                 Cost = r.Cost,
                 Price = r.Price,
-                Barcode = r.Barcode
+                Barcode = r.Barcode,
+                DiscountPercent = r.DiscountPercent
             }).ToList();
             _baselineCategoryNames = new HashSet<string>(AllCategoryNames, StringComparer.OrdinalIgnoreCase);
         }
@@ -406,7 +409,7 @@ namespace PosSystem.App.ViewModels
                     string today = DateTime.Now.ToString("dd/MM/yyyy");
                     row.Id = _goodsData.InsertGoodsReturningId(
                         "goods", row.Name, row.Category, row.Quantity, row.Cost, row.Price,
-                        "", row.Barcode, 0, today, today);
+                        "", row.Barcode, 0, today, today, row.DiscountPercent);
                 }
 
                 var currentIds = new HashSet<int>(_allRows.Where(r => r.Id > 0).Select(r => r.Id));
@@ -422,9 +425,9 @@ namespace PosSystem.App.ViewModels
 
                     bool fieldsChanged = baseline.Name != row.Name || baseline.Category != row.Category ||
                                           baseline.Cost != row.Cost || baseline.Price != row.Price ||
-                                          baseline.Barcode != row.Barcode;
+                                          baseline.Barcode != row.Barcode || baseline.DiscountPercent != row.DiscountPercent;
                     if (fieldsChanged)
-                        _goodsData.UpdateGoodsById("goods", row.Id, row.Name, row.Category, row.Cost, row.Price, row.Barcode);
+                        _goodsData.UpdateGoodsById("goods", row.Id, row.Name, row.Category, row.Cost, row.Price, row.Barcode, row.DiscountPercent);
 
                     if (baseline.Quantity != row.Quantity)
                         _goodsData.UpdateGoodCountById("goods", row.Id, row.Quantity);
@@ -706,6 +709,58 @@ namespace PosSystem.App.ViewModels
             set => SetProperty(ref _bulkCategoryTarget, value);
         }
 
+        // Bulk discount (added 2026-09-04, alongside the Discounts page --
+        // see class doc comment). Same selection (_allRows.Where(r =>
+        // r.IsSelected)) and admin gate as BulkChangeCategory/BulkDelete
+        // below; the only new piece is parsing/validating a percentage
+        // instead of picking a category.
+        private string _bulkDiscountPercentInput = "";
+        public string BulkDiscountPercentInput
+        {
+            get => _bulkDiscountPercentInput;
+            set => SetProperty(ref _bulkDiscountPercentInput, value);
+        }
+
+        public ICommand BulkAddDiscountsCommand { get; }
+
+        // Discounts management page (added 2026-09-04) -- a full-screen
+        // overlay, same Visible/Collapsed toggle idea as Checkout's Bills
+        // browser (CheckoutView.xaml's SelectedBillsBrowser==null trick),
+        // but simpler here: no separate ViewModel class, no CloseRequested
+        // event wiring -- this page only ever shows/edits/removes a
+        // discount on a row that's already part of _allRows, so it stays
+        // entirely inside InventoryViewModel and reuses the exact same
+        // PushChange/Undo/Redo/Save Changes pipeline every other action on
+        // this screen already goes through (see the class doc comment on
+        // staging). A separate ViewModel with its own immediate-write path
+        // (the way BillsBrowserViewModel works) would mean TWO different
+        // ways of writing to the same `goods` table that could race or
+        // partially commit against each other on a row with other pending
+        // edits -- not worth it for what's fundamentally a filtered view
+        // of the same rows plus two small actions.
+        private bool _isDiscountsBrowserOpen;
+        public bool IsDiscountsBrowserOpen
+        {
+            get => _isDiscountsBrowserOpen;
+            set => SetProperty(ref _isDiscountsBrowserOpen, value);
+        }
+
+        public ICommand OpenDiscountsCommand { get; }
+        public ICommand CloseDiscountsCommand { get; }
+
+        // Every currently-discounted product, name-sorted -- rebuilt by
+        // RebuildDiscountedRows() alongside every other derived collection
+        // (see RefreshDerivedCollections/LoadGoods) so it's always current
+        // whether a discount was just added, edited, removed, or the whole
+        // screen reloaded. Filters _allRows (not the post-search/category-
+        // filter Rows) -- the Discounts page is its own independent view,
+        // not affected by whatever search/category filter happens to be
+        // active on the main grid.
+        public ObservableCollection<InventoryRow> DiscountedRows { get; } = new ObservableCollection<InventoryRow>();
+
+        public ICommand SaveDiscountEditCommand { get; }
+        public ICommand RemoveDiscountCommand { get; }
+
         // Bound to a select-all checkbox above the grid. Reads/writes
         // against whatever's currently VISIBLE (Rows, post-filter) rather
         // than every product in _allRows.
@@ -745,6 +800,17 @@ namespace PosSystem.App.ViewModels
             });
             BulkDeleteCommand = new RelayCommand(_ => BulkDelete());
             BulkChangeCategoryCommand = new RelayCommand(_ => BulkChangeCategory());
+            BulkAddDiscountsCommand = new RelayCommand(_ => BulkAddDiscounts());
+            OpenDiscountsCommand = new RelayCommand(_ => IsDiscountsBrowserOpen = true);
+            CloseDiscountsCommand = new RelayCommand(_ => IsDiscountsBrowserOpen = false);
+            SaveDiscountEditCommand = new RelayCommand(p =>
+            {
+                if (p is InventoryRow row) SaveDiscountEdit(row);
+            });
+            RemoveDiscountCommand = new RelayCommand(p =>
+            {
+                if (p is InventoryRow row) RemoveDiscount(row);
+            });
             UndoCommand = new RelayCommand(_ => Undo());
             RedoCommand = new RelayCommand(_ => Redo());
             SaveChangesCommand = new RelayCommand(_ => SaveChanges());
@@ -811,8 +877,18 @@ namespace PosSystem.App.ViewModels
             // screen than alphabetical, and matches what a "what needs
             // restocking" glance actually wants.
             var models = _goodsData.ReadAllGoodsQuantity("goods");
-            _allRows = models.Select(m => new InventoryRow(new Core.Models.GoodsR(
-                m.Id, m.Name, m.Category, m.Quantity, m.Cost, m.Price, m.Type, m.Barcode, m.Earned, m.Datex, m.Datee))).ToList();
+            _allRows = models.Select(m =>
+            {
+                // DiscountPercent set explicitly after construction, not
+                // via GoodsR's constructor (added 2026-09-04 for
+                // Inventory's Discounts feature) — see GoodsR.DiscountPercent's
+                // own doc comment for why that property was deliberately
+                // kept out of the constructor's parameter list.
+                var goodsR = new Core.Models.GoodsR(
+                    m.Id, m.Name, m.Category, m.Quantity, m.Cost, m.Price, m.Type, m.Barcode, m.Earned, m.Datex, m.Datee);
+                goodsR.DiscountPercent = m.DiscountPercent;
+                return new InventoryRow(goodsR);
+            }).ToList();
 
             // Batch selection -- every fresh InventoryRow starts unselected
             // by construction, but this ViewModel still needs to hear about
@@ -825,6 +901,7 @@ namespace PosSystem.App.ViewModels
 
             RebuildCategoryChips();
             RebuildStockFilterChips();
+            RebuildDiscountedRows();
             ApplyFilter();
             OnPropertyChanged(nameof(SelectedCount));
             OnPropertyChanged(nameof(HasSelection));
@@ -1391,6 +1468,119 @@ namespace PosSystem.App.ViewModels
             BulkCategoryTarget = null;
 
             StatusMessage = string.Format(LocalizationManager.GetString("InventoryBulkCategoryChangeSuccess"), selected.Count, category)
+                + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
+        }
+
+        // Discounts feature (added 2026-09-04) -- see the property block
+        // above (BulkDiscountPercentInput/IsDiscountsBrowserOpen/
+        // DiscountedRows) for the overall design reasoning.
+
+        // Rebuilds DiscountedRows from _allRows -- called from LoadGoods()
+        // and RefreshDerivedCollections() (i.e. after every staged action,
+        // same uniform-refresh reasoning that method's own comment already
+        // gives), so this is always an accurate, current filter regardless
+        // of what changed.
+        private void RebuildDiscountedRows()
+        {
+            DiscountedRows.Clear();
+            foreach (var row in _allRows.Where(r => r.HasDiscount).OrderBy(r => r.Name))
+                DiscountedRows.Add(row);
+        }
+
+        // Bulk "Add Discounts" (added 2026-09-04) -- applies ONE typed-in
+        // percentage to every currently-selected product at once, same
+        // selection source and no-confirmation-modal directness as
+        // BulkDelete/BulkChangeCategory above. Overwrites any discount a
+        // selected product already had rather than refusing or stacking --
+        // "a product cannot have more than one discount" (explicit
+        // requirement) is what makes overwrite the only sensible behavior
+        // here: there is no second slot to stack into, by construction
+        // (see Core.Models.Goods.DiscountPercent's doc comment). Anyone who
+        // wants to see or fine-tune what a specific product's discount
+        // already is before changing it can do that from the Discounts
+        // page instead, which shows the current value per row.
+        private void BulkAddDiscounts()
+        {
+            if (!RequireAdminUnlocked()) return;
+
+            var selected = _allRows.Where(r => r.IsSelected).ToList();
+            if (selected.Count == 0)
+            {
+                StatusMessage = LocalizationManager.GetString("InventoryBulkNoSelection");
+                return;
+            }
+
+            if (!double.TryParse(BulkDiscountPercentInput, out double discountPercent) || discountPercent < 0 || discountPercent > 100)
+            {
+                StatusMessage = LocalizationManager.GetString("InventoryBulkDiscountInvalid");
+                return;
+            }
+
+            var snapshot = selected.Select(r => (Row: r, OldDiscount: r.DiscountPercent)).ToList();
+
+            PushChange(
+                apply: () =>
+                {
+                    foreach (var entry in snapshot) entry.Row.DiscountPercent = discountPercent;
+                },
+                revert: () =>
+                {
+                    foreach (var entry in snapshot) entry.Row.DiscountPercent = entry.OldDiscount;
+                });
+
+            foreach (var row in selected) row.IsSelected = false;
+            BulkDiscountPercentInput = "";
+
+            StatusMessage = string.Format(LocalizationManager.GetString("InventoryBulkDiscountSuccess"), selected.Count, discountPercent)
+                + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
+        }
+
+        // Discounts page: per-row Save (added 2026-09-04) -- reads that
+        // row's own DiscountEditInput buffer (see InventoryRow's doc
+        // comment on that property for why it's a separate typed-in buffer
+        // rather than a live binding straight to DiscountPercent), same
+        // validation range as the bulk version above. Admin-gated, same as
+        // every other discount-changing action on this screen.
+        private void SaveDiscountEdit(InventoryRow row)
+        {
+            if (!RequireAdminUnlocked()) return;
+
+            if (!double.TryParse(row.DiscountEditInput, out double discountPercent) || discountPercent < 0 || discountPercent > 100)
+            {
+                StatusMessage = LocalizationManager.GetString("InventoryBulkDiscountInvalid");
+                return;
+            }
+
+            double oldDiscount = row.DiscountPercent;
+            string name = row.Name;
+
+            PushChange(
+                apply: () => row.DiscountPercent = discountPercent,
+                revert: () => row.DiscountPercent = oldDiscount);
+
+            StatusMessage = string.Format(LocalizationManager.GetString("DiscountsBrowserSaveSuccess"), name)
+                + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
+        }
+
+        // Discounts page: per-row Remove (added 2026-09-04) -- sets
+        // DiscountPercent back to 0 ("no discount"), same PushChange
+        // staging as everything else here rather than a separate delete-
+        // style path; the row simply drops out of DiscountedRows on the
+        // next RebuildDiscountedRows (fired by PushChange's own
+        // RefreshDerivedCollections call), same as any other filtered-out
+        // row elsewhere in this class.
+        private void RemoveDiscount(InventoryRow row)
+        {
+            if (!RequireAdminUnlocked()) return;
+
+            double oldDiscount = row.DiscountPercent;
+            string name = row.Name;
+
+            PushChange(
+                apply: () => row.DiscountPercent = 0,
+                revert: () => row.DiscountPercent = oldDiscount);
+
+            StatusMessage = string.Format(LocalizationManager.GetString("DiscountsBrowserRemoveSuccess"), name)
                 + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
         }
     }

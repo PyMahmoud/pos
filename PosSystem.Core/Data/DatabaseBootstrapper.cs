@@ -439,6 +439,36 @@ namespace PosSystem.Core.Data
                 EnsureColumn(conn, "customers", "DiscountPercent", "REAL");
                 EnsureColumn(conn, "bills", "DiscountPercent", "REAL");
 
+                // Added 2026-09-04 for Inventory's product-level Discounts
+                // feature (bulk "Add Discounts" button + a dedicated
+                // Discounts management page) -- see Core.Models.Goods.
+                // DiscountPercent's doc comment for why this is a single
+                // column rather than a separate table. Same NULL-on-ADD-
+                // COLUMN caveat as every other EnsureColumn call in this
+                // file (SQLite never applies a retroactive default for
+                // this specific ALTER TABLE syntax) -- every product that
+                // existed before this feature needs the same one-time
+                // backfill to 0 ("no discount") the customers/bills columns
+                // above already got, or Data.Goods' ReadAllGoodsQuantity
+                // would have to lean on DbNullSafe.ToDouble's null-is-0
+                // fallback forever instead of the data itself just saying
+                // so.
+                EnsureColumn(conn, "goods", "DiscountPercent", "REAL");
+                try
+                {
+                    using (var cmd = new SQLiteCommand(
+                        "UPDATE goods SET DiscountPercent = 0 WHERE DiscountPercent IS NULL", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    // Not fatal -- see comment above; DbNullSafe.ToDouble's
+                    // own null-is-0 fallback still covers any row this
+                    // somehow missed.
+                }
+
                 // Added 2026-08-28 for receipt revisioning (Mahmoud's
                 // explicit requirement): removing/returning a product from
                 // a bill must no longer rewrite that bill's own row in

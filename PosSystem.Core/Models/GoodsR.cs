@@ -88,6 +88,16 @@ namespace PosSystem.Core.Models
         public double Earned { get => earned; set => earned = value; }
         public string Datex { get => datex; set => datex = value; }
         public string Datee { get => datee; set => datee = value; }
+
+        // Added 2026-09-04, same field/reasoning as Core.Models.Goods.
+        // DiscountPercent -- see that class's doc comment. Not wired into
+        // the constructor (both constructors are used positionally at
+        // several existing call sites -- adding a 12th parameter would
+        // touch every one of them for a value that's always 0 at
+        // construction anyway); callers that need to carry a real
+        // DiscountPercent through set this property directly after
+        // construction instead (see InventoryViewModel.LoadGoods).
+        public double DiscountPercent { get; set; }
        
 
         public event PropertyChangedEventHandler PropertyChanged;
