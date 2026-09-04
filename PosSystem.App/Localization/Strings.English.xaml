@@ -246,6 +246,7 @@
          keys needed for the checkbox itself). -->
     <system:String x:Key="InventorySelectAllLabel">Select all</system:String>
     <system:String x:Key="InventorySelectedCountLabel">Selected:</system:String>
+    <system:String x:Key="InventoryBulkCategoryPickerLabel">Move to category</system:String>
     <system:String x:Key="InventoryBulkChangeCategoryButton">Change Category</system:String>
     <system:String x:Key="InventoryBulkDeleteButton">Delete Selected</system:String>
     <system:String x:Key="InventoryBulkNoSelection">Select at least one product first.</system:String>

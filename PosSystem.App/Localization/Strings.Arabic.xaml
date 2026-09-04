@@ -192,6 +192,7 @@
     <!-- التحديد الجماعي (2026-08-31) -->
     <system:String x:Key="InventorySelectAllLabel">تحديد الكل</system:String>
     <system:String x:Key="InventorySelectedCountLabel">المحدد:</system:String>
+    <system:String x:Key="InventoryBulkCategoryPickerLabel">نقل إلى الفئة</system:String>
     <system:String x:Key="InventoryBulkChangeCategoryButton">تغيير الفئة</system:String>
     <system:String x:Key="InventoryBulkDeleteButton">حذف المحدد</system:String>
     <system:String x:Key="InventoryBulkNoSelection">حدد منتجًا واحدًا على الأقل أولاً.</system:String>

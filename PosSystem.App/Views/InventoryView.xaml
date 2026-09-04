@@ -393,6 +393,17 @@
                                        FontWeight="SemiBold" />
                         </StackPanel>
 
+                        <!-- Label added 2026-09-04 - this was the only
+                             input on the whole screen with no caption above
+                             it, so an empty ComboBox with nothing but a
+                             chevron just looked broken/blank until clicked
+                             (flagged via screenshot). Same LabelSmall/
+                             OnSurfaceVariantBrush caption pattern every
+                             other field on this screen already uses. -->
+                        <TextBlock Text="{DynamicResource InventoryBulkCategoryPickerLabel}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   Margin="0,0,0,4" />
                         <ComboBox ItemsSource="{Binding AllCategoryNames}"
                                   SelectedItem="{Binding BulkCategoryTarget, Mode=TwoWay}"
                                   Style="{StaticResource ThemedComboBoxStyle}"
