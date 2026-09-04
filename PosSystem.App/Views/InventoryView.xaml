@@ -253,12 +253,12 @@
                            Margin="0,0,0,12" />
 
                 <!-- Undo / Redo / Save Changes / Discard (2026-09-03,
-                     explicit request) -- see InventoryViewModel's
+                     explicit request) - see InventoryViewModel's
                      class doc comment on the staging model these drive.
                      Undo/Redo stay visible but disable themselves
                      (IsEnabled bound to CanUndo/CanRedo) since "nothing to
                      undo right now" is a normal, expected state, not
-                     something to hide -- but Save/Discard only appear at
+                     something to hide - but Save/Discard only appear at
                      all once there's actually something pending
                      (Visibility bound to HasUnsavedChanges), since an
                      always-visible disabled Save button next to a product

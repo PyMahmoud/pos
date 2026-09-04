@@ -69,7 +69,7 @@
         <!-- Active screen -->
         <ContentControl Grid.Column="1" Content="{Binding CurrentView}" />
 
-        <!-- Unsaved Inventory changes confirmation (2026-09-03) -- see
+        <!-- Unsaved Inventory changes confirmation (2026-09-03) - see
              MainViewModel.SelectedNavItem's setter for when this shows.
              Spans both columns (sidebar + content), not just the content
              area, since leaving the sidebar clickable underneath would let
