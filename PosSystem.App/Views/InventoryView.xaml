@@ -372,7 +372,7 @@
                     <CheckBox Grid.Column="0"
                               IsChecked="{Binding IsAllVisibleSelected, Mode=TwoWay}"
                               Content="{DynamicResource InventorySelectAllLabel}"
-                              Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                              Style="{StaticResource ThemedCheckBoxStyle}"
                               VerticalAlignment="Center" />
                 </Grid>
 
@@ -466,9 +466,13 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <!-- Batch selection checkbox (added 2026-08-31) -->
+                                            <!-- Batch selection checkbox (added 2026-08-31;
+                                                 themed 2026-09-04 to match the Access Control
+                                                 checkboxes on Settings instead of the unstyled
+                                                 default WPF checkbox it was rendering as) -->
                                             <CheckBox Grid.Column="0"
                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      Style="{StaticResource ThemedCheckBoxStyle}"
                                                       VerticalAlignment="Center"
                                                       Margin="0,0,8,0" />
                                             <TextBlock Grid.Column="1"
