@@ -746,30 +746,37 @@
                                                                VerticalAlignment="Center" />
 
                                                     <!-- Line-level return actions (2026-08-28,
-                                                         receipt revisioning) — − returns one unit
-                                                         (drops the line entirely once it hits zero);
-                                                         Remove returns the whole line at once. Both
-                                                         restore inventory and create a NEW bill
-                                                         revision rather than editing this bill in
-                                                         place — see BillsBrowserViewModel's class doc
-                                                         comment ("Return math") for the full reasoning.
-                                                         No "+" here any more: adding units back to an
-                                                         already-sold, possibly-historical receipt isn't
-                                                         a return, and doesn't fit this model — a
-                                                         genuinely new sale belongs in a fresh Checkout
-                                                         cart instead. The − BUTTON is hidden entirely
-                                                         (IsSelectedBillCurrent) when viewing a
+                                                         receipt revisioning; reworked 2026-09-04 into
+                                                         STAGED returns per Baraa's explicit request) —
+                                                         − stages one more unit for return (drops the
+                                                         line entirely once every unit is staged); Return
+                                                         stages the whole remaining line at once. Neither
+                                                         touches inventory or the database any more, and
+                                                         neither creates a bill revision by itself — they
+                                                         only set this line's PendingReturnQuantity (see
+                                                         Core.Models.Sells' doc comment on that property).
+                                                         Undo (only shown once something's staged on this
+                                                         line) clears it back to 0. The actual return only
+                                                         happens when Save Returns is pressed below the
+                                                         items list, covering every staged line on the
+                                                         bill in ONE new revision — see
+                                                         BillsBrowserViewModel's "STAGED RETURNS" class doc
+                                                         comment for the full reasoning. No "+" here: adding
+                                                         units back to an already-sold, possibly-historical
+                                                         receipt isn't a return, and doesn't fit this model
+                                                         — a genuinely new sale belongs in a fresh Checkout
+                                                         cart instead. The −/Return/Undo buttons are hidden
+                                                         entirely (IsSelectedBillCurrent) when viewing a
                                                          superseded/historical revision — see the banner
                                                          above this ItemsControl — but the quantity
-                                                         TextBlock stays outside that visibility switch
-                                                         and always shows: a bug fix (2026-08-29) for a
-                                                         first version of this that wrapped BOTH the
-                                                         button and the quantity number in the same
-                                                         Visibility binding, which meant opening a
-                                                         superseded bill's history hid the quantity of
-                                                         every line entirely instead of just hiding the
-                                                         return button, per Mahmoud's own report after
-                                                         trying it. -->
+                                                         TextBlock stays outside that visibility switch and
+                                                         always shows: a bug fix (2026-08-29) for a first
+                                                         version of this that wrapped BOTH the button and
+                                                         the quantity number in the same Visibility binding,
+                                                         which meant opening a superseded bill's history hid
+                                                         the quantity of every line entirely instead of just
+                                                         hiding the return button, per Mahmoud's own report
+                                                         after trying it. -->
                                                     <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                                 VerticalAlignment="Center">
                                                         <Button Content="−"
@@ -778,51 +785,111 @@
                                                                 Width="28" Height="28" Padding="0"
                                                                 Style="{StaticResource ThemeToggleButtonStyle}"
                                                                 Visibility="{Binding DataContext.IsSelectedBillCurrent, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                                        <TextBlock Text="{Binding Quantity, StringFormat={}{0:0.##}}"
-                                                                   Foreground="{DynamicResource OnSurfaceBrush}"
-                                                                   VerticalAlignment="Center"
-                                                                   MinWidth="28"
-                                                                   TextAlignment="Center"
-                                                                   Margin="8,0" />
+                                                        <StackPanel VerticalAlignment="Center" Margin="8,0">
+                                                            <!-- Shows what will remain after staged
+                                                                 returns save, not the raw sold Quantity
+                                                                 — see Core.Models.Sells.RemainingQuantity. -->
+                                                            <TextBlock Text="{Binding RemainingQuantity, StringFormat={}{0:0.##}}"
+                                                                       Foreground="{DynamicResource OnSurfaceBrush}"
+                                                                       TextAlignment="Center"
+                                                                       MinWidth="28" />
+                                                            <TextBlock Text="{Binding PendingReturnQuantity, StringFormat={}-{0:0.##}}"
+                                                                       Style="{StaticResource LabelSmall}"
+                                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                                       TextAlignment="Center"
+                                                                       Visibility="{Binding HasPendingReturn, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                        </StackPanel>
                                                     </StackPanel>
 
                                                     <TextBlock Grid.Column="2" Text="{Binding Price, StringFormat={}{0:0.00}}"
                                                                Style="{StaticResource BodyLarge}"
                                                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                                                VerticalAlignment="Center" />
-                                                    <Button Grid.Column="3"
-                                                            Content="{DynamicResource BillsDetailRemoveLineButton}"
-                                                            Command="{Binding DataContext.ReturnLineCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                            CommandParameter="{Binding}"
-                                                            Background="{DynamicResource ErrorContainerBrush}"
-                                                            Foreground="{DynamicResource OnErrorContainerBrush}"
-                                                            Template="{StaticResource SelectableButtonTemplate}"
-                                                            Padding="12,8"
-                                                            Visibility="{Binding DataContext.IsSelectedBillCurrent, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                    <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                                        <Button Content="{DynamicResource BillsUndoLineReturnButton}"
+                                                                Command="{Binding DataContext.UndoLineReturnCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Background="{DynamicResource SurfaceContainerHighBrush}"
+                                                                Foreground="{DynamicResource OnSurfaceBrush}"
+                                                                Template="{StaticResource SelectableButtonTemplate}"
+                                                                Padding="12,8"
+                                                                Margin="0,0,8,0"
+                                                                Visibility="{Binding HasPendingReturn, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                        <Button Content="{DynamicResource BillsDetailRemoveLineButton}"
+                                                                Command="{Binding DataContext.ReturnLineCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Background="{DynamicResource ErrorContainerBrush}"
+                                                                Foreground="{DynamicResource OnErrorContainerBrush}"
+                                                                Template="{StaticResource SelectableButtonTemplate}"
+                                                                Padding="12,8"
+                                                                Visibility="{Binding DataContext.IsSelectedBillCurrent, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                    </StackPanel>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <!-- Whole-bill return (2026-08-28, receipt revisioning)
-                                     — replaces the old "Delete Whole Bill" button; instead
-                                     of hard-deleting the bills row (which used to erase the
-                                     original sale from history entirely), this now returns
-                                     every line at once through the same revision-creating
-                                     path a single-line return uses, leaving a real (zero-
-                                     item) revision behind as history — see
-                                     BillsBrowserViewModel.ReturnWholeBill. Hidden for a
-                                     superseded/historical bill, same as the line-level
-                                     actions above. -->
+                                <!-- Whole-bill return (2026-08-28, receipt revisioning;
+                                     reworked 2026-09-04 into staging — see
+                                     BillsBrowserViewModel.StageWholeBillReturn) — marks every
+                                     line for full return at once, same as clicking Return on
+                                     each individually, but still just staging: Save Returns
+                                     below is what actually creates the (zero-item) revision.
+                                     Hidden for a superseded/historical bill, same as the
+                                     line-level actions above. -->
                                 <Button Content="{DynamicResource BillsDetailReturnWholeBillButton}"
                                         Command="{Binding ReturnWholeBillCommand}"
-                                        Background="{DynamicResource ErrorBrush}"
-                                        Foreground="{DynamicResource OnErrorBrush}"
+                                        Background="{DynamicResource ErrorContainerBrush}"
+                                        Foreground="{DynamicResource OnErrorContainerBrush}"
                                         Template="{StaticResource SelectableButtonTemplate}"
                                         Padding="0,14"
                                         HorizontalContentAlignment="Center"
+                                        Margin="0,0,0,12"
                                         Visibility="{Binding IsSelectedBillCurrent, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                <!-- Save Returns bar (2026-09-04, the actual point of the
+                                     staged-returns rework requested by Baraa) — the ONLY
+                                     thing that commits every −/Return/Return-Whole-Bill stage
+                                     made above into a real, single new bill revision (see
+                                     BillsBrowserViewModel.SaveReturns). Only visible once
+                                     something is actually staged (HasPendingReturns), so a
+                                     bill with nothing marked for return looks exactly like it
+                                     did before this feature existed. Discard clears every
+                                     staged line on this bill without saving any of it. -->
+                                <Border Background="{DynamicResource SurfaceContainerBrush}"
+                                        CornerRadius="14" Padding="16" Margin="0,0,0,20"
+                                        Visibility="{Binding HasPendingReturns, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{DynamicResource BillsPendingReturnsSummary}"
+                                                   Style="{StaticResource BodyLarge}"
+                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center" />
+                                        <Button Grid.Column="1"
+                                                Content="{DynamicResource BillsDiscardReturnsButton}"
+                                                Command="{Binding DiscardReturnsCommand}"
+                                                Background="{DynamicResource SurfaceContainerHighBrush}"
+                                                Foreground="{DynamicResource OnSurfaceBrush}"
+                                                Template="{StaticResource SelectableButtonTemplate}"
+                                                Padding="16,10"
+                                                Margin="12,0,0,0" />
+                                        <Button Grid.Column="2"
+                                                Content="{DynamicResource BillsSaveReturnsButton}"
+                                                Command="{Binding SaveReturnsCommand}"
+                                                Background="{DynamicResource ErrorBrush}"
+                                                Foreground="{DynamicResource OnErrorBrush}"
+                                                Template="{StaticResource SelectableButtonTemplate}"
+                                                Padding="16,10"
+                                                Margin="8,0,0,0" />
+                                    </Grid>
+                                </Border>
 
                                 <TextBlock Text="{Binding StatusMessage}"
                                            Foreground="{DynamicResource OnSurfaceVariantBrush}"

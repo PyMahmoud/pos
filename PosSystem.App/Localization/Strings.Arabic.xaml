@@ -88,6 +88,18 @@
     <system:String x:Key="BillsLineQuantityDecreased">تم تقليل {0} في الفاتورة رقم {1} — تم إنشاء فاتورة جديدة لتعكس ذلك.</system:String>
     <system:String x:Key="BillsAdjustLineError">حدث خطأ. حاول مرة أخرى.</system:String>
 
+    <!-- المرتجعات المؤجلة (2026-09-04، بناءً على طلب براء) — الآن أزرار وـ"إرجاع" و"إرجاع الفاتورة بالكامل"
+         تقوم فقط بتأجيل المرتجع لكل سطر، دون إنشاء فاتورة جديدة فورًا — زر حفظ
+         المرتجعات أدناه هو ما ينشئ فعلياً فاتورة جديدة واحدة لكل المنتجات المحددة،
+         بدلاً من فاتورة لكل منتج. -->
+    <system:String x:Key="BillsUndoLineReturnButton">تراجع</system:String>
+    <system:String x:Key="BillsPendingReturnsSummary">المنتجات المحددة أدناه ستُرجع معًا كفاتورة واحدة عند الحفظ.</system:String>
+    <system:String x:Key="BillsSaveReturnsButton">حفظ المرتجعات</system:String>
+    <system:String x:Key="BillsDiscardReturnsButton">تجاهل</system:String>
+    <system:String x:Key="BillsSaveReturnsSuccess">تم إرجاع {0} صنف من الفاتورة رقم {1} — تم إنشاء فاتورة جديدة لتعكس ذلك.</system:String>
+    <system:String x:Key="BillsSaveReturnsError">حدث خطأ. حاول مرة أخرى.</system:String>
+    <system:String x:Key="BillsDiscardReturnsSuccess">تم تجاهل المرتجعات المعلقة.</system:String>
+
     <system:String x:Key="CustomersHeading">العملاء</system:String>
     <system:String x:Key="CustomersAddSectionTitle">إضافة عميل</system:String>
     <system:String x:Key="CustomersNameField">الاسم</system:String>

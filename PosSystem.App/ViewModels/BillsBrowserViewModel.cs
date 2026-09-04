@@ -87,6 +87,22 @@ namespace PosSystem.App.ViewModels
     /// the original 2026-08-27 version's DeleteWholeBill did, so the
     /// original sale stays in history like every other return.
     ///
+    /// STAGED RETURNS (2026-09-04, per Baraa's explicit request) — every
+    /// return action below (−, Return, Return Whole Bill) used to call
+    /// CreateReturnRevision immediately, so returning 3 products off one
+    /// bill created 3 separate new revisions ("210-e1", "210-e2", "210-e3")
+    /// instead of one. These actions now only STAGE a pending return
+    /// quantity on each Core.Models.Sells line (see that class's
+    /// PendingReturnQuantity doc comment) — no database write, no
+    /// inventory change, no new revision — and SaveReturnsCommand is the
+    /// only thing that actually calls CreateReturnRevision, once, covering
+    /// every staged line at once. Staged state lives only on the in-memory
+    /// BillLines objects, so navigating away from a bill without saving
+    /// (BackToListCommand, opening a different bill, or closing the
+    /// browser) silently discards it — LoadBillLines always re-reads fresh
+    /// Sells objects from the database with PendingReturnQuantity at its
+    /// default of 0, nothing was ever written, so there's nothing to lose.
+    ///
     /// After any successful return, this reloads the bill list from the
     /// database (so newly-superseded/newly-created rows both show up) and
     /// re-selects the fresh copy of whichever bill is now open, by Id —
@@ -198,9 +214,23 @@ namespace PosSystem.App.ViewModels
         public ICommand BackToListCommand { get; }
         public ICommand ReturnLineCommand { get; }
         public ICommand DecrementLineQuantityCommand { get; }
+        public ICommand UndoLineReturnCommand { get; }
         public ICommand ReturnWholeBillCommand { get; }
+        public ICommand SaveReturnsCommand { get; }
+        public ICommand DiscardReturnsCommand { get; }
         public ICommand ViewCurrentVersionCommand { get; }
         public ICommand CloseCommand { get; }
+
+        // Staged-returns (2026-09-04) — true while at least one BillLines
+        // entry has a nonzero PendingReturnQuantity. Every staging method
+        // below (StageLineForReturn/StageLineUnitReturn/UndoLineReturn/
+        // StageWholeBillReturn/DiscardPendingReturns) raises this manually
+        // after mutating a line rather than this ViewModel subscribing to
+        // each Sells object's PropertyChanged -- simpler, since every
+        // mutation path already funnels through one of these methods (all
+        // UI-command-driven), so there's no other place PendingReturnQuantity
+        // could change out from under it.
+        public bool HasPendingReturns => BillLines.Any(l => l.PendingReturnQuantity > 0);
 
         // CheckoutViewModel subscribes to this to know when to drop back to
         // the normal Checkout screen — same pattern as
@@ -218,16 +248,22 @@ namespace PosSystem.App.ViewModels
             BackToListCommand = new RelayCommand(_ => SelectedBill = null);
             ReturnLineCommand = new RelayCommand(p =>
             {
-                if (p is Core.Models.Sells line) ReturnLine(line);
+                if (p is Core.Models.Sells line) StageLineForReturn(line);
             });
             DecrementLineQuantityCommand = new RelayCommand(p =>
             {
-                if (p is Core.Models.Sells line) DecrementLineQuantity(line);
+                if (p is Core.Models.Sells line) StageLineUnitReturn(line);
+            });
+            UndoLineReturnCommand = new RelayCommand(p =>
+            {
+                if (p is Core.Models.Sells line) UndoLineReturn(line);
             });
             ReturnWholeBillCommand = new RelayCommand(_ =>
             {
-                if (SelectedBill != null) ReturnWholeBill(SelectedBill);
+                if (SelectedBill != null) StageWholeBillReturn();
             });
+            SaveReturnsCommand = new RelayCommand(_ => SaveReturns(), _ => HasPendingReturns);
+            DiscardReturnsCommand = new RelayCommand(_ => DiscardPendingReturns(), _ => HasPendingReturns);
             // A superseded (historical) bill is read-only for returns, but
             // still needs a way OUT to the receipt's actual current version
             // — otherwise someone who opened #210 (now superseded by
@@ -445,24 +481,131 @@ namespace PosSystem.App.ViewModels
         }
 
         /// <summary>
-        /// Removes one whole line from the current bill as a return — the
-        /// line's full quantity goes back to inventory, and every OTHER
-        /// line on the bill is carried forward unchanged into the new
-        /// revision (see CreateReturnRevision).
+        /// STAGES the line's full remaining quantity for return (2026-09-04
+        /// rework — see class doc comment's "STAGED RETURNS" section). No
+        /// database write, no inventory change yet — just sets this line's
+        /// PendingReturnQuantity, which SaveReturnsCommand later commits
+        /// alongside any other staged lines in one revision. Acts as a
+        /// toggle: clicking again on an already-fully-staged line clears
+        /// the staging back to 0, since that's the obvious "undo" for a
+        /// single-click action.
         /// </summary>
-        private void ReturnLine(Core.Models.Sells line)
+        private void StageLineForReturn(Core.Models.Sells line)
+        {
+            var bill = SelectedBill;
+            if (bill == null || !bill.IsCurrent) return; // history is read-only — see class doc comment
+
+            line.PendingReturnQuantity = line.PendingReturnQuantity >= line.Quantity ? 0 : line.Quantity;
+            OnPropertyChanged(nameof(HasPendingReturns));
+        }
+
+        /// <summary>
+        /// STAGES one additional unit of this line for return (2026-09-04
+        /// rework of the original per-line decrement) — increments
+        /// PendingReturnQuantity by 1, capped at the line's full Quantity.
+        /// Nothing is written to the database or restored to inventory
+        /// until SaveReturnsCommand runs.
+        /// </summary>
+        private void StageLineUnitReturn(Core.Models.Sells line)
+        {
+            var bill = SelectedBill;
+            if (bill == null || !bill.IsCurrent) return;
+
+            if (line.PendingReturnQuantity < line.Quantity)
+                line.PendingReturnQuantity += 1;
+            OnPropertyChanged(nameof(HasPendingReturns));
+        }
+
+        /// <summary>
+        /// Clears a single line's staged return back to 0 — the per-line
+        /// "undo" shown next to a line once it has anything staged, without
+        /// discarding any OTHER line's staged returns the way
+        /// DiscardPendingReturns does for the whole bill.
+        /// </summary>
+        private void UndoLineReturn(Core.Models.Sells line)
+        {
+            line.PendingReturnQuantity = 0;
+            OnPropertyChanged(nameof(HasPendingReturns));
+        }
+
+        /// <summary>
+        /// STAGES every line on the bill for full return at once (2026-09-04
+        /// rework of the original immediate ReturnWholeBill) — sets every
+        /// BillLines entry's PendingReturnQuantity to its full Quantity.
+        /// Still just staging: SaveReturnsCommand is what actually creates
+        /// the (now zero-item, zero-cost) revision.
+        /// </summary>
+        private void StageWholeBillReturn()
+        {
+            var bill = SelectedBill;
+            if (bill == null || !bill.IsCurrent) return;
+
+            foreach (var line in BillLines) line.PendingReturnQuantity = line.Quantity;
+            OnPropertyChanged(nameof(HasPendingReturns));
+        }
+
+        /// <summary>
+        /// Clears every line's staged return back to 0 — the "Discard"
+        /// button next to Save Returns, for backing out of a whole staged
+        /// batch without saving any of it.
+        /// </summary>
+        private void DiscardPendingReturns()
+        {
+            foreach (var line in BillLines) line.PendingReturnQuantity = 0;
+            OnPropertyChanged(nameof(HasPendingReturns));
+            StatusMessage = LocalizationManager.GetString("BillsDiscardReturnsSuccess");
+        }
+
+        /// <summary>
+        /// Commits every currently-staged line at once (2026-09-04, the
+        /// actual point of the staged-returns rework — see class doc
+        /// comment) as a SINGLE CreateReturnRevision call, so returning
+        /// several products off one bill produces exactly one new revision
+        /// instead of one per product. For each staged line: restores
+        /// PendingReturnQuantity units to inventory, then either drops the
+        /// line entirely (fully returned) or carries it forward at its
+        /// reduced quantity — same per-line logic the old immediate
+        /// ReturnLine/DecrementLineQuantity used, just applied to every
+        /// staged line in one pass instead of one line per database write.
+        /// Re-reads currentLines fresh from the database rather than
+        /// trusting BillLines' bound objects directly, same defensive
+        /// reasoning the original per-action methods already followed.
+        /// </summary>
+        private void SaveReturns()
         {
             if (!RequireAdminUnlocked()) return;
             var bill = SelectedBill;
-            if (bill == null || !bill.IsCurrent) return; // history is read-only — see class doc comment
+            if (bill == null || !bill.IsCurrent) return;
+
+            var stagedIds = BillLines.Where(l => l.PendingReturnQuantity > 0)
+                .ToDictionary(l => l.Id, l => l.PendingReturnQuantity);
+            if (stagedIds.Count == 0) return;
 
             try
             {
                 var currentLines = _sellsData.ReadSellsByBillId("sells", bill.Id);
                 double oldSubtotal = currentLines.Sum(l => l.Price * l.Quantity);
 
-                RestoreInventoryFor(line, line.Quantity);
-                var remainingLines = currentLines.Where(l => l.Id != line.Id).ToList();
+                var remainingLines = new List<Core.Models.Sells>();
+                int returnedLineCount = 0;
+                foreach (var line in currentLines)
+                {
+                    if (!stagedIds.TryGetValue(line.Id, out double pendingQuantity) || pendingQuantity <= 0)
+                    {
+                        remainingLines.Add(line);
+                        continue;
+                    }
+
+                    RestoreInventoryFor(line, pendingQuantity);
+                    returnedLineCount++;
+
+                    double newQuantity = line.Quantity - pendingQuantity;
+                    if (newQuantity <= 0) continue; // fully returned — drop the line entirely
+
+                    line.Quantity = newQuantity;
+                    line.Earned = (line.Price - line.Cost) * newQuantity;
+                    remainingLines.Add(line);
+                }
 
                 CreateReturnRevision(bill, remainingLines, oldSubtotal);
 
@@ -473,104 +616,13 @@ namespace PosSystem.App.ViewModels
                 // not specifically that a NEW sale happened.
                 OrderEvents.RaiseOrderCompleted();
 
-                StatusMessage = string.Format(LocalizationManager.GetString("BillsDeleteLineSuccess"), line.Name, bill.DisplayNumber);
+                StatusMessage = string.Format(LocalizationManager.GetString("BillsSaveReturnsSuccess"), returnedLineCount, bill.DisplayNumber);
 
                 ReloadAfterReturn(bill.Billnumber);
             }
             catch (Exception ex)
             {
-                StatusMessage = LocalizationManager.GetString("BillsDeleteLineError") + " (" + ex.Message + ")";
-            }
-        }
-
-        /// <summary>
-        /// Returns one unit of this line (2026-08-28, receipt revisioning —
-        /// mirrors the original per-line decrement Mahmoud requested
-        /// 2026-08-28 in the previous batch, now producing a new revision
-        /// instead of mutating the bill in place). If this was the line's
-        /// last remaining unit, it converges with ReturnLine's own
-        /// full-line path (a zero-quantity line serves no purpose in the
-        /// new revision).
-        /// </summary>
-        private void DecrementLineQuantity(Core.Models.Sells line)
-        {
-            if (!RequireAdminUnlocked()) return;
-            var bill = SelectedBill;
-            if (bill == null || !bill.IsCurrent) return;
-
-            try
-            {
-                var currentLines = _sellsData.ReadSellsByBillId("sells", bill.Id);
-                double oldSubtotal = currentLines.Sum(l => l.Price * l.Quantity);
-
-                RestoreInventoryFor(line, 1);
-
-                double newQuantity = line.Quantity - 1;
-                var remainingLines = new List<Core.Models.Sells>();
-                foreach (var l in currentLines)
-                {
-                    if (l.Id != line.Id)
-                    {
-                        remainingLines.Add(l);
-                        continue;
-                    }
-                    if (newQuantity <= 0) continue; // last unit — drop the line entirely, same as ReturnLine
-
-                    l.Quantity = newQuantity;
-                    l.Earned = (l.Price - l.Cost) * newQuantity;
-                    remainingLines.Add(l);
-                }
-
-                CreateReturnRevision(bill, remainingLines, oldSubtotal);
-
-                InventoryDataEvents.RaiseGoodsChanged();
-                OrderEvents.RaiseOrderCompleted();
-
-                StatusMessage = string.Format(LocalizationManager.GetString("BillsLineQuantityDecreased"), line.Name, bill.DisplayNumber);
-
-                ReloadAfterReturn(bill.Billnumber);
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = LocalizationManager.GetString("BillsAdjustLineError") + " (" + ex.Message + ")";
-            }
-        }
-
-        /// <summary>
-        /// Returns every line on the bill at once — same CreateReturnRevision
-        /// path as a partial return, just with an empty remaining-lines
-        /// list, so the result is a real (zero-item, zero-cost) revision
-        /// row rather than a hard-deleted bill. Replaces the original
-        /// 2026-08-27 DeleteWholeBill, which used to remove the bills row
-        /// (and every sells row under it) outright — that would have
-        /// erased the original sale from history entirely, which no longer
-        /// fits "view my bill receipt history" now that returns are
-        /// expected to leave a trail.
-        /// </summary>
-        private void ReturnWholeBill(Core.Models.Bills bill)
-        {
-            if (!RequireAdminUnlocked()) return;
-            if (!bill.IsCurrent) return;
-
-            try
-            {
-                var currentLines = _sellsData.ReadSellsByBillId("sells", bill.Id);
-                double oldSubtotal = currentLines.Sum(l => l.Price * l.Quantity);
-
-                foreach (var line in currentLines) RestoreInventoryFor(line, line.Quantity);
-
-                CreateReturnRevision(bill, new List<Core.Models.Sells>(), oldSubtotal);
-
-                InventoryDataEvents.RaiseGoodsChanged();
-                OrderEvents.RaiseOrderCompleted(); // see ReturnLine's matching comment
-
-                StatusMessage = string.Format(LocalizationManager.GetString("BillsDeleteWholeBillSuccess"), bill.DisplayNumber);
-
-                ReloadAfterReturn(bill.Billnumber);
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = LocalizationManager.GetString("BillsDeleteWholeBillError") + " (" + ex.Message + ")";
+                StatusMessage = LocalizationManager.GetString("BillsSaveReturnsError") + " (" + ex.Message + ")";
             }
         }
 

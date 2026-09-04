@@ -123,6 +123,26 @@
     <system:String x:Key="BillsLineQuantityDecreased">{0} reduced on Bill #{1} — a new receipt was created to reflect it.</system:String>
     <system:String x:Key="BillsAdjustLineError">Something went wrong. Please try again.</system:String>
 
+    <!-- Staged returns (2026-09-04, per Baraa's explicit request) — −,
+         Return, and Return Whole Bill above now only STAGE a pending
+         return on each line (Core.Models.Sells.PendingReturnQuantity); none
+         of them create a bill revision by themselves any more. This block
+         is what commits every staged line at once: Undo clears a single
+         line's staging, the Save Returns bar (summary + Discard + Save)
+         appears once anything is staged, and Save Returns is the only
+         action that actually calls CreateReturnRevision — once, for every
+         product staged, instead of once per product. See
+         BillsBrowserViewModel's "STAGED RETURNS" class doc comment. -->
+    <system:String x:Key="BillsUndoLineReturnButton">Undo</system:String>
+    <system:String x:Key="BillsPendingReturnsSummary">Products marked below will be returned together as a single receipt when you save.</system:String>
+    <system:String x:Key="BillsSaveReturnsButton">Save Returns</system:String>
+    <system:String x:Key="BillsDiscardReturnsButton">Discard</system:String>
+    <!-- {0} = number of lines returned, {1} = the ORIGINAL bill's display
+         number — same reasoning as BillsDeleteLineSuccess's {1} above. -->
+    <system:String x:Key="BillsSaveReturnsSuccess">{0} item(s) returned from Bill #{1} — a new receipt was created to reflect it.</system:String>
+    <system:String x:Key="BillsSaveReturnsError">Something went wrong. Please try again.</system:String>
+    <system:String x:Key="BillsDiscardReturnsSuccess">Pending returns discarded.</system:String>
+
     <system:String x:Key="CustomersHeading">Customers</system:String>
     <system:String x:Key="CustomersAddSectionTitle">Add a customer</system:String>
     <system:String x:Key="CustomersNameField">Name</system:String>

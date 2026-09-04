@@ -30,6 +30,18 @@ namespace PosSystem.Core.Models
         // row this line belongs to, since Billnumber alone can now be
         // shared by several bills rows (an original plus its revisions).
         private int billId;
+
+        // Added 2026-09-04 for the Bills browser's "stage several returns,
+        // then Save" flow (see BillsBrowserViewModel's class doc comment).
+        // NOT a database column and never sent to Data.Sells.InsertSells --
+        // purely in-memory UI state on the Sells object the Bills detail
+        // view is already bound to, tracking how much of THIS line's
+        // Quantity the person has marked to return but not yet committed.
+        // Reset to 0 every time BillsBrowserViewModel.LoadBillLines re-reads
+        // fresh Sells objects from the database (i.e. on every OpenBill), so
+        // nothing needs to explicitly "discard" it when navigating away from
+        // an unsaved bill -- the staged objects are simply dropped.
+        private double pendingReturnQuantity;
         public event PropertyChangedEventHandler PropertyChanged;
         public void NotifyPropertyChanged(string property)
         {
@@ -120,6 +132,25 @@ namespace PosSystem.Core.Models
         public int Billnumber { get => billnumber; set => billnumber = value; }
         public string Returned { get => returned; set => returned = value; }
         public int BillId { get => billId; set => billId = value; }
+
+        public double PendingReturnQuantity
+        {
+            get { return pendingReturnQuantity; }
+            set
+            {
+                pendingReturnQuantity = value;
+                NotifyPropertyChanged("PendingReturnQuantity");
+                NotifyPropertyChanged("RemainingQuantity");
+                NotifyPropertyChanged("HasPendingReturn");
+            }
+        }
+
+        // What will actually remain on this line once staged returns are
+        // saved -- what the Bills detail view shows instead of the raw
+        // Quantity, without mutating Quantity itself until the save
+        // actually happens (Quantity here stays exactly what was sold).
+        public double RemainingQuantity => quantity - pendingReturnQuantity;
+        public bool HasPendingReturn => pendingReturnQuantity > 0;
     }
        
 }
