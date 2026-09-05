@@ -95,7 +95,7 @@ namespace PosSystem.Core.Reporting
             {
                 BuildSummarySheet(workbook, labels, billsInRange, sellsInRange, start, end);
                 BuildBillsSheet(workbook, labels, billsInRange, sellsInRange);
-                BuildSalesDetailSheet(workbook, labels, sellsInRange);
+                BuildSalesDetailSheet(workbook, labels, billsInRange, sellsInRange);
 
                 string directory = Path.GetDirectoryName(outputPath);
                 if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
@@ -124,8 +124,9 @@ namespace PosSystem.Core.Reporting
             ws.Cell(row, 2).Value = DateTime.Now.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
             row += 2;
 
-            double totalRevenue = sellsInRange.Sum(s => s.Price * s.Quantity);
-            double totalProfit = sellsInRange.Sum(s => s.Earned);
+            var billIdToDiscountPercent = BuildDiscountLookup(billsInRange);
+            double totalRevenue = sellsInRange.Sum(s => LineRevenue(s, billIdToDiscountPercent));
+            double totalProfit = sellsInRange.Sum(s => LineProfit(s, billIdToDiscountPercent));
             int totalTransactions = billsInRange.Count;
 
             // Bills.Details stores the payment tag written at sale time
@@ -245,9 +246,23 @@ namespace PosSystem.Core.Reporting
                 ? quantity.ToString("0", CultureInfo.InvariantCulture)
                 : quantity.ToString("0.##", CultureInfo.InvariantCulture);
 
-        private static void BuildSalesDetailSheet(XLWorkbook workbook, SalesExportLabels labels, List<Models.Sells> sellsInRange)
+        private static void BuildSalesDetailSheet(XLWorkbook workbook, SalesExportLabels labels, List<Models.Bills> billsInRange, List<Models.Sells> sellsInRange)
         {
             var ws = workbook.Worksheets.Add(labels.SalesDetailSheetName);
+
+            // Discount lookup (2026-09-05 fix) -- a Sells row's Price is
+            // always the bill's full, PRE-discount unit price (same root
+            // cause DashboardViewModel.LineRevenue's doc comment covers,
+            // and the same bug CustomerDetailViewModel.LoadSalesHistory was
+            // independently found to have and fixed). Line Total and Profit
+            // below used to sum Price*Quantity/Earned directly, silently
+            // ignoring any bill-level discount -- meaning this sheet's own
+            // totals didn't match the Bills sheet's Total column (which
+            // DOES already net the discount out via bill.Billcost), and
+            // wouldn't match the Summary sheet's totals either once those
+            // got the same fix just below. Keyed by bills.Id via
+            // Sells.BillId -- see BuildDiscountLookup's doc comment.
+            var billIdToDiscountPercent = BuildDiscountLookup(billsInRange);
 
             string[] headers =
             {
@@ -271,8 +286,8 @@ namespace PosSystem.Core.Reporting
 
                 ws.Cell(row, 6).Value = sell.Price;
                 ws.Cell(row, 7).Value = sell.Cost;
-                ws.Cell(row, 8).Value = sell.Price * sell.Quantity;
-                ws.Cell(row, 9).Value = sell.Earned;
+                ws.Cell(row, 8).Value = LineRevenue(sell, billIdToDiscountPercent);
+                ws.Cell(row, 9).Value = LineProfit(sell, billIdToDiscountPercent);
                 for (int c = 6; c <= 9; c++) ws.Cell(row, c).Style.NumberFormat.Format = "#,##0.00";
 
                 // Returned is stored as the literal string "Yes"/"No" on
@@ -289,6 +304,48 @@ namespace PosSystem.Core.Reporting
             }
 
             FinishSheet(ws, headers.Length, sellsInRange.Count);
+        }
+
+        /// <summary>
+        /// bills.Id -&gt; DiscountPercent, built once per sheet rather than
+        /// inline per-line -- shared by BuildSummarySheet and
+        /// BuildSalesDetailSheet (added 2026-09-05 alongside the discount
+        /// fix on both). Keyed by Id, not Billnumber: billsInRange is
+        /// already filtered to IsCurrent, so every Id here is unique,
+        /// unlike Billnumber which a superseded bill and its revision can
+        /// share -- same reasoning CustomerDetailViewModel.LoadSalesHistory
+        /// already uses for its own equivalent lookup.
+        /// </summary>
+        private static Dictionary<int, double> BuildDiscountLookup(List<Models.Bills> billsInRange) =>
+            billsInRange.ToDictionary(b => b.Id, b => b.DiscountPercent);
+
+        /// <summary>
+        /// A Sells line's revenue AFTER its bill's discount -- see
+        /// DashboardViewModel.LineRevenue's doc comment (App project) for
+        /// the shared root cause: a Sells row's Price is always the bill's
+        /// PRE-discount unit price, so summing Price*Quantity directly
+        /// overstates revenue by however much any bill-level discount took
+        /// off. Duplicated here rather than shared code across the two
+        /// projects -- Core has no reference to App, and this is a two-line
+        /// formula, not worth a new shared assembly for.
+        /// </summary>
+        private static double LineRevenue(Models.Sells sell, Dictionary<int, double> billIdToDiscountPercent)
+        {
+            double discountPercent = billIdToDiscountPercent.TryGetValue(sell.BillId, out double dp) ? dp : 0;
+            return sell.Price * sell.Quantity * (1 - discountPercent / 100.0);
+        }
+
+        /// <summary>
+        /// A Sells line's profit AFTER its bill's discount -- same formula
+        /// and reasoning as DashboardViewModel.LineProfit: Earned is stored
+        /// PRE-discount ((Price - Cost) * Quantity), and the discount's
+        /// currency amount comes straight out of margin rather than being
+        /// split proportionally against cost.
+        /// </summary>
+        private static double LineProfit(Models.Sells sell, Dictionary<int, double> billIdToDiscountPercent)
+        {
+            double discountPercent = billIdToDiscountPercent.TryGetValue(sell.BillId, out double dp) ? dp : 0;
+            return sell.Earned - (sell.Price * sell.Quantity * discountPercent / 100.0);
         }
 
         private static void WriteHeaderRow(IXLWorksheet ws, string[] headers)

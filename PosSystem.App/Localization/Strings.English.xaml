@@ -610,7 +610,7 @@ Access Control: choose which of those areas actually require the password -- e.g
     <system:String x:Key="HelpNeedMoreTitle">Still Need Help?</system:String>
     <system:String x:Key="HelpNeedMoreBody">If this guide didn't answer your question, use the Contact Support card below to call, WhatsApp, or email us directly.</system:String>
 
-    <!-- Activation gate (Licensing-Plan.md, Phase 5) -- shown instead of
+    <!-- Activation gate (Licensing-Plan.md, Phase 5) - shown instead of
          MainWindow on any launch where no valid license is found (first
          run, expired, hardware changed, etc). See
          Views/ActivationWindow.xaml. -->

@@ -390,6 +390,16 @@ namespace PosSystem.Core.Data
                         //goods_List.Type = reader["Type"].ToString();
                         goods_List.Barcode = reader["Barcode"].ToString();
                         goods_List.Earned = Convert.ToDouble(reader["Earned"]);
+                        // DiscountPercent (2026-09-05) -- added for the same
+                        // consistency reason as ReadAllGoodsRPic just below
+                        // (that method's own comment covers the actual bug
+                        // this closes) -- this category-filtered overload
+                        // wasn't found to be called from anywhere in the App
+                        // project today, but leaving it silently missing the
+                        // column while its sibling method has it is exactly
+                        // the kind of drift that already caused Checkout's
+                        // discount bug in the first place.
+                        goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
                         //goods_List.Details = reader["Details"].ToString();
                         //if (!Convert.IsDBNull(reader["Image"]))
                         //{
@@ -429,6 +439,18 @@ namespace PosSystem.Core.Data
                         goods_List.Datee = reader["Datee"].ToString();
                         goods_List.Barcode = reader["Barcode"].ToString();
                         goods_List.Earned = Convert.ToDouble(reader["Earned"]);
+                        // DiscountPercent (2026-09-05 fix) -- this method
+                        // feeds Checkout's product list (CheckoutViewModel.
+                        // LoadGoods) and CustomerDetailViewModel's medication
+                        // picker; it never read this column at all, so
+                        // Checkout had zero visibility into a product's
+                        // Inventory discount and always charged full price
+                        // for a discounted product (flagged, now fixed -- see
+                        // CartLine's constructor for where this actually gets
+                        // applied). DbNullSafe, not raw Convert, for the same
+                        // pre-backfill-safety reason Data.Goods.
+                        // ReadAllGoodsQuantity already uses it.
+                        goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
                         //goods_List.Details = reader["Details"].ToString();
                         //if (!Convert.IsDBNull(reader["Image"]))
                         //{
