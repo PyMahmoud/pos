@@ -751,6 +751,23 @@ namespace PosSystem.App.ViewModels
                 .GroupBy(b => b.Billnumber)
                 .ToDictionary(g => g.Key, g => g.First().Details);
 
+            // Discount (2026-09-04 fix) -- a Sells row's Price is always the
+            // full, PRE-discount unit price (CheckoutViewModel.CompleteSale
+            // writes line.Price as-is; the discount only ever gets applied
+            // and stored at the Bills level, as DiscountPercent). Every
+            // revenue/profit figure below therefore has to look up its
+            // bill's discount and net it out itself -- summing Price*Quantity
+            // directly (the previous behavior) silently ignored discounts
+            // entirely, so a bill rung up as (say) $100 with a 20% discount
+            // (an actual $80 sale) was counted as $100 everywhere on this
+            // screen. Keyed by Billnumber, same as billNumberToPayment right
+            // above, for the same reason (a superseded bill's line items
+            // share their replacement's Billnumber, and allBills is already
+            // filtered to IsCurrent rows only by the time it gets here).
+            var billNumberToDiscountPercent = allBills
+                .GroupBy(b => b.Billnumber)
+                .ToDictionary(g => g.Key, g => g.First().DiscountPercent);
+
             string paymentFilter = SelectedPaymentChip?.Value;
             string categoryFilter = SelectedCategoryChip?.Value;
 
@@ -763,17 +780,48 @@ namespace PosSystem.App.ViewModels
                 return true;
             }).ToList();
 
-            FilteredRevenue = sellsFiltered.Sum(s => s.Price * s.Quantity);
-            FilteredProfit = sellsFiltered.Sum(s => s.Earned);
+            FilteredRevenue = sellsFiltered.Sum(s => LineRevenue(s, billNumberToDiscountPercent));
+            FilteredProfit = sellsFiltered.Sum(s => LineProfit(s, billNumberToDiscountPercent));
             FilteredTransactionCount = sellsFiltered.Select(s => s.Billnumber).Distinct().Count();
 
-            BuildTopItemsChart(sellsFiltered);
-            BuildPaymentSplitChart(sellsFiltered, billNumberToPayment);
-            BuildCategoryRevenueChart(sellsFiltered);
-            BuildRevenueTrendChart(sellsFiltered, start, end);
+            BuildTopItemsChart(sellsFiltered, billNumberToDiscountPercent);
+            BuildPaymentSplitChart(sellsFiltered, billNumberToPayment, billNumberToDiscountPercent);
+            BuildCategoryRevenueChart(sellsFiltered, billNumberToDiscountPercent);
+            BuildRevenueTrendChart(sellsFiltered, start, end, billNumberToDiscountPercent);
         }
 
-        private void BuildTopItemsChart(List<Core.Models.Sells> sellsFiltered)
+        /// <summary>
+        /// A Sells line's revenue AFTER its bill's discount -- see the
+        /// discount comment in ApplyFiltersAndRebuildCharts above for why
+        /// this can't just be s.Price * s.Quantity. Falls back to 0%
+        /// discount for a Billnumber the map doesn't have (shouldn't happen
+        /// in practice -- every Sells row is written alongside its bill in
+        /// the same CompleteSale transaction -- but a missing lookup should
+        /// degrade to the old undiscounted number, not throw or silently
+        /// zero out real revenue).
+        /// </summary>
+        private static double LineRevenue(Core.Models.Sells s, Dictionary<int, double> billNumberToDiscountPercent)
+        {
+            double discountPercent = billNumberToDiscountPercent.TryGetValue(s.Billnumber, out double dp) ? dp : 0;
+            return s.Price * s.Quantity * (1 - discountPercent / 100.0);
+        }
+
+        /// <summary>
+        /// A Sells line's profit AFTER its bill's discount. s.Earned is
+        /// stored PRE-discount ((Price - Cost) * Quantity, same as
+        /// CheckoutViewModel.CompleteSale writes it) -- discount reduces
+        /// what the customer actually paid without changing what the item
+        /// cost, so the currency amount taken off comes straight out of
+        /// profit rather than being split proportionally between cost and
+        /// margin.
+        /// </summary>
+        private static double LineProfit(Core.Models.Sells s, Dictionary<int, double> billNumberToDiscountPercent)
+        {
+            double discountPercent = billNumberToDiscountPercent.TryGetValue(s.Billnumber, out double dp) ? dp : 0;
+            return s.Earned - (s.Price * s.Quantity * discountPercent / 100.0);
+        }
+
+        private void BuildTopItemsChart(List<Core.Models.Sells> sellsFiltered, Dictionary<int, double> billNumberToDiscountPercent)
         {
             // Changed 2026-08-25: this WAS deliberately all-time and
             // unfiltered (see Dashboard-Parity-Plan.md's "Design deviations"
@@ -798,8 +846,8 @@ namespace PosSystem.App.ViewModels
                 {
                     Name = g.Key,
                     Quantity = g.Sum(s => s.Quantity),
-                    Revenue = g.Sum(s => s.Price * s.Quantity),
-                    Profit = g.Sum(s => s.Earned)
+                    Revenue = g.Sum(s => LineRevenue(s, billNumberToDiscountPercent)),
+                    Profit = g.Sum(s => LineProfit(s, billNumberToDiscountPercent))
                 })
                 .OrderByDescending(x => x.Quantity)
                 .Take(5)
@@ -847,11 +895,11 @@ namespace PosSystem.App.ViewModels
             TopItemsYAxes = new[] { ThemedAxis(minLimit: 0) };
         }
 
-        private void BuildPaymentSplitChart(List<Core.Models.Sells> sellsFiltered, Dictionary<int, string> billNumberToPayment)
+        private void BuildPaymentSplitChart(List<Core.Models.Sells> sellsFiltered, Dictionary<int, string> billNumberToPayment, Dictionary<int, double> billNumberToDiscountPercent)
         {
             double RevenueFor(string tag) => sellsFiltered
                 .Where(s => billNumberToPayment.TryGetValue(s.Billnumber, out string pm) && pm == tag)
-                .Sum(s => s.Price * s.Quantity);
+                .Sum(s => LineRevenue(s, billNumberToDiscountPercent));
 
             double cashTotal = RevenueFor("Cash");
             double cardTotal = RevenueFor("Card");
@@ -907,7 +955,7 @@ namespace PosSystem.App.ViewModels
                 PaymentSplitSeries.Add(new PieSeries<double> { Values = new[] { creditTotal }, Name = creditLabel + PctSuffix(creditTotal), Fill = new SolidColorPaint(tertiary) });
         }
 
-        private void BuildCategoryRevenueChart(List<Core.Models.Sells> sellsFiltered)
+        private void BuildCategoryRevenueChart(List<Core.Models.Sells> sellsFiltered, Dictionary<int, double> billNumberToDiscountPercent)
         {
             var categoryTotals = sellsFiltered
                 .GroupBy(s => string.IsNullOrWhiteSpace(s.Category) ? "—" : s.Category)
@@ -915,8 +963,8 @@ namespace PosSystem.App.ViewModels
                 {
                     Category = g.Key,
                     Quantity = g.Sum(s => s.Quantity),
-                    Revenue = g.Sum(s => s.Price * s.Quantity),
-                    Profit = g.Sum(s => s.Earned)
+                    Revenue = g.Sum(s => LineRevenue(s, billNumberToDiscountPercent)),
+                    Profit = g.Sum(s => LineProfit(s, billNumberToDiscountPercent))
                 })
                 .OrderByDescending(x => x.Revenue)
                 .ToList();
@@ -945,7 +993,7 @@ namespace PosSystem.App.ViewModels
             CategoryRevenueYAxes = new[] { ThemedAxis(minLimit: 0) };
         }
 
-        private void BuildRevenueTrendChart(List<Core.Models.Sells> sellsFiltered, DateTime start, DateTime end)
+        private void BuildRevenueTrendChart(List<Core.Models.Sells> sellsFiltered, DateTime start, DateTime end, Dictionary<int, double> billNumberToDiscountPercent)
         {
             int totalDays = (end - start).Days + 1;
             // Performance rule (Dashboard-Parity-Plan.md): cap chart data
@@ -971,8 +1019,8 @@ namespace PosSystem.App.ViewModels
                     : d.Date;
                 if (buckets.TryGetValue(bucketKey, out RevenueTrendPoint point))
                 {
-                    point.Revenue += sell.Price * sell.Quantity;
-                    point.Profit += sell.Earned;
+                    point.Revenue += LineRevenue(sell, billNumberToDiscountPercent);
+                    point.Profit += LineProfit(sell, billNumberToDiscountPercent);
                 }
             }
 

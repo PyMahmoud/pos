@@ -269,12 +269,28 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
+                    <!-- Discounts page entry point (added 2026-09-04) -
+                         same placement idea as Checkout's own Bills browser
+                         button (a plain nav button that opens a full-screen
+                         overlay, see the Grid at the bottom of this file) -
+                         first in this row since it's a whole separate page,
+                         not one of the Undo/Redo/Discard/Save Changes group
+                         it sits next to. -->
                     <Button Grid.Column="0"
+                            Content="{DynamicResource InventoryDiscountsButton}"
+                            Command="{Binding OpenDiscountsCommand}"
+                            Background="{DynamicResource SurfaceContainerHighBrush}"
+                            Foreground="{DynamicResource OnSurfaceBrush}"
+                            Template="{StaticResource SelectableButtonTemplate}"
+                            Padding="14,8" />
+                    <Button Grid.Column="2"
                             Content="{DynamicResource InventoryUndoButton}"
                             Command="{Binding UndoCommand}"
                             IsEnabled="{Binding CanUndo}"
@@ -282,7 +298,7 @@
                             Foreground="{DynamicResource OnSurfaceBrush}"
                             Template="{StaticResource SelectableButtonTemplate}"
                             Padding="14,8" />
-                    <Button Grid.Column="2"
+                    <Button Grid.Column="4"
                             Content="{DynamicResource InventoryRedoButton}"
                             Command="{Binding RedoCommand}"
                             IsEnabled="{Binding CanRedo}"
@@ -290,7 +306,7 @@
                             Foreground="{DynamicResource OnSurfaceBrush}"
                             Template="{StaticResource SelectableButtonTemplate}"
                             Padding="14,8" />
-                    <Button Grid.Column="4"
+                    <Button Grid.Column="6"
                             Content="{DynamicResource InventoryDiscardChangesButton}"
                             Command="{Binding DiscardChangesCommand}"
                             Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -298,7 +314,7 @@
                             Foreground="{DynamicResource OnErrorContainerBrush}"
                             Template="{StaticResource SelectableButtonTemplate}"
                             Padding="14,8" />
-                    <Button Grid.Column="6"
+                    <Button Grid.Column="8"
                             Content="{DynamicResource InventorySaveChangesButton}"
                             Command="{Binding SaveChangesCommand}"
                             Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -372,7 +388,7 @@
                     <CheckBox Grid.Column="0"
                               IsChecked="{Binding IsAllVisibleSelected, Mode=TwoWay}"
                               Content="{DynamicResource InventorySelectAllLabel}"
-                              Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                              Style="{StaticResource ThemedCheckBoxStyle}"
                               VerticalAlignment="Center" />
                 </Grid>
 
@@ -393,12 +409,39 @@
                                        FontWeight="SemiBold" />
                         </StackPanel>
 
+                        <!-- Label added 2026-09-04 - this was the only
+                             input on the whole screen with no caption above
+                             it, so an empty ComboBox with nothing but a
+                             chevron just looked broken/blank until clicked
+                             (flagged via screenshot). Same LabelSmall/
+                             OnSurfaceVariantBrush caption pattern every
+                             other field on this screen already uses. -->
+                        <TextBlock Text="{DynamicResource InventoryBulkCategoryPickerLabel}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   Margin="0,0,0,4" />
                         <ComboBox ItemsSource="{Binding AllCategoryNames}"
                                   SelectedItem="{Binding BulkCategoryTarget, Mode=TwoWay}"
                                   Style="{StaticResource ThemedComboBoxStyle}"
                                   Margin="0,0,0,10" />
 
-                        <Grid>
+                        <!-- Bulk discount (added 2026-09-04) - a plain %
+                             TextBox next to the category picker above,
+                             same "one input, one action button" shape.
+                             Overwrites any existing discount on every
+                             selected product (see InventoryViewModel.
+                             BulkAddDiscounts' comment for why that's correct
+                             given a product can never have more than one
+                             discount at a time). -->
+                        <TextBlock Text="{DynamicResource InventoryBulkDiscountPercentLabel}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   Margin="0,0,0,4" />
+                        <TextBox Text="{Binding BulkDiscountPercentInput, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ThemedTextBoxStyle}"
+                                 Margin="0,0,0,10" />
+
+                        <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="8" />
@@ -413,14 +456,22 @@
                                     Padding="0,10"
                                     HorizontalContentAlignment="Center" />
                             <Button Grid.Column="2"
-                                    Content="{DynamicResource InventoryBulkDeleteButton}"
-                                    Command="{Binding BulkDeleteCommand}"
-                                    Background="{DynamicResource ErrorContainerBrush}"
-                                    Foreground="{DynamicResource OnErrorContainerBrush}"
+                                    Content="{DynamicResource InventoryBulkAddDiscountsButton}"
+                                    Command="{Binding BulkAddDiscountsCommand}"
+                                    Background="{DynamicResource TertiaryContainerBrush}"
+                                    Foreground="{DynamicResource OnTertiaryContainerBrush}"
                                     Template="{StaticResource SelectableButtonTemplate}"
                                     Padding="0,10"
                                     HorizontalContentAlignment="Center" />
                         </Grid>
+
+                        <Button Content="{DynamicResource InventoryBulkDeleteButton}"
+                                Command="{Binding BulkDeleteCommand}"
+                                Background="{DynamicResource ErrorContainerBrush}"
+                                Foreground="{DynamicResource OnErrorContainerBrush}"
+                                Template="{StaticResource SelectableButtonTemplate}"
+                                Padding="0,10"
+                                HorizontalContentAlignment="Center" />
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -466,9 +517,13 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <!-- Batch selection checkbox (added 2026-08-31) -->
+                                            <!-- Batch selection checkbox (added 2026-08-31;
+                                                 themed 2026-09-04 to match the Access Control
+                                                 checkboxes on Settings instead of the unstyled
+                                                 default WPF checkbox it was rendering as) -->
                                             <CheckBox Grid.Column="0"
                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      Style="{StaticResource ThemedCheckBoxStyle}"
                                                       VerticalAlignment="Center"
                                                       Margin="0,0,8,0" />
                                             <TextBlock Grid.Column="1"
@@ -491,16 +546,65 @@
                                                    TextWrapping="Wrap"
                                                    Margin="0,2,0,10" />
 
+                                        <!-- Discount badge (added 2026-09-04) -
+                                             only rendered when this product actually
+                                             has one (InventoryRow.HasDiscount), so a
+                                             shop that never uses discounts sees the
+                                             card exactly as it looked before this
+                                             feature existed. -->
+                                        <Border CornerRadius="6" Padding="8,3" Margin="0,0,0,8"
+                                                HorizontalAlignment="Left"
+                                                Background="{DynamicResource TertiaryContainerBrush}"
+                                                Visibility="{Binding HasDiscount, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{DynamicResource InventoryDiscountBadge}"
+                                                           Foreground="{DynamicResource OnTertiaryContainerBrush}"
+                                                           FontWeight="SemiBold"
+                                                           Margin="0,0,4,0" />
+                                                <TextBlock Text="{Binding DiscountPercent, StringFormat={}-{0:0.##}%}"
+                                                           Foreground="{DynamicResource OnTertiaryContainerBrush}"
+                                                           FontWeight="SemiBold" />
+                                            </StackPanel>
+                                        </Border>
+
                                         <Grid Margin="0,0,0,10">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
+                                            <!-- Price display (rewritten 2026-09-04 for
+                                                 discounts) - two mutually-exclusive states
+                                                 instead of always showing the plain Price,
+                                                 same TertiaryBrush/"-{0:0.00}" convention
+                                                 CheckoutView.xaml's own Discount line already
+                                                 uses (the explicit visual reference for this
+                                                 feature), so a discounted product's card and
+                                                 the discount line at Checkout read the same
+                                                 way. -->
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center"
+                                                        Visibility="{Binding HasDiscount, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Price, StringFormat={}{0:0.00}}"
+                                                               Style="{StaticResource BodyLarge}"
+                                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                               TextDecorations="Strikethrough"
+                                                               VerticalAlignment="Center"
+                                                               Margin="0,0,8,0" />
+                                                    <TextBlock Text="{Binding DiscountedPrice, StringFormat={}{0:0.00}}"
+                                                               Style="{StaticResource TitleMedium}"
+                                                               Foreground="{DynamicResource PrimaryBrush}"
+                                                               VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding DiscountAmount, StringFormat={}-{0:0.00}}"
+                                                           Style="{StaticResource LabelSmall}"
+                                                           Foreground="{DynamicResource TertiaryBrush}" />
+                                            </StackPanel>
                                             <TextBlock Grid.Column="0"
                                                        Text="{Binding Price, StringFormat={}{0:0.00}}"
                                                        Style="{StaticResource TitleMedium}"
                                                        Foreground="{DynamicResource PrimaryBrush}"
-                                                       VerticalAlignment="Center" />
+                                                       VerticalAlignment="Center"
+                                                       Visibility="{Binding HasDiscount, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
                                             <!-- Two elements, not one MultiBinding-with-a-
                                                  localized-label-as-Source: Binding.Source
                                                  can't take a DynamicResource (Binding isn't a
@@ -701,6 +805,152 @@
                     </ItemsControl>
                 </ScrollViewer>
             </Grid>
+        </Grid>
+
+        <!-- ================= Discounts browser overlay (added 2026-09-04) =================
+             Covers the whole screen (both columns), same Panel.ZIndex/
+             full-Border-over-BackgroundBrush trick as Checkout's Bills
+             browser overlay in CheckoutView.xaml - toggled by a plain bool
+             (IsDiscountsBrowserOpen) rather than a null-object DataTrigger
+             since this reuses InventoryViewModel directly instead of a
+             separate ViewModel class (see that property's own doc comment
+             for why). DataContext is NOT reassigned here (unlike Checkout's
+             version) - every binding below is still against
+             InventoryViewModel itself, which is exactly what's needed since
+             DiscountedRows/BulkDiscountPercentInput-equivalent per-row edit
+             fields/SaveDiscountEditCommand/RemoveDiscountCommand all live
+             there. -->
+        <Grid Grid.Column="0" Grid.ColumnSpan="2"
+              Panel.ZIndex="20"
+              FlowDirection="{DynamicResource AppFlowDirection}"
+              Visibility="{Binding IsDiscountsBrowserOpen, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border Background="{DynamicResource BackgroundBrush}">
+                <Grid Margin="24">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource DiscountsBrowserTitle}"
+                                   Style="{StaticResource HeadlineMedium}"
+                                   Foreground="{DynamicResource OnSurfaceBrush}" />
+                        <Button Grid.Column="1"
+                                Content="{DynamicResource DiscountsBrowserCloseButton}"
+                                Command="{Binding CloseDiscountsCommand}"
+                                Background="{DynamicResource SurfaceContainerHighBrush}"
+                                Foreground="{DynamicResource OnSurfaceBrush}"
+                                Template="{StaticResource SelectableButtonTemplate}"
+                                Padding="14,8" />
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <TextBlock Text="{DynamicResource DiscountsBrowserNoResults}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   TextWrapping="Wrap"
+                                   VerticalAlignment="Top"
+                                   Visibility="{Binding DiscountedRows.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding DiscountedRows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{DynamicResource SurfaceContainerBrush}"
+                                                CornerRadius="12" Padding="16" Margin="0,0,0,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="110" />
+                                                    <ColumnDefinition Width="110" />
+                                                    <ColumnDefinition Width="90" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}"
+                                                               Style="{StaticResource BodyLarge}"
+                                                               Foreground="{DynamicResource OnSurfaceBrush}"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Category}"
+                                                               Style="{StaticResource LabelSmall}"
+                                                               Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                                </StackPanel>
+
+                                                <!-- Original price, struck through - same
+                                                     visual language as the product card. -->
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Price, StringFormat={}{0:0.00}}"
+                                                           Style="{StaticResource BodyLarge}"
+                                                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                           TextDecorations="Strikethrough"
+                                                           TextAlignment="Center"
+                                                           VerticalAlignment="Center" />
+
+                                                <!-- New (discounted) price + the currency amount
+                                                     taken off, same TertiaryBrush/"-{0:0.00}"
+                                                     convention as Checkout's own Discount line. -->
+                                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding DiscountedPrice, StringFormat={}{0:0.00}}"
+                                                               Style="{StaticResource BodyLarge}"
+                                                               Foreground="{DynamicResource PrimaryBrush}"
+                                                               TextAlignment="Center" />
+                                                    <TextBlock Text="{Binding DiscountAmount, StringFormat={}-{0:0.00}}"
+                                                               Style="{StaticResource LabelSmall}"
+                                                               Foreground="{DynamicResource TertiaryBrush}"
+                                                               TextAlignment="Center" />
+                                                </StackPanel>
+
+                                                <!-- Editable % - DiscountEditInput is this row's
+                                                     own typed-in buffer (see InventoryRow's doc
+                                                     comment), only committed to the real
+                                                     DiscountPercent when Save below is clicked. -->
+                                                <TextBox Grid.Column="3"
+                                                         Text="{Binding DiscountEditInput, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource ThemedTextBoxStyle}"
+                                                         HorizontalContentAlignment="Center"
+                                                         VerticalAlignment="Center"
+                                                         Margin="8,0" />
+
+                                                <Button Grid.Column="4"
+                                                        Content="{DynamicResource DiscountsBrowserSaveButton}"
+                                                        Command="{Binding DataContext.SaveDiscountEditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Background="{DynamicResource PrimaryBrush}"
+                                                        Foreground="{DynamicResource OnPrimaryBrush}"
+                                                        Template="{StaticResource SelectableButtonTemplate}"
+                                                        Padding="12,8"
+                                                        Margin="0,0,8,0" />
+                                                <Button Grid.Column="5"
+                                                        Content="{DynamicResource DiscountsBrowserRemoveButton}"
+                                                        Command="{Binding DataContext.RemoveDiscountCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Background="{DynamicResource ErrorContainerBrush}"
+                                                        Foreground="{DynamicResource OnErrorContainerBrush}"
+                                                        Template="{StaticResource SelectableButtonTemplate}"
+                                                        Padding="12,8" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding StatusMessage}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Bottom"
+                               Margin="0,0,0,4" />
+                </Grid>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

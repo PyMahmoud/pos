@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 
 namespace PosSystem.App.ViewModels
@@ -67,10 +68,82 @@ namespace PosSystem.App.ViewModels
         public double Price
         {
             get => _price;
-            set { if (_price == value) return; _price = value; OnPropertyChanged(); }
+            set
+            {
+                if (_price == value) return;
+                _price = value;
+                OnPropertyChanged();
+                // Discount (added 2026-09-04) derives from Price, so a
+                // Price edit has to re-notify these too or a stale
+                // DiscountedPrice/DiscountAmount would linger on-screen
+                // after Save Edit changes a discounted product's price.
+                OnPropertyChanged(nameof(DiscountedPrice));
+                OnPropertyChanged(nameof(DiscountAmount));
+            }
         }
 
         public string Type { get; }
+
+        // Discount (added 2026-09-04, Inventory's Discounts feature -- bulk
+        // "Add Discounts" button + a dedicated Discounts management page,
+        // requested off a screenshot of Checkout's own discount line: "a
+        // minus price like one in checkout"). A single percentage, same
+        // convention as Core.Models.Goods.DiscountPercent (0 = no
+        // discount) -- see that class's doc comment for why a product can
+        // never have more than one discount by construction. Setting this
+        // also re-syncs DiscountEditInput to match (see that property's
+        // own comment) so the Discounts page's edit box always reflects
+        // whatever the real, current value actually is, not a stale one
+        // left over from before the last change.
+        private double _discountPercent;
+        public double DiscountPercent
+        {
+            get => _discountPercent;
+            set
+            {
+                if (_discountPercent == value) return;
+                _discountPercent = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasDiscount));
+                OnPropertyChanged(nameof(DiscountedPrice));
+                OnPropertyChanged(nameof(DiscountAmount));
+                _discountEditInput = value.ToString(CultureInfo.InvariantCulture);
+                OnPropertyChanged(nameof(DiscountEditInput));
+            }
+        }
+
+        public bool HasDiscount => DiscountPercent > 0;
+
+        // Rounded to 2 decimal places, same convention as every other
+        // currency figure this app displays (StringFormat={}{0:0.00}
+        // throughout the XAML) -- computed here rather than in the View so
+        // Checkout's future integration (flagged, not yet built -- see
+        // InventoryViewModel's class doc comment) has one already-correct
+        // place to read a discounted price from, instead of re-deriving
+        // the same formula a second time.
+        public double DiscountedPrice => System.Math.Round(Price * (1 - DiscountPercent / 100.0), 2);
+
+        // The currency amount taken off, shown with a leading "-" in the
+        // View exactly the way CheckoutView.xaml's own DiscountAmount line
+        // already does (StringFormat={}-{0:0.00}) -- the visual reference
+        // point from the screenshot this feature was requested from.
+        public double DiscountAmount => System.Math.Round(Price * DiscountPercent / 100.0, 2);
+
+        // Edit buffer for the Discounts page's per-row "new %" TextBox --
+        // same buffer-not-live-binding reasoning as AdjustInput/EditCost/
+        // EditPrice elsewhere in this class (a partial/invalid typed value
+        // never touches the real DiscountPercent until explicitly saved).
+        // Initialized from the real value at construction and re-synced by
+        // DiscountPercent's own setter above on every subsequent change
+        // (bulk-apply, Discounts-page Save, or Remove), so this only ever
+        // shows something stale while the user is actively mid-edit in the
+        // box, never after any actual change lands.
+        private string _discountEditInput = "0";
+        public string DiscountEditInput
+        {
+            get => _discountEditInput;
+            set { if (_discountEditInput == value) return; _discountEditInput = value; OnPropertyChanged(); }
+        }
 
         private string _barcode;
         public string Barcode
@@ -196,6 +269,8 @@ namespace PosSystem.App.ViewModels
             Type = model.Type;
             _barcode = model.Barcode;
             _quantity = model.Quantity;
+            _discountPercent = model.DiscountPercent;
+            _discountEditInput = model.DiscountPercent.ToString(CultureInfo.InvariantCulture);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
