@@ -53,20 +53,44 @@ motherboard UUID blindly.
 
 ## License key format
 
+**Status: implemented** — `Core.Licensing/Signing/LicenseData.cs`,
+`RsaKeyPairGenerator.cs`, `LicenseSigner.cs`, `LicenseVerifier.cs`.
+
 - A signed blob containing: machine fingerprint (CPU ID + motherboard
   UUID, hashed), issue date, expiry date, license tier/notes.
-- Signed with **Ed25519** (or RSA if tooling is easier on the admin side —
-  decide during implementation) using a **private key Baraa holds and never
-  ships**.
+- Signed with **RSA (3072-bit), not Ed25519** — decided during
+  implementation. Ed25519 has no native .NET Framework support and would
+  need a NuGet package, which can't be restored from Baraa's Linux
+  environment (same blocker hit with ClosedXML). RSA
+  (`RSACryptoServiceProvider`) is built into the framework, zero
+  dependencies, and verification cost is negligible even on old client
+  hardware — signing only happens on Baraa/Mahmoud's own machine.
+- Uses a **private key Baraa holds and never ships**.
 - The POS app only ever embeds the **public** key, used to verify the
   signature. Even a fully decompiled app can't forge a valid key without
   the private key.
 - Stored as a small file (`license.dat`) or a row in the SQLite DB,
   encrypted at rest either way.
 
+**Status: implemented** — `Core.Licensing/Storage/LicenseStorage.cs`.
+Stored as `Documents\PosSystem\license.dat` (same folder the database
+lives in, for the same reasons: visible, survives updates/uninstalls).
+Encrypted at rest with **Windows DPAPI, machine scope**
+(`DataProtectionScope.LocalMachine`) — chosen as a second, independent
+binding layer on top of the RSA signature: a `license.dat` copied off the
+machine can't be decrypted at all on another machine, regardless of
+whether its CPU/motherboard happen to match. `Core.Licensing`
+deliberately does not reference `PosSystem.Core`, so the folder name
+constant is duplicated rather than shared — keep both in sync if the DB
+location ever moves again.
+
 ---
 
 ## Validation logic (in the POS app)
+
+**Status: implemented** — `Core.Licensing/Validation/LicenseValidator.cs`
+(+ `LicenseStatus.cs`), wired into `App.xaml.cs.OnStartup` and
+`Views/ActivationWindow.xaml(.cs)`.
 
 On startup:
 1. Read the stored license blob.
@@ -84,16 +108,41 @@ On startup:
    or silently degrading. Never leak why validation failed beyond that
    (don't hand a would-be cracker a debug map).
 
-**Decision to make during implementation:** hard-lock immediately on
-expiry, or allow a short grace period (e.g. 3 days with a warning banner)
-before locking. Affects support load — Baraa to decide.
+**Decision made during implementation:** hard-lock immediately on
+expiry — no grace period. `LicenseValidator` rejects the moment
+`DateTime.UtcNow` passes `ExpiresUtc`, showing the same generic
+"invalid or expired" message as every other failure case. Simpler to
+reason about and matches the plan's anti-info-leak principle (a grace
+period with its own countdown/banner would need distinct UI and would
+telegraph more about internal state to someone probing the app).
 
 ---
 
 ## Admin key-generation tool
 
-Separate from the client app — **never shipped to clients.** Console or
-small GUI tool, used only by Baraa/Mahmoud.
+**Status: implemented** — `LicenseAdminTool` project (console app),
+references `Core.Licensing`. Not shipped to clients — lives in the
+private repo only, run locally by Baraa/Mahmoud.
+
+A real 3072-bit RSA keypair was generated 2026-09-04:
+- **Private key**: `PrivateSigningKey.xml` at the repo root, plain and
+  uncompiled. Originally committed per an earlier decision ("repo is
+  private anyway"), then reconsidered — now added to `.gitignore` and
+  must never be committed. Reasoning: git history is permanent, so even
+  in a private repo a single accidental commit (or the repo ever being
+  forked/cloned/leaked down the line) would expose the key forever, and
+  possession of it means being able to forge a valid license for any
+  machine. The file now lives only on Baraa's and Mahmoud's local disks,
+  copied out-of-band (not through git) if it ever needs to be shared
+  between the two of you. If it's ever exposed anyway, the fix is
+  generating a new keypair, updating `LicensePublicKey.Xml` below, and
+  reissuing every outstanding client license — old licenses signed with
+  the old key stop validating.
+- **Public key**: embedded as `Core.Licensing/Signing/LicensePublicKey.cs`
+  (a plain constant) — ships inside `PosSystem.App`, safe to expose even
+  in a decompiled build.
+
+Tool is interactive (`LicenseAdminTool/Program.cs`):
 
 Inputs:
 - Client's machine fingerprint (CPU ID + motherboard UUID) — client's copy
@@ -130,15 +179,16 @@ later if key generation becomes frequent enough to be annoying.
 
 ## Open questions / decisions still pending
 
-- [ ] RSA vs Ed25519 for signing (leaning Ed25519 — smaller keys/signatures,
-      good .NET support via a NuGet package — confirm library availability
-      for .NET Framework 4.8 during implementation).
-- [ ] Hard-lock vs grace period on expiry.
-- [ ] Console vs GUI for the admin key-gen tool.
-- [ ] Where the licensing code lives: new `Core.Licensing` project vs. a
-      folder inside an existing project. (Leaning a new project — keeps it
-      cleanly separable and easier to obfuscate/exclude from any future
-      open-sourcing of other parts.)
+- [x] RSA vs Ed25519 for signing — **decided: RSA 3072-bit**, no NuGet
+      dependency needed (see License key format section above).
+- [x] Hard-lock vs grace period on expiry — **decided: hard-lock**, no
+      grace period (see "Validation logic" section above).
+- [x] Console vs GUI for the admin key-gen tool — **decided: console**
+      (`LicenseAdminTool`), fast to build and sufficient for occasional
+      use by Baraa/Mahmoud.
+- [x] Where the licensing code lives — **decided: new `Core.Licensing`
+      project**, added to `PosSystem.sln`, keeps it cleanly separable and
+      easier to obfuscate/exclude later.
 - [ ] Exact WMI/P-Invoke calls to read CPU ID and motherboard UUID
       reliably on old, low-spec Windows machines — needs testing on
       representative hardware, not just Baraa's dev machine.

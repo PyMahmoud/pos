@@ -181,6 +181,13 @@
     <Compile Include="Views\HelpView.xaml.cs">
       <DependentUpon>HelpView.xaml</DependentUpon>
     </Compile>
+    <Page Include="Views\ActivationWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="Views\ActivationWindow.xaml.cs">
+      <DependentUpon>ActivationWindow.xaml</DependentUpon>
+    </Compile>
     <Page Include="Localization\Strings.English.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -239,6 +246,10 @@
     <ProjectReference Include="..\PosSystem.Core\PosSystem.Core.csproj">
       <Project>{A1B2C3D4-0001-4E5F-9A2B-000000000001}</Project>
       <Name>PosSystem.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Core.Licensing\Core.Licensing.csproj">
+      <Project>{A1B2C3D4-0003-4E5F-9A2B-000000000003}</Project>
+      <Name>Core.Licensing</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

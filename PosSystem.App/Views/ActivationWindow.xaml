@@ -1,0 +1,201 @@
+<Window x:Class="PosSystem.App.Views.ActivationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{DynamicResource ActivationTitle}"
+        Width="640" Height="760"
+        MinWidth="560" MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize"
+        Background="{DynamicResource SurfaceBrush}"
+        FlowDirection="{DynamicResource AppFlowDirection}"
+        FontFamily="{StaticResource AppFontFamily}">
+    <Window.Resources>
+        <!--
+            Same reasoning as NavStyles.xaml's ThemeToggleButtonStyle: the
+            default WPF Button chrome ignores Background/CornerRadius, so a
+            plain Border set via Button.Resources never actually rounds
+            anything — this is a real ControlTemplate override instead,
+            driven entirely by TemplateBinding so one style covers the
+            filled Primary button, the muted Secondary-container Copy
+            button, and the outlined Exit button just by setting different
+            Background/Foreground/BorderBrush per instance below.
+        -->
+        <Style x:Key="ActivationButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                              TextElement.FontWeight="{TemplateBinding FontWeight}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.88" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.75" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <!--
+        Shown instead of MainWindow (see App.xaml.cs.OnStartup) whenever
+        LicenseValidator finds no valid license on this machine — first
+        run, expired, or moved to different hardware. Not part of
+        MainViewModel's normal sidebar navigation, since the whole app is
+        gated behind this until it succeeds.
+
+        Deliberately plain code-behind rather than a ViewModel: this
+        screen has no ongoing state to bind beyond what a handful of
+        fields already cover, and it only ever runs once per
+        activation/reactivation, not as part of the app's regular
+        screen-switching flow. See ActivationWindow.xaml.cs.
+    -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32">
+        <StackPanel MaxWidth="520" HorizontalAlignment="Stretch">
+
+            <TextBlock Text="{DynamicResource ActivationTitle}"
+                       Style="{StaticResource HeadlineMedium}"
+                       Foreground="{DynamicResource OnSurfaceBrush}" />
+            <TextBlock Text="{DynamicResource ActivationSubtitle}"
+                       Style="{StaticResource BodyLarge}"
+                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                       Margin="0,6,0,24"
+                       TextWrapping="Wrap" />
+
+            <!-- Fingerprint card -->
+            <Border Background="{DynamicResource SurfaceContainerBrush}"
+                    BorderBrush="{DynamicResource OutlineVariantBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    Padding="20"
+                    Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource ActivationFingerprintTitle}"
+                               Style="{StaticResource TitleMedium}"
+                               Foreground="{DynamicResource OnSurfaceBrush}" />
+                    <TextBlock Text="{DynamicResource ActivationFingerprintSubtitle}"
+                               Style="{StaticResource BodyLarge}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               Margin="0,4,0,14"
+                               TextWrapping="Wrap" />
+
+                    <TextBlock Text="{DynamicResource ActivationHashLabel}"
+                               Style="{StaticResource LabelSmall}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               Margin="0,0,0,4" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="HashTextBox"
+                                 Grid.Column="0"
+                                 Style="{StaticResource ThemedTextBoxStyle}"
+                                 IsReadOnly="True"
+                                 FontFamily="Consolas"
+                                 TextWrapping="Wrap"
+                                 Margin="0,0,10,0" />
+                        <Button x:Name="CopyButton"
+                                Grid.Column="1"
+                                Style="{StaticResource ActivationButtonStyle}"
+                                Content="{DynamicResource ActivationCopyButton}"
+                                Click="CopyButton_Click"
+                                Padding="16,10"
+                                Background="{DynamicResource SecondaryContainerBrush}"
+                                Foreground="{DynamicResource OnSecondaryContainerBrush}"
+                                BorderThickness="0" />
+                    </Grid>
+                    <TextBlock x:Name="CopiedStatusText"
+                               Text="{DynamicResource ActivationCopiedStatus}"
+                               Style="{StaticResource LabelSmall}"
+                               Foreground="{DynamicResource TertiaryBrush}"
+                               Margin="0,6,0,0"
+                               Visibility="Collapsed" />
+
+                    <Expander x:Name="DetailsExpander"
+                              Header="{DynamicResource ActivationDetailsToggle}"
+                              Margin="0,14,0,0"
+                              Foreground="{DynamicResource OnSurfaceVariantBrush}">
+                        <TextBlock x:Name="RawDetailsTextBlock"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   FontFamily="Consolas"
+                                   FontSize="12"
+                                   Margin="0,10,0,0"
+                                   TextWrapping="Wrap" />
+                    </Expander>
+                </StackPanel>
+            </Border>
+
+            <!-- Activation code entry card -->
+            <Border Background="{DynamicResource SurfaceContainerBrush}"
+                    BorderBrush="{DynamicResource OutlineVariantBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    Padding="20"
+                    Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource ActivationPasteTitle}"
+                               Style="{StaticResource TitleMedium}"
+                               Foreground="{DynamicResource OnSurfaceBrush}" />
+                    <TextBlock Text="{DynamicResource ActivationPasteHint}"
+                               Style="{StaticResource BodyLarge}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               Margin="0,4,0,14"
+                               TextWrapping="Wrap" />
+
+                    <TextBox x:Name="LicenseBlobTextBox"
+                             Style="{StaticResource ThemedTextBoxStyle}"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             MinHeight="110"
+                             VerticalScrollBarVisibility="Auto"
+                             FontFamily="Consolas"
+                             FontSize="12" />
+
+                    <TextBlock x:Name="ErrorTextBlock"
+                               Style="{StaticResource BodyLarge}"
+                               Foreground="{DynamicResource ErrorBrush}"
+                               Margin="0,12,0,0"
+                               TextWrapping="Wrap"
+                               Visibility="Collapsed" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="ExitButton"
+                        Style="{StaticResource ActivationButtonStyle}"
+                        Content="{DynamicResource ActivationExitButton}"
+                        Click="ExitButton_Click"
+                        Padding="18,12"
+                        Margin="0,0,10,0"
+                        Background="Transparent"
+                        Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                        BorderBrush="{DynamicResource OutlineVariantBrush}"
+                        BorderThickness="1" />
+                <Button x:Name="ActivateButton"
+                        Style="{StaticResource ActivationButtonStyle}"
+                        Content="{DynamicResource ActivationActivateButton}"
+                        Click="ActivateButton_Click"
+                        Padding="24,12"
+                        Background="{DynamicResource PrimaryBrush}"
+                        Foreground="{DynamicResource OnPrimaryBrush}"
+                        BorderThickness="0"
+                        FontWeight="SemiBold" />
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</Window>

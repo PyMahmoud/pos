@@ -361,3 +361,16 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# RSA private signing key for RovaShop POS licensing (Licensing-Plan.md,
+# Phase 4). Must NEVER be committed, even though this repo is private:
+# git history is forever, so a single accidental commit (or a future
+# fork/clone/leak) permanently exposes the key that can forge a license
+# for any client machine. Keep this file locally on Baraa's and Mahmoud's
+# machines only, outside git entirely.
+PrivateSigningKey.xml
+
+# Anything the admin license tool writes out locally (issued license
+# blobs) — these are per-client artifacts, not something the repo needs
+# to track.
+*.lic

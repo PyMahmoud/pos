@@ -456,4 +456,21 @@
     <system:String x:Key="HelpNeedMoreTitle">ما زلت بحاجة إلى مساعدة؟</system:String>
     <system:String x:Key="HelpNeedMoreBody">إذا لم يجب هذا الدليل على سؤالك، استخدم بطاقة التواصل مع الدعم أدناه للاتصال أو المراسلة عبر واتساب أو البريد الإلكتروني مباشرة.</system:String>
 
+    <!-- شاشة التفعيل (خطة الترخيص، المرحلة 5) -->
+    <system:String x:Key="ActivationTitle">تفعيل نظام RovaShop POS</system:String>
+    <system:String x:Key="ActivationSubtitle">يحتاج هذا التثبيت إلى ترخيص قبل أن يمكن استخدامه.</system:String>
+    <system:String x:Key="ActivationFingerprintTitle">معرّف هذا الجهاز</system:String>
+    <system:String x:Key="ActivationFingerprintSubtitle">أرسل الرمز أدناه إلى المورّد للحصول على رمز تفعيل لهذا الجهاز.</system:String>
+    <system:String x:Key="ActivationHashLabel">معرّف الجهاز</system:String>
+    <system:String x:Key="ActivationCopyButton">نسخ</system:String>
+    <system:String x:Key="ActivationCopiedStatus">تم النسخ.</system:String>
+    <system:String x:Key="ActivationDetailsToggle">عرض تفاصيل الجهاز الخام</system:String>
+    <system:String x:Key="ActivationPasteTitle">إدخال رمز التفعيل</system:String>
+    <system:String x:Key="ActivationPasteHint">الصق رمز التفعيل الذي أرسله لك المورّد.</system:String>
+    <system:String x:Key="ActivationActivateButton">تفعيل</system:String>
+    <system:String x:Key="ActivationErrorMissing">يرجى لصق رمز التفعيل الذي استلمته قبل المتابعة.</system:String>
+    <system:String x:Key="ActivationErrorGeneric">رمز التفعيل هذا غير صالح لهذا الجهاز. يرجى التواصل مع الدعم.</system:String>
+    <system:String x:Key="ActivationSaveError">تعذر حفظ الترخيص على هذا الجهاز. حاول مرة أخرى أو تواصل مع الدعم.</system:String>
+    <system:String x:Key="ActivationExitButton">خروج</system:String>
+
 </ResourceDictionary>

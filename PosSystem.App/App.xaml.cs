@@ -19,6 +19,15 @@ namespace PosSystem.App
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
             DispatcherUnhandledException += OnDispatcherUnhandledException;
 
+            // StartupUri was removed from App.xaml (Licensing-Plan.md,
+            // Phase 5) — MainWindow is no longer created automatically.
+            // OnExplicitShutdown here so ActivationWindow closing (below)
+            // never triggers the app quitting on its own before
+            // MainWindow gets a chance to open; switched to
+            // OnMainWindowClose once a real license is confirmed and
+            // MainWindow is actually up.
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
             // Runs BEFORE base.OnStartup — StartupUri makes the base call
             // create and show MainWindow synchronously, and MainWindow's
             // default screen (Dashboard) reads Bills/Customers immediately
@@ -34,6 +43,39 @@ namespace PosSystem.App
             AppSettings.Load();
 
             base.OnStartup(e);
+
+            if (!EnsureLicensed())
+            {
+                Shutdown();
+                return;
+            }
+
+            var mainWindow = new MainWindow();
+            MainWindow = mainWindow;
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
+            mainWindow.Show();
+        }
+
+        /// <summary>
+        /// Returns true once this machine has a valid license — either it
+        /// already did, or the person just activated it successfully in
+        /// ActivationWindow. Returns false if they closed/exited that
+        /// window without activating, in which case the caller shuts the
+        /// app down rather than falling through to MainWindow.
+        /// </summary>
+        private static bool EnsureLicensed()
+        {
+            Core.Licensing.Validation.LicenseValidationResult result =
+                Core.Licensing.Validation.LicenseValidator.ValidateStoredLicense();
+
+            if (result.IsValid)
+            {
+                return true;
+            }
+
+            var activationWindow = new Views.ActivationWindow();
+            bool? activated = activationWindow.ShowDialog();
+            return activated == true;
         }
 
         private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

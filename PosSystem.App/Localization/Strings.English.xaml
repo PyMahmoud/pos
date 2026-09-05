@@ -583,4 +583,24 @@ Access Control: choose which of those areas actually require the password -- e.g
     <system:String x:Key="HelpNeedMoreTitle">Still Need Help?</system:String>
     <system:String x:Key="HelpNeedMoreBody">If this guide didn't answer your question, use the Contact Support card below to call, WhatsApp, or email us directly.</system:String>
 
+    <!-- Activation gate (Licensing-Plan.md, Phase 5) -- shown instead of
+         MainWindow on any launch where no valid license is found (first
+         run, expired, hardware changed, etc). See
+         Views/ActivationWindow.xaml. -->
+    <system:String x:Key="ActivationTitle">Activate RovaShop POS</system:String>
+    <system:String x:Key="ActivationSubtitle">This installation needs a license before it can be used.</system:String>
+    <system:String x:Key="ActivationFingerprintTitle">This Machine's ID</system:String>
+    <system:String x:Key="ActivationFingerprintSubtitle">Send the code below to your vendor to receive an activation code for this machine.</system:String>
+    <system:String x:Key="ActivationHashLabel">Machine ID</system:String>
+    <system:String x:Key="ActivationCopyButton">Copy</system:String>
+    <system:String x:Key="ActivationCopiedStatus">Copied.</system:String>
+    <system:String x:Key="ActivationDetailsToggle">Show raw hardware details</system:String>
+    <system:String x:Key="ActivationPasteTitle">Enter Activation Code</system:String>
+    <system:String x:Key="ActivationPasteHint">Paste the activation code your vendor sent you.</system:String>
+    <system:String x:Key="ActivationActivateButton">Activate</system:String>
+    <system:String x:Key="ActivationErrorMissing">Please paste the activation code you received before continuing.</system:String>
+    <system:String x:Key="ActivationErrorGeneric">This activation code isn't valid for this machine. Please contact support.</system:String>
+    <system:String x:Key="ActivationSaveError">Couldn't save the license on this machine. Please try again or contact support.</system:String>
+    <system:String x:Key="ActivationExitButton">Exit</system:String>
+
 </ResourceDictionary>

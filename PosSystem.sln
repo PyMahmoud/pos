@@ -6,6 +6,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PosSystem.Core", "PosSystem
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PosSystem.App", "PosSystem.App\PosSystem.App.csproj", "{A1B2C3D4-0002-4E5F-9A2B-000000000002}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Licensing", "Core.Licensing\Core.Licensing.csproj", "{A1B2C3D4-0003-4E5F-9A2B-000000000003}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LicenseAdminTool", "LicenseAdminTool\LicenseAdminTool.csproj", "{A1B2C3D4-0004-4E5F-9A2B-000000000004}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +24,14 @@ Global
 		{A1B2C3D4-0002-4E5F-9A2B-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1B2C3D4-0002-4E5F-9A2B-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1B2C3D4-0002-4E5F-9A2B-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0003-4E5F-9A2B-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0003-4E5F-9A2B-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0003-4E5F-9A2B-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0003-4E5F-9A2B-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0004-4E5F-9A2B-000000000004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0004-4E5F-9A2B-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0004-4E5F-9A2B-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0004-4E5F-9A2B-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
