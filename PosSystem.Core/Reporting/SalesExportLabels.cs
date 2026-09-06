@@ -55,11 +55,14 @@ namespace PosSystem.Core.Reporting
         // what was actually sold.
         public string ColItems { get; set; } = "Items";
         public string ColSubtotal { get; set; } = "Subtotal";
-        // Bills.Discount exists and is read here, but every bill currently
-        // writes 0 at sale time (CheckoutViewModel.CompleteSale -- no UI
-        // sets a discount yet). Exported anyway so the column is already in
-        // place, correct, and non-breaking the day a discount UI ships,
-        // instead of this being a second change later.
+        // Bills.Discount is written from the actual Checkout discount
+        // (Discount (2026-09-01) / Inventory's separate product-level
+        // Discounts feature (2026-09-04) doesn't feed this column -- see
+        // Core.Models.Goods.DiscountPercent's doc comment for why that's a
+        // different, standing-markdown discount not yet wired into
+        // Checkout's sale price at all) -- this comment previously said
+        // every bill wrote 0 here because no discount UI existed yet; that
+        // stopped being true once Checkout's own discount field shipped.
         public string ColDiscount { get; set; } = "Discount";
         public string ColTax { get; set; } = "Tax";
         public string ColTotal { get; set; } = "Total";
@@ -74,11 +77,19 @@ namespace PosSystem.Core.Reporting
         public string ColUnitCost { get; set; } = "Unit Cost";
         public string ColLineTotal { get; set; } = "Line Total";
         public string ColProfit { get; set; } = "Profit";
-        // Sells.Returned is written "No" on every line at sale time and
-        // never flipped elsewhere in this app today (no returns workflow
-        // exists yet) -- surfaced anyway so a return doesn't silently read
-        // as an ordinary sale in this sheet the day that workflow does
-        // exist, and so this isn't a second export change when it ships.
+        // Sells.Returned is written "No" at sale time and normally never
+        // touched again -- a returns workflow DOES exist now
+        // (BillsBrowserViewModel's staged returns), but per that class's
+        // "Return math" design a wholly-returned line is dropped entirely
+        // from the new revision it creates rather than kept and flagged, so
+        // there is no row left anywhere to mark "Yes" for a full return.
+        // Only a PARTIAL return (the line survives at a reduced quantity)
+        // actually flips this to "Yes" on the surviving line (see
+        // BillsBrowserViewModel.SaveReturns, fixed 2026-09-05 -- it used to
+        // silently carry the original "No" forward even then, making this
+        // column dead in every case). A fully-returned line's return is
+        // still visible in the bill's own superseded/current revision pair
+        // via Bills.IsCurrent, just not through this per-line column.
         public string ColReturned { get; set; } = "Returned";
         public string ReturnedYesLabel { get; set; } = "Yes";
         public string ReturnedNoLabel { get; set; } = "No";

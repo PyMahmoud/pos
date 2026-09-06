@@ -600,10 +600,22 @@ namespace PosSystem.App.ViewModels
                     returnedLineCount++;
 
                     double newQuantity = line.Quantity - pendingQuantity;
-                    if (newQuantity <= 0) continue; // fully returned — drop the line entirely
+                    if (newQuantity <= 0) continue; // fully returned - drop the line entirely
 
                     line.Quantity = newQuantity;
                     line.Earned = (line.Price - line.Cost) * newQuantity;
+                    // Returned flag (2026-09-05 fix) -- this line previously
+                    // carried its ORIGINAL Returned value ("No", set at sale
+                    // time and never touched again) straight into the new
+                    // revision even though a real partial return just
+                    // happened to it -- Sells.Returned/the Excel export's
+                    // Returned column could never show "Yes" for ANY return,
+                    // partial or whole, since a wholly-returned line is
+                    // dropped above with no replacement row at all to mark.
+                    // This at least makes the partial case (which DOES
+                    // persist into the new current revision, unlike a full
+                    // return) actually reflect what happened to it.
+                    line.Returned = "Yes";
                     remainingLines.Add(line);
                 }
 

@@ -390,6 +390,19 @@ namespace PosSystem.App.ViewModels
             var bills = _billsData.ReadBillsByCustomer("bills", Customer.Id).Where(b => b.IsCurrent).ToList();
             var billIds = new HashSet<int>(bills.Select(b => b.Id));
 
+            // Discount (2026-09-05 fix) -- same bug class already found and
+            // fixed on Dashboard (see DashboardViewModel.LineRevenue's doc
+            // comment for the root cause): a Sells row's Price is always
+            // the bill's full, PRE-discount unit price. Summing
+            // Quantity*Price directly ignored the bill's own DiscountPercent
+            // entirely, overstating this customer's real purchase revenue
+            // by the exact amount any Checkout discount took off. Keyed by
+            // bills.Id -- simpler than Dashboard's Billnumber-based lookup,
+            // since Sells.BillId here references bills.Id directly and
+            // `bills` above is already filtered to IsCurrent, so there's
+            // exactly one Bills row per Id to look up.
+            var billIdToDiscountPercent = bills.ToDictionary(b => b.Id, b => b.DiscountPercent);
+
             var lines = _sellsData.ReadPendingSell("sells")
                 .Where(s => billIds.Contains(s.BillId));
 
@@ -399,7 +412,11 @@ namespace PosSystem.App.ViewModels
                 {
                     Name = g.Key,
                     TotalQuantity = g.Sum(s => s.Quantity),
-                    TotalRevenue = g.Sum(s => s.Quantity * s.Price)
+                    TotalRevenue = g.Sum(s =>
+                    {
+                        double discountPercent = billIdToDiscountPercent.TryGetValue(s.BillId, out double dp) ? dp : 0;
+                        return s.Quantity * s.Price * (1 - discountPercent / 100.0);
+                    })
                 })
                 .OrderByDescending(x => x.TotalRevenue);
 

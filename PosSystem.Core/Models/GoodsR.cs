@@ -64,6 +64,12 @@ namespace PosSystem.Core.Models
             set
             {
                 price = value; NotifyPropertyChanged("Price");
+                // Discount (2026-09-05) -- these derive from Price, so a
+                // Price change has to re-notify them too, same reasoning
+                // as InventoryRow.Price's setter (App project).
+                NotifyPropertyChanged("HasDiscount");
+                NotifyPropertyChanged("DiscountedPrice");
+                NotifyPropertyChanged("DiscountAmount");
                 //NotifyPropertyChanged("PriceBrush");
             }
         }
@@ -97,7 +103,29 @@ namespace PosSystem.Core.Models
         // construction anyway); callers that need to carry a real
         // DiscountPercent through set this property directly after
         // construction instead (see InventoryViewModel.LoadGoods).
-        public double DiscountPercent { get; set; }
+        private double discountPercent;
+        public double DiscountPercent
+        {
+            get => discountPercent;
+            set
+            {
+                discountPercent = value;
+                NotifyPropertyChanged("DiscountPercent");
+                NotifyPropertyChanged("HasDiscount");
+                NotifyPropertyChanged("DiscountedPrice");
+                NotifyPropertyChanged("DiscountAmount");
+            }
+        }
+
+        // Discount display helpers (added 2026-09-05, Checkout's item grid
+        // and CartLine both need these) -- identical formulas to
+        // InventoryRow's own HasDiscount/DiscountedPrice/DiscountAmount
+        // (App project) so a product's markdown reads the same way
+        // everywhere it's shown: Inventory's product card, Checkout's item
+        // tile, and a cart line once it's added.
+        public bool HasDiscount => DiscountPercent > 0;
+        public double DiscountedPrice => Math.Round(Price * (1 - DiscountPercent / 100.0), 2);
+        public double DiscountAmount => Math.Round(Price * DiscountPercent / 100.0, 2);
        
 
         public event PropertyChangedEventHandler PropertyChanged;

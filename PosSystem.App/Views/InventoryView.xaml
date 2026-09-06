@@ -247,10 +247,30 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Margin="0,0,0,16">
-                <TextBlock Text="{DynamicResource InventoryListTitle}"
-                           Style="{StaticResource TitleMedium}"
-                           Foreground="{DynamicResource OnSurfaceBrush}"
-                           Margin="0,0,0,12" />
+                <!-- Title row (restructured 2026-09-04) - Discounts moved
+                     here, next to the page title, instead of sitting inside
+                     the Undo/Redo/Discard/Save Changes group below (explicit
+                     feedback: it read as part of that group, which it isn't -
+                     it's a page-level nav button, same category as
+                     Checkout's Bills button, not an editing-session action). -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{DynamicResource InventoryListTitle}"
+                               Style="{StaticResource TitleMedium}"
+                               Foreground="{DynamicResource OnSurfaceBrush}"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1"
+                            Content="{DynamicResource InventoryDiscountsButton}"
+                            Command="{Binding OpenDiscountsCommand}"
+                            Background="{DynamicResource TertiaryContainerBrush}"
+                            Foreground="{DynamicResource OnTertiaryContainerBrush}"
+                            Template="{StaticResource SelectableButtonTemplate}"
+                            Padding="14,8" />
+                </Grid>
 
                 <!-- Undo / Redo / Save Changes / Discard (2026-09-03,
                      explicit request) - see InventoryViewModel's
@@ -269,28 +289,12 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="8" />
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <!-- Discounts page entry point (added 2026-09-04) -
-                         same placement idea as Checkout's own Bills browser
-                         button (a plain nav button that opens a full-screen
-                         overlay, see the Grid at the bottom of this file) -
-                         first in this row since it's a whole separate page,
-                         not one of the Undo/Redo/Discard/Save Changes group
-                         it sits next to. -->
                     <Button Grid.Column="0"
-                            Content="{DynamicResource InventoryDiscountsButton}"
-                            Command="{Binding OpenDiscountsCommand}"
-                            Background="{DynamicResource SurfaceContainerHighBrush}"
-                            Foreground="{DynamicResource OnSurfaceBrush}"
-                            Template="{StaticResource SelectableButtonTemplate}"
-                            Padding="14,8" />
-                    <Button Grid.Column="2"
                             Content="{DynamicResource InventoryUndoButton}"
                             Command="{Binding UndoCommand}"
                             IsEnabled="{Binding CanUndo}"
@@ -298,7 +302,7 @@
                             Foreground="{DynamicResource OnSurfaceBrush}"
                             Template="{StaticResource SelectableButtonTemplate}"
                             Padding="14,8" />
-                    <Button Grid.Column="4"
+                    <Button Grid.Column="2"
                             Content="{DynamicResource InventoryRedoButton}"
                             Command="{Binding RedoCommand}"
                             IsEnabled="{Binding CanRedo}"
@@ -306,7 +310,7 @@
                             Foreground="{DynamicResource OnSurfaceBrush}"
                             Template="{StaticResource SelectableButtonTemplate}"
                             Padding="14,8" />
-                    <Button Grid.Column="6"
+                    <Button Grid.Column="4"
                             Content="{DynamicResource InventoryDiscardChangesButton}"
                             Command="{Binding DiscardChangesCommand}"
                             Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -314,7 +318,7 @@
                             Foreground="{DynamicResource OnErrorContainerBrush}"
                             Template="{StaticResource SelectableButtonTemplate}"
                             Padding="14,8" />
-                    <Button Grid.Column="8"
+                    <Button Grid.Column="6"
                             Content="{DynamicResource InventorySaveChangesButton}"
                             Command="{Binding SaveChangesCommand}"
                             Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -409,40 +413,63 @@
                                        FontWeight="SemiBold" />
                         </StackPanel>
 
-                        <!-- Label added 2026-09-04 - this was the only
-                             input on the whole screen with no caption above
-                             it, so an empty ComboBox with nothing but a
-                             chevron just looked broken/blank until clicked
-                             (flagged via screenshot). Same LabelSmall/
-                             OnSurfaceVariantBrush caption pattern every
-                             other field on this screen already uses. -->
-                        <TextBlock Text="{DynamicResource InventoryBulkCategoryPickerLabel}"
-                                   Style="{StaticResource LabelSmall}"
-                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                   Margin="0,0,0,4" />
-                        <ComboBox ItemsSource="{Binding AllCategoryNames}"
-                                  SelectedItem="{Binding BulkCategoryTarget, Mode=TwoWay}"
-                                  Style="{StaticResource ThemedComboBoxStyle}"
-                                  Margin="0,0,0,10" />
-
-                        <!-- Bulk discount (added 2026-09-04) - a plain %
-                             TextBox next to the category picker above,
-                             same "one input, one action button" shape.
-                             Overwrites any existing discount on every
-                             selected product (see InventoryViewModel.
-                             BulkAddDiscounts' comment for why that's correct
-                             given a product can never have more than one
-                             discount at a time). -->
-                        <TextBlock Text="{DynamicResource InventoryBulkDiscountPercentLabel}"
-                                   Style="{StaticResource LabelSmall}"
-                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                   Margin="0,0,0,4" />
-                        <TextBox Text="{Binding BulkDiscountPercentInput, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource ThemedTextBoxStyle}"
-                                 Margin="0,0,0,10" />
-
-                        <Grid Margin="0,0,0,8">
+                        <!-- Compacted 2026-09-04 - "Move to category" and
+                             "Discount (%)" now side by side instead of each
+                             taking a full-width row, and all three actions
+                             (Change Category / Add Discounts / Delete
+                             Selected) collapsed into one row instead of two -
+                             this whole card was tall enough to push the
+                             product grid below out of view while selecting
+                             (explicit feedback, screenshot showed zero
+                             product cards visible with only 1 item
+                             selected). Nothing removed, same five controls,
+                             just laid out to take roughly half the vertical
+                             space. -->
+                        <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <!-- Label added 2026-09-04 - this was the only
+                                     input on the whole screen with no caption above
+                                     it, so an empty ComboBox with nothing but a
+                                     chevron just looked broken/blank until clicked
+                                     (flagged via screenshot). Same LabelSmall/
+                                     OnSurfaceVariantBrush caption pattern every
+                                     other field on this screen already uses. -->
+                                <TextBlock Text="{DynamicResource InventoryBulkCategoryPickerLabel}"
+                                           Style="{StaticResource LabelSmall}"
+                                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                           Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding AllCategoryNames}"
+                                          SelectedItem="{Binding BulkCategoryTarget, Mode=TwoWay}"
+                                          Style="{StaticResource ThemedComboBoxStyle}" />
+                            </StackPanel>
+
+                            <!-- Bulk discount (added 2026-09-04) - a plain %
+                                 TextBox next to the category picker, same
+                                 "one input, one action button" shape.
+                                 Overwrites any existing discount on every
+                                 selected product (see InventoryViewModel.
+                                 BulkAddDiscounts' comment for why that's correct
+                                 given a product can never have more than one
+                                 discount at a time). -->
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{DynamicResource InventoryBulkDiscountPercentLabel}"
+                                           Style="{StaticResource LabelSmall}"
+                                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                           Margin="0,0,0,4" />
+                                <TextBox Text="{Binding BulkDiscountPercentInput, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource ThemedTextBoxStyle}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="8" />
                                 <ColumnDefinition Width="*" />
@@ -463,15 +490,15 @@
                                     Template="{StaticResource SelectableButtonTemplate}"
                                     Padding="0,10"
                                     HorizontalContentAlignment="Center" />
+                            <Button Grid.Column="4"
+                                    Content="{DynamicResource InventoryBulkDeleteButton}"
+                                    Command="{Binding BulkDeleteCommand}"
+                                    Background="{DynamicResource ErrorContainerBrush}"
+                                    Foreground="{DynamicResource OnErrorContainerBrush}"
+                                    Template="{StaticResource SelectableButtonTemplate}"
+                                    Padding="0,10"
+                                    HorizontalContentAlignment="Center" />
                         </Grid>
-
-                        <Button Content="{DynamicResource InventoryBulkDeleteButton}"
-                                Command="{Binding BulkDeleteCommand}"
-                                Background="{DynamicResource ErrorContainerBrush}"
-                                Foreground="{DynamicResource OnErrorContainerBrush}"
-                                Template="{StaticResource SelectableButtonTemplate}"
-                                Padding="0,10"
-                                HorizontalContentAlignment="Center" />
                     </StackPanel>
                 </Border>
             </StackPanel>

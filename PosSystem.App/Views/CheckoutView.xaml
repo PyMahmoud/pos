@@ -78,7 +78,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="184" Height="128" Margin="0,0,12,12"
+                                <Border Width="184" Height="Auto" MinHeight="128" Margin="0,0,12,12"
                                         CornerRadius="14"
                                         Background="{DynamicResource SurfaceContainerBrush}">
                                     <Border.Style>
@@ -110,11 +110,32 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
+                                            <!-- Discount (added 2026-09-05) - the cashier
+                                                 should see a product is marked down BEFORE
+                                                 adding it, not just after (explicit request).
+                                                 Same struck-through-original/new-price
+                                                 language as Inventory's own product card;
+                                                 the badge itself is skipped here purely for
+                                                 space (this tile is a fixed 128px tall,
+                                                 unlike Inventory's card) - the strikethrough
+                                                 alone already makes "this isn't the normal
+                                                 price" unmistakable. -->
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center"
+                                                        Visibility="{Binding HasDiscount, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <TextBlock Text="{Binding Price, StringFormat={}{0:0.00}}"
+                                                           Style="{StaticResource LabelSmall}"
+                                                           Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                           TextDecorations="Strikethrough" />
+                                                <TextBlock Text="{Binding DiscountedPrice, StringFormat={}{0:0.00}}"
+                                                           Style="{StaticResource TitleMedium}"
+                                                           Foreground="{DynamicResource PrimaryBrush}" />
+                                            </StackPanel>
                                             <TextBlock Grid.Column="0"
                                                        Text="{Binding Price, StringFormat={}{0:0.00}}"
                                                        Style="{StaticResource TitleMedium}"
                                                        Foreground="{DynamicResource PrimaryBrush}"
-                                                       VerticalAlignment="Center" />
+                                                       VerticalAlignment="Center"
+                                                       Visibility="{Binding HasDiscount, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
                                             <Button Grid.Column="1"
                                                     Content="+"
                                                     FontWeight="Bold"
@@ -172,6 +193,7 @@
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto" />
                                                 <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
                                             <Grid Grid.Row="0">
                                                 <Grid.ColumnDefinitions>
@@ -187,7 +209,53 @@
                                                            Foreground="{DynamicResource OnSurfaceBrush}"
                                                            Margin="8,0,0,0" />
                                             </Grid>
-                                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
+
+                                            <!-- Discount "minus theme" (added 2026-09-05,
+                                                 explicit request off a screenshot of
+                                                 Inventory's product card) - the cashier
+                                                 needs to see this specific line already has a
+                                                 product discount baked into it, on top of
+                                                 whatever bill-level discount is entered
+                                                 separately below the cart (see
+                                                 CartLine's class doc comment for how the two
+                                                 stack). Same badge + struck-through-original +
+                                                 new-price + per-unit "-amount" language as
+                                                 Inventory's card and Checkout's own item tile
+                                                 above, just laid out for this narrower 360px
+                                                 cart column. Only rendered when this specific
+                                                 line actually has one - a cart with no
+                                                 discounted products looks exactly like it did
+                                                 before this feature existed. -->
+                                            <StackPanel Grid.Row="1" Margin="0,8,0,0"
+                                                        Visibility="{Binding HasDiscount, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <Border CornerRadius="6" Padding="8,3"
+                                                        HorizontalAlignment="Left"
+                                                        Background="{DynamicResource TertiaryContainerBrush}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{DynamicResource InventoryDiscountBadge}"
+                                                                   Foreground="{DynamicResource OnTertiaryContainerBrush}"
+                                                                   FontWeight="SemiBold"
+                                                                   Margin="0,0,4,0" />
+                                                        <TextBlock Text="{Binding DiscountPercent, StringFormat={}-{0:0.##}%}"
+                                                                   Foreground="{DynamicResource OnTertiaryContainerBrush}"
+                                                                   FontWeight="SemiBold" />
+                                                    </StackPanel>
+                                                </Border>
+                                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                    <TextBlock Text="{Binding OriginalPrice, StringFormat={}{0:0.00}}"
+                                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                               TextDecorations="Strikethrough"
+                                                               Margin="0,0,8,0" />
+                                                    <TextBlock Text="{Binding Price, StringFormat={}{0:0.00}}"
+                                                               Foreground="{DynamicResource PrimaryBrush}"
+                                                               FontWeight="SemiBold" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding DiscountAmountPerUnit, StringFormat={}-{0:0.00}}"
+                                                           Style="{StaticResource LabelSmall}"
+                                                           Foreground="{DynamicResource TertiaryBrush}" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
                                                 <Button Content="−"
                                                         Command="{Binding DataContext.DecrementLineCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"
