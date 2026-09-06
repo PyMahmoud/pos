@@ -126,18 +126,21 @@ private repo only, run locally by Baraa/Mahmoud.
 
 A real 3072-bit RSA keypair was generated 2026-09-04:
 - **Private key**: `PrivateSigningKey.xml` at the repo root, plain and
-  uncompiled. Originally committed per an earlier decision ("repo is
-  private anyway"), then reconsidered — now added to `.gitignore` and
-  must never be committed. Reasoning: git history is permanent, so even
-  in a private repo a single accidental commit (or the repo ever being
-  forked/cloned/leaked down the line) would expose the key forever, and
-  possession of it means being able to forge a valid license for any
-  machine. The file now lives only on Baraa's and Mahmoud's local disks,
-  copied out-of-band (not through git) if it ever needs to be shared
-  between the two of you. If it's ever exposed anyway, the fix is
-  generating a new keypair, updating `LicensePublicKey.Xml` below, and
-  reissuing every outstanding client license — old licenses signed with
-  the old key stop validating.
+  uncompiled. Decision history on this file, for the record: committed
+  initially ("repo is private anyway") → reconsidered and gitignored
+  → reconsidered again and committed once more, explicitly so Mahmoud
+  can use `LicenseAdminTool` too, given the repo will stay private through
+  release. **Current state: committed, not gitignored.**
+  The underlying risk hasn't changed and is worth restating plainly: git
+  history is permanent, so a single accidental repo leak (public flip,
+  clone ending up somewhere it shouldn't, a compromised collaborator
+  account) exposes this key forever, and possession of it means being
+  able to forge a valid license for any machine, silently, with no way
+  for Baraa to know it happened. The mitigation isn't prevention at that
+  point, it's response: if it's ever exposed, generate a new keypair,
+  update `LicensePublicKey.Xml` below, and reissue every outstanding
+  client license — old licenses signed with the old key stop validating
+  the moment the public key is swapped in a new app build.
 - **Public key**: embedded as `Core.Licensing/Signing/LicensePublicKey.cs`
   (a plain constant) — ships inside `PosSystem.App`, safe to expose even
   in a decompiled build.
