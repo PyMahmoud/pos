@@ -374,3 +374,8 @@ PrivateSigningKey.xml
 # blobs) — these are per-client artifacts, not something the repo needs
 # to track.
 *.lic
+
+# ConfuserEx CLI (Licensing-Plan.md, Phase 6) — downloaded manually,
+# per-machine, never committed. See Core.Licensing.csproj's
+# ObfuscateReleaseBuild target for where it's expected to live.
+/tools/ConfuserEx/

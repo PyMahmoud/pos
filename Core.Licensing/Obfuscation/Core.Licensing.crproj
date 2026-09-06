@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project baseDir="..\bin\Release" outputDir="..\bin\Release\Obfuscated" xmlns="http://confuser.codeplex.com">
+  <!--
+    ConfuserEx project for Core.Licensing (Licensing-Plan.md, Phase 6).
+
+    Scoped to Core.Licensing.dll ONLY, per the plan's own guidance: this
+    is the assembly worth raising the bar on (fingerprinting, signing,
+    validation), and NOT PosSystem.App.exe itself — obfuscating a WPF exe
+    risks breaking x:Class/XAML type resolution, InitializeComponent, and
+    resource lookups in ways that can't be verified without a real WPF
+    runtime to click through, which isn't available in the environment
+    this was written in. If PosSystem.App.exe obfuscation is wanted later,
+    it needs its own carefully-scoped rule set (excluding anything XAML
+    touches) and real testing on a Windows machine, not a blind expansion
+    of this file.
+
+    "normal" preset covers renaming, control-flow obfuscation, and
+    anti-tamper — a reasonable default without needing per-protection
+    tuning for a first pass. Revisit if ConfuserEx's own docs recommend
+    against something here once actually run (e.g. anti-tamper is known
+    to sometimes conflict with certain AV heuristics — false positives
+    are a real risk worth watching for on client machines, not just a
+    theoretical one).
+  -->
+  <rule pattern="true" preset="normal" inherit="false" />
+  <module path="Core.Licensing.dll" />
+</project>

@@ -52,4 +52,40 @@
     <Compile Include="Validation\LicenseValidator.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!--
+      Obfuscation (Licensing-Plan.md, Phase 6) — Release builds only,
+      scoped to this assembly (see Obfuscation\Core.Licensing.crproj for
+      why not PosSystem.App.exe). Deliberately opt-in rather than
+      required: if ConfuserEx's CLI isn't present at the expected path,
+      this just logs a message and the plain (unobfuscated) DLL is what
+      ships — so a machine without the tool installed (e.g. GitHub
+      Actions CI today) still gets a working Release build, just not an
+      obfuscated one, instead of a hard build failure.
+
+      $(SolutionDir) is only reliably populated when MSBuild is invoked
+      against PosSystem.sln (as both local Release builds and
+      build-demo.yml's CI already do) — building this .csproj directly,
+      outside the solution, will leave it empty and just skip this step,
+      which is a safe failure mode here (falls back to "no obfuscation"),
+      not a broken one.
+
+      SETUP (one-time, per machine that should actually obfuscate):
+      download the ConfuserEx CLI (mkaring/ConfuserEx releases on GitHub,
+      since the original yck1509/ConfuserEx is archived) and place
+      Confuser.CLI.exe at \tools\ConfuserEx\Confuser.CLI.exe at the repo
+      root. Never commit the tool itself — see .gitignore.
+  -->
+  <PropertyGroup>
+    <ConfuserExPath>$(SolutionDir)tools\ConfuserEx\Confuser.CLI.exe</ConfuserExPath>
+  </PropertyGroup>
+  <Target Name="ObfuscateReleaseBuild" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <Message Importance="high"
+             Condition="!Exists('$(ConfuserExPath)')"
+             Text="Core.Licensing: obfuscation skipped — ConfuserEx CLI not found at $(ConfuserExPath). Plain (unobfuscated) DLL was built. See Licensing-Plan.md, Phase 6, for one-time setup." />
+    <Exec Condition="Exists('$(ConfuserExPath)')"
+          Command="&quot;$(ConfuserExPath)&quot; &quot;$(ProjectDir)Obfuscation\Core.Licensing.crproj&quot;" />
+    <Message Importance="high"
+             Condition="Exists('$(ConfuserExPath)')"
+             Text="Core.Licensing: obfuscated build written to $(ProjectDir)bin\Release\Obfuscated\Core.Licensing.dll — this is the copy that should ship, not the plain one in bin\Release\ directly. See Licensing-Plan.md, Phase 6." />
+  </Target>
 </Project>

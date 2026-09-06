@@ -165,6 +165,45 @@ later if key generation becomes frequent enough to be annoying.
 
 ## Obfuscation
 
+**Status: implemented (build wiring), not yet actually run** — needs the
+ConfuserEx CLI installed on a real Windows machine to verify (see below).
+
+- **`ConfuserEx`** (free, works with old-style `.csproj`) run as a
+  post-build step on Release builds only — `Core.Licensing.csproj`'s
+  `ObfuscateReleaseBuild` target, `AfterTargets="Build"`,
+  `Condition="'$(Configuration)' == 'Release'"`. Debug builds are
+  untouched.
+- **Scoped to `Core.Licensing.dll` only**, not `PosSystem.App.exe` —
+  matches the original plan below, and deliberately avoids the much
+  higher risk of obfuscating a WPF executable (x:Class/XAML type
+  resolution, `InitializeComponent`, resource lookups can all break in
+  ways that need a real WPF runtime to catch, which wasn't available
+  while writing this). If `PosSystem.App.exe` obfuscation is wanted
+  later, it needs its own scoped rule set and real on-machine testing,
+  not a blind copy-paste of this config.
+- **Opt-in, not required to build**: if the CLI tool isn't found at
+  `$(SolutionDir)tools\ConfuserEx\Confuser.CLI.exe`, the target logs a
+  message and skips — Release builds still succeed with the plain
+  (unobfuscated) DLL, including on GitHub Actions CI today, which has no
+  reason to have the tool installed yet.
+- **One-time setup** (on whichever machine should actually produce
+  obfuscated builds): download the ConfuserEx CLI —
+  `mkaring/ConfuserEx` on GitHub (the original `yck1509/ConfuserEx` is
+  archived) — and place `Confuser.CLI.exe` at
+  `\tools\ConfuserEx\Confuser.CLI.exe` at the repo root. Never commit the
+  tool itself; `.gitignore` already excludes `/tools/ConfuserEx/`.
+- **Important manual step, not yet automated**: the target writes the
+  obfuscated DLL to `Core.Licensing\bin\Release\Obfuscated\` — it does
+  **not** automatically overwrite the plain copy that MSBuild copies into
+  `PosSystem.App\bin\Release\` via the project reference. Before
+  packaging a build for a client, the obfuscated
+  `Core.Licensing\bin\Release\Obfuscated\Core.Licensing.dll` needs to be
+  copied over the plain one sitting in `PosSystem.App\bin\Release\`.
+  Automating that swap as its own build step is a reasonable fast-follow
+  once the manual flow is confirmed working, rather than something to
+  get right blind right now.
+
+Original plan (still accurate as the underlying reasoning):
 - **ConfuserEx** (free, works with old-style `.csproj`) run as a
   post-build step on Release builds only — keep Debug builds clean for
   normal development.
