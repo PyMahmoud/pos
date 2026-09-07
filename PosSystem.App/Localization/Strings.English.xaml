@@ -623,7 +623,8 @@ Access Control: choose which of those areas actually require the password -- e.g
     <system:String x:Key="ActivationCopiedStatus">Copied.</system:String>
     <system:String x:Key="ActivationDetailsToggle">Show raw hardware details</system:String>
     <system:String x:Key="ActivationPasteTitle">Enter Activation Code</system:String>
-    <system:String x:Key="ActivationPasteHint">Paste the activation code your vendor sent you.</system:String>
+    <system:String x:Key="ActivationPasteHint">Paste the activation code your vendor sent you, or load the .lic file directly.</system:String>
+    <system:String x:Key="ActivationLoadFileButton">Load from file…</system:String>
     <system:String x:Key="ActivationActivateButton">Activate</system:String>
     <system:String x:Key="ActivationErrorMissing">Please paste the activation code you received before continuing.</system:String>
     <system:String x:Key="ActivationErrorGeneric">This activation code isn't valid for this machine. Please contact support.</system:String>

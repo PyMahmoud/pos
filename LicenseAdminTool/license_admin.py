@@ -151,9 +151,17 @@ def _looks_like_private(path):
 def cmd_verify(args):
     if os.path.isfile(args.blob_or_path):
         with open(args.blob_or_path, "r") as f:
-            blob = f.read().strip()
+            raw = f.read()
     else:
-        blob = args.blob_or_path.strip()
+        raw = args.blob_or_path
+
+    # Strip ALL whitespace, not just edges -- a long base64 blob pasted
+    # through a terminal or chat app that soft-wrapped it can pick up real
+    # embedded newlines at the wrap points. Base64 never contains
+    # whitespace, so this is always safe and only ever fixes a mangled
+    # blob, never corrupts a clean one. (Confirmed against a real license
+    # that got mangled exactly this way -- see Licensing-Plan.md.)
+    blob = "".join(raw.split())
 
     if args.key:
         public_key = load_private_key(args.key).public_key() if _looks_like_private(args.key) else load_public_key(args.key)

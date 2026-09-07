@@ -116,6 +116,27 @@ reason about and matches the plan's anti-info-leak principle (a grace
 period with its own countdown/banner would need distinct UI and would
 telegraph more about internal state to someone probing the app).
 
+**Real-world bug found & fixed (2026-09-07):** a genuinely valid, correctly
+signed license got rejected as "invalid" because copying the long base64
+blob out of a terminal/chat app (which soft-wrapped the long line for
+display) turned the wrap points into real embedded newline characters on
+paste. `ActivationWindow`'s old `.Trim()` only strips leading/trailing
+whitespace, not whitespace buried in the middle, so the mangled blob
+failed base64 decoding and was reported as an invalid license — even
+though the license itself, verified independently, was completely valid.
+Fixed two ways:
+- `ActivationWindow.xaml.cs` now strips **all** whitespace anywhere in
+  the pasted text before validating (base64 never contains whitespace, so
+  this can only ever fix a mangled blob, never corrupt a valid one).
+- Added a **"Load from file…" button** next to the paste box
+  (`OpenFileDialog` filtered to `*.lic`) so the raw text never has to be
+  hand-copied through anything that might wrap it in the first place.
+- The Python `license_admin.py verify` command got the same whitespace-
+  stripping fix.
+
+Worth remembering for any future free-text input in this app that carries
+long opaque tokens: `.Trim()` is not enough on its own.
+
 ---
 
 ## Admin key-generation tool

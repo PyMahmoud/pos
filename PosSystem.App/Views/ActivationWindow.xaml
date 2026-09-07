@@ -150,11 +150,28 @@
                     <TextBlock Text="{DynamicResource ActivationPasteTitle}"
                                Style="{StaticResource TitleMedium}"
                                Foreground="{DynamicResource OnSurfaceBrush}" />
-                    <TextBlock Text="{DynamicResource ActivationPasteHint}"
-                               Style="{StaticResource BodyLarge}"
-                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                               Margin="0,4,0,14"
-                               TextWrapping="Wrap" />
+                    <Grid Margin="0,4,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource ActivationPasteHint}"
+                                   Style="{StaticResource BodyLarge}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="Wrap" />
+                        <Button x:Name="LoadFileButton"
+                                Grid.Column="1"
+                                Style="{StaticResource ActivationButtonStyle}"
+                                Content="{DynamicResource ActivationLoadFileButton}"
+                                Click="LoadFileButton_Click"
+                                Padding="14,8"
+                                Margin="10,0,0,0"
+                                Background="{DynamicResource SecondaryContainerBrush}"
+                                Foreground="{DynamicResource OnSecondaryContainerBrush}"
+                                BorderThickness="0" />
+                    </Grid>
 
                     <TextBox x:Name="LicenseBlobTextBox"
                              Style="{StaticResource ThemedTextBoxStyle}"
