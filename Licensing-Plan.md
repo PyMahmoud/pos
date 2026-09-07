@@ -164,6 +164,34 @@ whatever's convenient — offline distribution is fine and expected).
 Baraa/Mahmoud's own use) vs. small WPF GUI. Leaning console for v1, GUI
 later if key generation becomes frequent enough to be annoying.
 
+**Cross-platform alternative (added 2026-09-07):**
+`LicenseAdminTool/license_admin.py` + `license_core.py` — a pure-Python
+reimplementation of the exact same wire format (canonical string, RSA
+PKCS#1 v1.5 + SHA-256 signing, .NET-compatible `DateTime.Ticks`), runnable
+on Linux or Windows with just `pip install cryptography` (see
+`requirements.txt`) — no Visual Studio or .NET Framework needed. Built
+because the C# console tool, while fine on Windows, is friction on
+Baraa's Linux dev machine.
+
+**Verified working against the repo's real keypair**, not just simulated:
+loaded the actual `PrivateSigningKey.xml`, signed a test license, verified
+it with the actual embedded public key, confirmed a tampered blob is
+correctly rejected, and confirmed the ticks conversion round-trips to
+microsecond precision. This is a meaningfully stronger guarantee than the
+C# tool has right now, which has never actually been run.
+
+Also adds a `verify` subcommand with no C# equivalent yet — checks a
+license's signature/expiry locally without needing to run the WPF app at
+all, useful for sanity-checking a `.lic` file before sending it to a
+client.
+
+Both tools read the same `PrivateSigningKey.xml` and produce byte-for-byte
+compatible blobs — use whichever is convenient on the machine you're on.
+**Open question:** whether to keep maintaining both or retire the C#
+console tool now that Python covers the same ground cross-platform — not
+decided yet; left both in place since removing a tracked project is a
+more deliberate action than adding one.
+
 ---
 
 ## Obfuscation
