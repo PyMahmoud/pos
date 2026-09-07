@@ -279,31 +279,46 @@
   -->
   <Import Project="..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\System.Data.SQLite.Core.targets')" />
   <!--
-      Belt-and-suspenders fallback for the import above: if the package's
-      own targets file doesn't fire for any reason (wrong TFM subfolder
-      for this exact version, a NuGet restore quirk like the one that hit
-      HarfBuzzSharp, etc.), copy the interop DLLs directly so a silent
-      omission can't slip through unnoticed. Harmless no-op if the Import
-      above already handled it — CopyToOutputDirectory just overwrites
-      with an identical file.
+      2026-09: The version-pinned Content-item fallback that used to live
+      here (hardcoded to ..\packages\System.Data.SQLite.Core.1.0.110.0\...)
+      wasn't reliable — the vendor's own copy mechanism
+      (CopySQLiteInteropFiles, inside the package's .targets file) is an
+      MSBuild INCREMENTAL target keyed on file timestamps, and on this
+      solution's stack of hand-patched Imports it silently skipped the x86
+      copy on a real Windows 10 deployment while x64 came through fine
+      (confirmed: x64\SQLite.Interop.dll present, x86\ empty). A
+      hardcoded single-version path is also fragile on its own —
+      packages.config restores aren't lock-filed, so exactly which
+      package/version ends up supplying the native DLL can drift between
+      restores.
+      Replaced with an unconditional, non-incremental sweep: find every
+      real SQLite.Interop.dll anywhere under ..\packages (wherever NuGet
+      actually put it, whichever package/version resolved) and force-copy
+      each one to the matching x86\ or x64\ output folder on EVERY build,
+      with no timestamp-based skip logic involved. This only fails if the
+      real files are missing from disk entirely, which is what
+      EnsureNuGetPackageBuildImports below now checks for explicitly.
   -->
-  <ItemGroup>
-    <Content Include="..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\x86\SQLite.Interop.dll" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\x86\SQLite.Interop.dll')">
-      <Link>x86\SQLite.Interop.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\x64\SQLite.Interop.dll" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\x64\SQLite.Interop.dll')">
-      <Link>x64\SQLite.Interop.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+  <Target Name="ForceCopySQLiteInterop" AfterTargets="Build;PrepareForBuild;ResolveReferences" BeforeTargets="AfterBuild">
+    <ItemGroup>
+      <_SQLiteInteropCandidates Include="..\packages\**\SQLite.Interop.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_SQLiteInteropCandidates)"
+          DestinationFiles="@(_SQLiteInteropCandidates -> '$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          Condition="'$(OutDir)' != '' And Exists('$(OutDir)')"
+          SkipUnchangedFiles="false" />
+  </Target>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
+    <ItemGroup>
+      <_SQLiteInteropCheck Include="..\packages\**\x86\SQLite.Interop.dll" />
+      <_SQLiteInteropCheck Include="..\packages\**\x64\SQLite.Interop.dll" />
+    </ItemGroup>
     <Error Condition="!Exists('..\packages\SkiaSharp.NativeAssets.macOS.3.119.0\build\net462\SkiaSharp.NativeAssets.macOS.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\SkiaSharp.NativeAssets.macOS.3.119.0\build\net462\SkiaSharp.NativeAssets.macOS.targets'))" />
     <Error Condition="!Exists('..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets'))" />
-    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\x86\SQLite.Interop.dll') And !Exists('..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.110.0\build\net46\x86\SQLite.Interop.dll'))" />
+    <Error Condition="'@(_SQLiteInteropCheck)' == ''" Text="No SQLite.Interop.dll found anywhere under ..\packages for either x86 or x64. Run 'nuget restore PosSystem.sln' (or delete the packages folder and restore clean) before building." />
   </Target>
   <Import Project="..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets" Condition="Exists('..\packages\SkiaSharp.NativeAssets.Win32.3.119.0\build\net462\SkiaSharp.NativeAssets.Win32.targets')" />
   <!--
