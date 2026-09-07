@@ -221,6 +221,24 @@ Original plan (still accurate as the underlying reasoning):
 
 ## Open questions / decisions still pending
 
+- [x] **Build gotcha found & fixed (2026-09-07):** `App.xaml.cs` initially
+      referenced `Core.Licensing.Validation.LicenseValidator` inline
+      without a `using` directive, which failed to compile
+      (`CS0234: The type or namespace name 'Licensing' does not exist in
+      the namespace 'PosSystem.Core'`). Cause: C#'s enclosing-namespace
+      fallback for unqualified names — code inside `namespace PosSystem.App`
+      resolves a bare `Core` identifier against the sibling `PosSystem.Core`
+      project first (which is *why* the existing `Core.Data.DatabaseBootstrapper`
+      call elsewhere in the same file works without a `using`), so it never
+      reaches the real top-level `Core.Licensing` namespace. Fixed by adding
+      `using Core.Licensing.Validation;` at the top of the file and using
+      unqualified type names in the method body — file-level `using`
+      directives resolve from the true global namespace and aren't subject
+      to this fallback. Worth remembering for any future code in
+      `PosSystem.App`/`PosSystem.Core` that references `Core.Licensing.*`:
+      always import it via `using`, never reference it with an inline
+      `Core.Licensing.X` qualifier.
+
 - [x] RSA vs Ed25519 for signing — **decided: RSA 3072-bit**, no NuGet
       dependency needed (see License key format section above).
 - [x] Hard-lock vs grace period on expiry — **decided: hard-lock**, no

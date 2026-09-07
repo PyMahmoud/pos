@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
+using Core.Licensing.Validation;
 
 namespace PosSystem.App
 {
@@ -65,8 +66,7 @@ namespace PosSystem.App
         /// </summary>
         private static bool EnsureLicensed()
         {
-            Core.Licensing.Validation.LicenseValidationResult result =
-                Core.Licensing.Validation.LicenseValidator.ValidateStoredLicense();
+            LicenseValidationResult result = LicenseValidator.ValidateStoredLicense();
 
             if (result.IsValid)
             {
