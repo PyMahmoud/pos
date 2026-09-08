@@ -106,8 +106,8 @@ namespace PosSystem.App
             try
             {
                 MessageBox.Show(
-                    "RovaShop POS hit an unexpected error and needs to close.\n\n" + message,
-                    "RovaShop POS - Error",
+                    "BMTech POS hit an unexpected error and needs to close.\n\n" + message,
+                    "BMTech POS - Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }

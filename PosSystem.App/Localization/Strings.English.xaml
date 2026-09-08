@@ -419,7 +419,7 @@
 
     <!-- About (new, 2026-08-26) — static, read-only. -->
     <system:String x:Key="SettingsAboutTitle">About</system:String>
-    <system:String x:Key="SettingsAboutDescription">PosSystem — point of sale for pharmaceutical distribution.</system:String>
+    <system:String x:Key="SettingsAboutDescription">BMTech POS — point of sale for pharmaceutical distribution.</system:String>
 
     <!-- Admin password (#7, 2026-08-27) — Dashboard unlock screen and
          Settings' set/change-password section. -->
@@ -532,20 +532,18 @@
     <system:String x:Key="HelpContactSupportTitle">Contact Support</system:String>
     <system:String x:Key="HelpContactSupportDescription">Need help or found a problem? Reach out any of these ways.</system:String>
     <system:String x:Key="HelpContactPhoneLabel">Phone</system:String>
-    <system:String x:Key="HelpContactEmailLabel">Email</system:String>
     <system:String x:Key="HelpContactCallButton">Call</system:String>
     <system:String x:Key="HelpContactWhatsAppButton">WhatsApp</system:String>
-    <system:String x:Key="HelpContactEmailButton">Email</system:String>
-    <system:String x:Key="HelpContactError">Couldn't open that — check the number/email in ContactInfo.cs.</system:String>
+    <system:String x:Key="HelpContactError">Couldn't open that — check the number in ContactInfo.cs.</system:String>
 
     <!-- Help screen (Phase 11 #5, 2026-08-28)  see HelpView.xaml's own
          doc comment for the overall shape. Strings.Arabic.xaml defines the
          identical set of keys with translated content. -->
     <system:String x:Key="HelpHeading">Help</system:String>
-    <system:String x:Key="HelpDescription">A quick guide to every screen in PosSystem -- read top to bottom, or jump to the section you need.</system:String>
+    <system:String x:Key="HelpDescription">A quick guide to every screen in BMTech POS -- read top to bottom, or jump to the section you need.</system:String>
 
     <system:String x:Key="HelpGettingStartedTitle">Getting Started</system:String>
-    <system:String x:Key="HelpGettingStartedBody">PosSystem has six screens, listed in the sidebar on the left: Dashboard, Checkout, Customers, Inventory, Settings, and this Help screen.
+    <system:String x:Key="HelpGettingStartedBody">BMTech POS has six screens, listed in the sidebar on the left: Dashboard, Checkout, Customers, Inventory, Settings, and this Help screen.
 
 Switch between English and Arabic, and between light and dark themes, from Settings &#8594; Appearance -- the whole app updates immediately, no restart needed.
 
@@ -608,13 +606,13 @@ Admin Password: set, change, or remove the password that protects Dashboard, Bil
 Access Control: choose which of those areas actually require the password -- e.g. keep Dashboard locked but leave Inventory open to any staff member. This section itself always requires the password, so it can't be used to switch off its own protection.</system:String>
 
     <system:String x:Key="HelpNeedMoreTitle">Still Need Help?</system:String>
-    <system:String x:Key="HelpNeedMoreBody">If this guide didn't answer your question, use the Contact Support card below to call, WhatsApp, or email us directly.</system:String>
+    <system:String x:Key="HelpNeedMoreBody">If this guide didn't answer your question, use the Contact Support card below to call or WhatsApp us directly.</system:String>
 
     <!-- Activation gate (Licensing-Plan.md, Phase 5) - shown instead of
          MainWindow on any launch where no valid license is found (first
          run, expired, hardware changed, etc). See
          Views/ActivationWindow.xaml. -->
-    <system:String x:Key="ActivationTitle">Activate RovaShop POS</system:String>
+    <system:String x:Key="ActivationTitle">Activate BMTech POS</system:String>
     <system:String x:Key="ActivationSubtitle">This installation needs a license before it can be used.</system:String>
     <system:String x:Key="ActivationFingerprintTitle">This Machine's ID</system:String>
     <system:String x:Key="ActivationFingerprintSubtitle">Send the code below to your vendor to receive an activation code for this machine.</system:String>

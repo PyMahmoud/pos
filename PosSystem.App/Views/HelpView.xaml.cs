@@ -40,11 +40,6 @@ namespace PosSystem.App.Views
             TryLaunch("https://wa.me/" + ContactInfo.WhatsAppNumber);
         }
 
-        private void EmailSupport_Click(object sender, RoutedEventArgs e)
-        {
-            TryLaunch("mailto:" + ContactInfo.SupportEmail);
-        }
-
         private void TryLaunch(string uri)
         {
             try

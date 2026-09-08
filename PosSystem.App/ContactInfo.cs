@@ -10,11 +10,9 @@ namespace PosSystem.App
     /// there's no in-app editor for these. Edit the values below and
     /// rebuild whenever the real number/email is ready or changes.
     ///
-    /// TODO(Mahmoud): replace the placeholder values below with your real
-    /// phone number, WhatsApp number, and support email before shipping to
-    /// the client -- everything else (the card, the buttons, the tel:/
-    /// wa.me/mailto: links) is already wired up and working against
-    /// whatever is here.
+    /// Real support phone/WhatsApp number set 2026-09-08. No support email
+    /// for now -- the Email button/row was removed from HelpView.xaml
+    /// along with SupportEmail below.
     /// </summary>
     public static class ContactInfo
     {
@@ -22,7 +20,7 @@ namespace PosSystem.App
         /// Shown on screen exactly as typed here -- format it however you
         /// want it to read, e.g. "+20 10 1234 5678".
         /// </summary>
-        public const string PhoneDisplay = "+20 100 000 0000";
+        public const string PhoneDisplay = "+20 101 564 6683";
 
         /// <summary>
         /// Same number used to build the "tel:" link the Call button opens
@@ -30,15 +28,13 @@ namespace PosSystem.App
         /// (some phone/dialer apps on Windows are picky about extra
         /// formatting characters in a tel: URI).
         /// </summary>
-        public const string PhoneUri = "+201000000000";
+        public const string PhoneUri = "+201015646683";
 
         /// <summary>
         /// WhatsApp number in wa.me's own format: country code + number,
         /// digits only, NO leading "+" (e.g. Egypt "201000000000", not
         /// "+201000000000").
         /// </summary>
-        public const string WhatsAppNumber = "201000000000";
-
-        public const string SupportEmail = "support@example.com";
+        public const string WhatsAppNumber = "201015646683";
     }
 }

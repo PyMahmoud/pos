@@ -1,11 +1,11 @@
 using System.Reflection;
 using System.Windows;
 
-[assembly: AssemblyTitle("PosSystem.App")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("BMTech POS")]
+[assembly: AssemblyDescription("Point of sale for pharmaceutical distribution")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("PosSystem.App")]
+[assembly: AssemblyCompany("BMTech")]
+[assembly: AssemblyProduct("BMTech POS")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]

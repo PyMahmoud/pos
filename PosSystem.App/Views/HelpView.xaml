@@ -175,7 +175,7 @@
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,16" />
 
-                        <Grid Margin="0,0,0,6">
+                        <Grid Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
@@ -188,24 +188,8 @@
                                        Text="{x:Static app:ContactInfo.PhoneDisplay}"
                                        Foreground="{DynamicResource OnSurfaceBrush}" />
                         </Grid>
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0"
-                                       Text="{DynamicResource HelpContactEmailLabel}"
-                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                       Margin="0,0,8,0" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{x:Static app:ContactInfo.SupportEmail}"
-                                       Foreground="{DynamicResource OnSurfaceBrush}" />
-                        </Grid>
-
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="8" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="8" />
                                 <ColumnDefinition Width="*" />
@@ -221,14 +205,6 @@
                             <Button Grid.Column="2"
                                     Content="{DynamicResource HelpContactWhatsAppButton}"
                                     Click="WhatsAppSupport_Click"
-                                    Background="{DynamicResource SurfaceContainerHighBrush}"
-                                    Foreground="{DynamicResource OnSurfaceBrush}"
-                                    Template="{StaticResource SelectableButtonTemplate}"
-                                    Padding="0,12"
-                                    HorizontalContentAlignment="Center" />
-                            <Button Grid.Column="4"
-                                    Content="{DynamicResource HelpContactEmailButton}"
-                                    Click="EmailSupport_Click"
                                     Background="{DynamicResource SurfaceContainerHighBrush}"
                                     Foreground="{DynamicResource OnSurfaceBrush}"
                                     Template="{StaticResource SelectableButtonTemplate}"

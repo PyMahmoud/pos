@@ -313,7 +313,7 @@
     <system:String x:Key="SettingsDatabaseNotFound">ملف قاعدة البيانات غير موجود.</system:String>
 
     <system:String x:Key="SettingsAboutTitle">حول التطبيق</system:String>
-    <system:String x:Key="SettingsAboutDescription">PosSystem — نظام نقاط بيع لتوزيع الأدوية.</system:String>
+    <system:String x:Key="SettingsAboutDescription">BMTech POS — نظام نقاط بيع لتوزيع الأدوية.</system:String>
 
     <system:String x:Key="DashboardLockedTitle">للمالك أو المدير فقط</system:String>
     <system:String x:Key="DashboardLockedSubtitle">تعرض هذه الشاشة إيرادات المتجر. أدخل كلمة مرور المسؤول للمتابعة.</system:String>
@@ -398,11 +398,9 @@
     <system:String x:Key="HelpContactSupportTitle">التواصل مع الدعم</system:String>
     <system:String x:Key="HelpContactSupportDescription">هل تحتاج إلى مساعدة أو واجهت مشكلة؟ تواصل معنا بأي من الطرق التالية.</system:String>
     <system:String x:Key="HelpContactPhoneLabel">الهاتف</system:String>
-    <system:String x:Key="HelpContactEmailLabel">البريد الإلكتروني</system:String>
     <system:String x:Key="HelpContactCallButton">اتصال</system:String>
     <system:String x:Key="HelpContactWhatsAppButton">واتساب</system:String>
-    <system:String x:Key="HelpContactEmailButton">بريد إلكتروني</system:String>
-    <system:String x:Key="HelpContactError">تعذر فتح ذلك — تحقق من الرقم/البريد الإلكتروني في ملف ContactInfo.cs.</system:String>
+    <system:String x:Key="HelpContactError">تعذر فتح ذلك — تحقق من الرقم في ملف ContactInfo.cs.</system:String>
 
     <!-- شاشة المساعدة (البند 5 من الدفعة 11) — نفس مجموعة المفاتيح الموجودة في Strings.English.xaml مع محتوى مترجم. -->
     <system:String x:Key="HelpHeading">المساعدة</system:String>
@@ -472,10 +470,10 @@
 التحكم في الوصول: اختر أيًا من هذه المناطق يتطلب فعليًا كلمة المرور — مثلاً أبقِ لوحة التحكم مقفلة واترك المخزون مفتوحًا لأي موظف. هذا القسم نفسه يتطلب دائمًا كلمة المرور، لذا لا يمكن استخدامه لإيقاف حمايته الخاصة.</system:String>
 
     <system:String x:Key="HelpNeedMoreTitle">ما زلت بحاجة إلى مساعدة؟</system:String>
-    <system:String x:Key="HelpNeedMoreBody">إذا لم يجب هذا الدليل على سؤالك، استخدم بطاقة التواصل مع الدعم أدناه للاتصال أو المراسلة عبر واتساب أو البريد الإلكتروني مباشرة.</system:String>
+    <system:String x:Key="HelpNeedMoreBody">إذا لم يجب هذا الدليل على سؤالك، استخدم بطاقة التواصل مع الدعم أدناه للاتصال أو المراسلة عبر واتساب مباشرة.</system:String>
 
     <!-- شاشة التفعيل (خطة الترخيص، المرحلة 5) -->
-    <system:String x:Key="ActivationTitle">تفعيل نظام RovaShop POS</system:String>
+    <system:String x:Key="ActivationTitle">تفعيل نظام BMTech POS</system:String>
     <system:String x:Key="ActivationSubtitle">يحتاج هذا التثبيت إلى ترخيص قبل أن يمكن استخدامه.</system:String>
     <system:String x:Key="ActivationFingerprintTitle">معرّف هذا الجهاز</system:String>
     <system:String x:Key="ActivationFingerprintSubtitle">أرسل الرمز أدناه إلى المورّد للحصول على رمز تفعيل لهذا الجهاز.</system:String>

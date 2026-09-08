@@ -36,28 +36,27 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: RovaShop-POS-Demo
+          name: BMTechPOS-Demo
           path: dist\**
 
   installer:
     needs: build
     runs-on: windows-latest
-    if: false  # flip to `true` once you have an Inno Setup script under installer/
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: RovaShop-POS-Demo
+          name: BMTechPOS-Demo
           path: dist
       - name: Install Inno Setup
         run: choco install innosetup -y
       - name: Build installer
-        run: iscc installer\RovaShopSetup.iss
+        run: iscc installer\BMTechPOSSetup.iss
         shell: cmd
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: RovaShop-POS-Setup
+          name: BMTechPOS-Setup
           path: installer\Output\*.exe
