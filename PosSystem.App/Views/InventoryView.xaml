@@ -855,6 +855,7 @@
                 <Grid Margin="24">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
@@ -876,7 +877,61 @@
                                 Padding="14,8" />
                     </Grid>
 
-                    <Grid Grid.Row="1">
+                    <!-- Bug fix (2026-09-09): this overlay covers the whole
+                         screen, including the Add Product panel's admin-
+                         unlock box underneath it - there was previously no
+                         way to enter the admin password from inside the
+                         Discounts page itself, so a locked staff member who
+                         opened it and tried to Save/Remove a discount could
+                         only get an "admin required" message with no
+                         password box anywhere on screen, and had to close
+                         this overlay, unlock on the main grid, then reopen
+                         it. Same inline-unlock-box pattern as everywhere
+                         else in this app; browsing the list underneath
+                         stays visible either way, same "viewing is open,
+                         editing is gated" rule as the rest of Inventory. -->
+                    <Border Grid.Row="1"
+                            Background="{DynamicResource SurfaceContainerHighBrush}"
+                            CornerRadius="12"
+                            Padding="16"
+                            Margin="0,0,0,16"
+                            Visibility="{Binding IsAdminLocked, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource InventoryAdminLockedTitle}"
+                                       Style="{StaticResource TitleMedium}"
+                                       Foreground="{DynamicResource OnSurfaceBrush}"
+                                       Margin="0,0,0,4" />
+                            <TextBlock Text="{DynamicResource InventoryAdminLockedSubtitle}"
+                                       Style="{StaticResource LabelSmall}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="260" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <PasswordBox Grid.Column="0"
+                                             x:Name="DiscountsAdminUnlockPasswordBox"
+                                             Style="{StaticResource ThemedPasswordBoxStyle}"
+                                             PasswordChanged="AdminUnlockPasswordBox_PasswordChanged" />
+                                <Button Grid.Column="2"
+                                        Content="{DynamicResource DashboardUnlockButton}"
+                                        Command="{Binding AdminUnlockCommand}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Foreground="{DynamicResource OnPrimaryBrush}"
+                                        Template="{StaticResource SelectableButtonTemplate}"
+                                        Padding="16,8" />
+                            </Grid>
+                            <TextBlock Text="{Binding AdminUnlockError}"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Grid Grid.Row="2">
                         <TextBlock Text="{DynamicResource DiscountsBrowserNoResults}"
                                    Style="{StaticResource BodyLarge}"
                                    Foreground="{DynamicResource OnSurfaceVariantBrush}"
@@ -970,7 +1025,7 @@
                         </ScrollViewer>
                     </Grid>
 
-                    <TextBlock Grid.Row="1"
+                    <TextBlock Grid.Row="2"
                                Text="{Binding StatusMessage}"
                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                TextWrapping="Wrap"

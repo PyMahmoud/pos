@@ -349,7 +349,19 @@
                                         Padding="14,8" Margin="0,0,0,8" />
                             </WrapPanel>
 
-                            <Grid Margin="0,0,0,16">
+                            <!-- Two prebuilt column orders instead of relying on
+                                 Grid FlowDirection mirroring here (2026-09-09 fix,
+                                 per Mahmoud: this section rendered "من" on the left
+                                 and "إلى" on the right in Arabic — backwards from the
+                                 من...إلى reading order). Same fix DashboardView.xaml's
+                                 filter bar already uses for the identical problem:
+                                 explicit fixed element order per language, gated by
+                                 EnglishOnlyVisibility / ArabicOnlyVisibility, both
+                                 pinned FlowDirection=LeftToRight so nothing here
+                                 depends on inherited mirroring. -->
+                            <Grid Margin="0,0,0,16"
+                                  Visibility="{DynamicResource EnglishOnlyVisibility}"
+                                  FlowDirection="LeftToRight">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="16" />
@@ -367,6 +379,33 @@
                                                Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                                Margin="0,0,0,4" />
                                     <DatePicker SelectedDate="{Binding ExportEndDate, Mode=TwoWay}"
+                                                Style="{StaticResource ThemedDatePickerStyle}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Arabic: rightmost block must be "من" (read first),
+                                 so physical left-to-right order is [to][from], same
+                                 as Dashboard's filter bar. -->
+                            <Grid Margin="0,0,0,16"
+                                  Visibility="{DynamicResource ArabicOnlyVisibility}"
+                                  FlowDirection="LeftToRight">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{DynamicResource DashboardFilterToLabel}"
+                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                               Margin="0,0,0,4" />
+                                    <DatePicker SelectedDate="{Binding ExportEndDate, Mode=TwoWay}"
+                                                Style="{StaticResource ThemedDatePickerStyle}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{DynamicResource DashboardFilterFromLabel}"
+                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                               Margin="0,0,0,4" />
+                                    <DatePicker SelectedDate="{Binding ExportStartDate, Mode=TwoWay}"
                                                 Style="{StaticResource ThemedDatePickerStyle}" />
                                 </StackPanel>
                             </Grid>
@@ -394,6 +433,23 @@
                                         Padding="0,12"
                                         HorizontalContentAlignment="Center" />
                             </Grid>
+
+                            <!-- Bug fix (2026-09-09): StatusMessage used to
+                                 only render once, shared, at the very bottom
+                                 of the whole Settings page (below Admin
+                                 Password and Access Control) - an export's
+                                 success/failure message was invisible
+                                 without scrolling past two more cards. This
+                                 mirrors the exact same binding right under
+                                 the Export section's own buttons; the
+                                 shared TextBlock at the bottom still shows
+                                 it too (harmless duplication), so every
+                                 other section's messages keep working
+                                 exactly as before. -->
+                            <TextBlock Text="{Binding StatusMessage}"
+                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,10,0,0" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

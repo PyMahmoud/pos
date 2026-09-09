@@ -42,6 +42,20 @@ namespace PosSystem.App.Views
                         && vm0.AdminUnlockPasswordInput == "")
                     {
                         AdminUnlockPasswordBox.Password = "";
+                        // Bug fix (2026-09-09): the Discounts overlay's own
+                        // unlock box (added alongside that overlay's admin-
+                        // unlock fix) shares this same AdminUnlockPasswordInput
+                        // property with the main panel's box above -- both
+                        // PasswordBoxes write into it via the same sender-cast
+                        // handler below, but only the main box was ever being
+                        // cleared back out on a successful unlock. Harmless in
+                        // practice today (the overlay's unlock panel collapses
+                        // the instant IsAdminLocked flips, hiding the box right
+                        // along with the stale text), but leaving it uncleared
+                        // meant the old password would still be sitting there,
+                        // visible, the next time that panel re-appears after a
+                        // re-lock -- same reasoning as clearing the main box.
+                        DiscountsAdminUnlockPasswordBox.Password = "";
                     }
                 };
             }
@@ -58,6 +72,7 @@ namespace PosSystem.App.Views
                             && vm.AdminUnlockPasswordInput == "")
                         {
                             AdminUnlockPasswordBox.Password = "";
+                            DiscountsAdminUnlockPasswordBox.Password = "";
                         }
                     };
                 }

@@ -125,6 +125,17 @@ namespace PosSystem.App
             string hash = string.IsNullOrEmpty(plainPassword) ? "" : HashPassword(plainPassword);
             settings.SetString(AdminPasswordHashKey, hash);
             HasAdminPassword = !string.IsNullOrEmpty(hash);
+
+            // Bug fix (2026-09-09): this used to skip raising Changed,
+            // unlike Save()/SaveGateSettings() above -- every gated
+            // ViewModel's IsUnlocked/IsLocked property depends on
+            // HasAdminPassword and only re-raises PropertyChanged via this
+            // event, so setting/changing/removing the password here left
+            // any already-open cached screen (Dashboard, Inventory, Bills,
+            // Checkout's/CustomerDetail's discount gate) showing its stale
+            // locked/unlocked state until something unrelated happened to
+            // trigger a refresh.
+            Changed?.Invoke();
         }
 
         public static bool VerifyAdminPassword(string attempt)

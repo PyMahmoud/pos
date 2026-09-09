@@ -674,8 +674,14 @@ namespace PosSystem.App.ViewModels
                 ColDiscount = L("ExportColDiscount"),
                 ColTax = L("CheckoutTax"),
                 ColTotal = L("CheckoutTotal"),
-                ColPaid = L("CustomersBalancePaidUp"),
-                ColRemaining = L("CustomersPaymentAmountLabel"),
+                // Bug fix (2026-09-09): these used to reuse
+                // CustomersBalancePaidUp ("Paid up") and
+                // CustomersPaymentAmountLabel ("Payment amount") -- wrong
+                // wording for a column header, and "Payment amount" in
+                // particular was actively misleading for what is really
+                // the outstanding balance. Two dedicated keys instead.
+                ColPaid = L("ExportColPaid"),
+                ColRemaining = L("ExportColRemaining"),
                 SalesDetailSheetName = L("ExportSalesDetailSheetName"),
                 ColProduct = L("ExportColProduct"),
                 ColCategory = L("InventoryProductCategoryLabel"),

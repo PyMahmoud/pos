@@ -380,6 +380,8 @@
     <system:String x:Key="ExportColUnitPrice">سعر الوحدة</system:String>
     <system:String x:Key="ExportColLineTotal">إجمالي السطر</system:String>
     <system:String x:Key="ExportColProfit">الربح</system:String>
+    <system:String x:Key="ExportColPaid">المدفوع</system:String>
+    <system:String x:Key="ExportColRemaining">المتبقي</system:String>
     <system:String x:Key="ExportSalesDetailSheetName">تفاصيل المبيعات</system:String>
 
     <!-- أعمدة إضافية في ورقتي الفواتير وتفاصيل المبيعات (طلب محمود، 2026-08-28)

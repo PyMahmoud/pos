@@ -507,6 +507,14 @@
     <system:String x:Key="ExportColUnitPrice">Unit Price</system:String>
     <system:String x:Key="ExportColLineTotal">Line Total</system:String>
     <system:String x:Key="ExportColProfit">Profit</system:String>
+    <!-- Bug fix (2026-09-09): the Bills sheet's Paid/Remaining columns
+         used to reuse CustomersBalancePaidUp ("Paid up") and
+         CustomersPaymentAmountLabel ("Payment amount") as their headers -
+         wrong wording for a column header, and "Payment amount" in
+         particular read as actively misleading over what is really the
+         outstanding balance. Two dedicated keys instead. -->
+    <system:String x:Key="ExportColPaid">Paid</system:String>
+    <system:String x:Key="ExportColRemaining">Remaining</system:String>
     <system:String x:Key="ExportSalesDetailSheetName">Sales Detail</system:String>
 
     <!-- Bills/Sales Detail sheet columns added on top of the original
