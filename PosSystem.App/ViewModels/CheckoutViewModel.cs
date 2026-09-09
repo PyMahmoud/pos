@@ -600,10 +600,17 @@ namespace PosSystem.App.ViewModels
                     // nextId -- the bills row inserted a few lines above IS
                     // this sale's bill, so its ID is already known here
                     // without a second query.
+                    // OriginalPrice/DiscountPercent (2026-09-09) -- CartLine
+                    // already knows both (see its class doc comment on
+                    // discount stacking); passing them through here is what
+                    // lets the Bills detail view show this line came from a
+                    // discounted product, same badge/strikethrough treatment
+                    // as the cart itself.
                     _sellsData.InsertSells(
                         "sells", line.Name, line.Category, line.Quantity, line.Cost, line.Price,
                         line.Type, time, date, line.Barcode, nextBillNumber,
-                        (line.Price - line.Cost) * line.Quantity, "No", "", nextId);
+                        (line.Price - line.Cost) * line.Quantity, "No", "", nextId,
+                        line.OriginalPrice, line.DiscountPercent);
 
                     // ID-based, not Barcode-based (Phase 7): a product's
                     // Barcode can now be "" (no barcode), which is no

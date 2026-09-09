@@ -98,6 +98,12 @@
     <system:String x:Key="BillsBrowserViewCurrentButton">View current version</system:String>
     <system:String x:Key="BillsDetailBackButton">← Back to Bills</system:String>
     <system:String x:Key="BillsDetailItemsTitle">Items</system:String>
+    <!-- Unit price / line total labels (added 2026-09-09, bug fix - see
+         CheckoutView.xaml's comment on the line-item Grid) - a line item
+         used to show only its per-unit Price with no indication that's
+         what it was, and no extended total for the full quantity sold. -->
+    <system:String x:Key="BillsDetailUnitPriceLabel">Unit price</system:String>
+    <system:String x:Key="BillsDetailLineTotalLabel">Total</system:String>
     <system:String x:Key="BillsDetailRemoveLineButton">Return</system:String>
     <system:String x:Key="BillsDetailReturnWholeBillButton">Return Whole Bill</system:String>
     <system:String x:Key="BillsAdminLockedTitle">Owner/Manager Access Required</system:String>

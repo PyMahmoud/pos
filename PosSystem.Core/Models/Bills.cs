@@ -83,6 +83,16 @@ namespace PosSystem.Core.Models
             ? Billnumber.ToString()
             : Billnumber + "-" + RevisionSuffix;
 
+        // Added 2026-09-09 (bug fix -- Mahmoud's report that the Bills
+        // detail screen's Total didn't visibly reconcile against the line
+        // items' prices). Not a database column -- purely derived from the
+        // three values already stored and already used to compute Billcost
+        // in the first place (BillsBrowserViewModel.CreateReturnRevision:
+        // newBillcost = newSubtotal - newDiscount + newTax), just run in
+        // reverse so the UI has something to bind a Subtotal row to without
+        // duplicating that math anywhere else.
+        public double Subtotal => Billcost + Discount - Tax;
+
         public event PropertyChangedEventHandler PropertyChanged;
         public void NotifyPropertyChanged(string property)
         {

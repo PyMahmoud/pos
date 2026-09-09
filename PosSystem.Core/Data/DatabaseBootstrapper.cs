@@ -469,6 +469,56 @@ namespace PosSystem.Core.Data
                     // somehow missed.
                 }
 
+                // Added 2026-09-09 so a bill's line items can show that a
+                // PRODUCT (not just the whole bill) was discounted at sale
+                // time. sells.Price was always already the discounted
+                // per-unit price (see CartLine's class doc comment -- the
+                // product's Inventory discount is baked into Price before
+                // it's ever saved), but nothing recorded what the price
+                // WOULD have been without that discount, or what the
+                // discount percentage even was -- so a saved bill line
+                // looked identical whether it came from a marked-down
+                // product or a normal one. OriginalPrice is the sticker
+                // price at the moment of sale (for the strikethrough
+                // display, same as CartLine.OriginalPrice); DiscountPercent
+                // is the rate, kept alongside it rather than re-derived,
+                // same reasoning as bills.DiscountPercent living next to
+                // bills.Discount.
+                EnsureColumn(conn, "sells", "OriginalPrice", "REAL");
+                EnsureColumn(conn, "sells", "DiscountPercent", "REAL");
+
+                // Backfill for every sells row that existed before this
+                // feature: OriginalPrice = Price (nothing recorded a real
+                // sticker price for these, so the safest non-lie is "assume
+                // no discount" -- Price itself is the only number that
+                // exists), DiscountPercent = 0. Same reasoning/pattern as
+                // every other ALTER-TABLE-ADD-COLUMN backfill in this file
+                // (SQLite never applies a retroactive default here) --
+                // Core.Data.Sells' own read methods also fall back to
+                // "OriginalPrice = Price" for a NULL cell belt-and-
+                // suspenders style, but writing a real value here means the
+                // data itself says so instead of relying on that fallback
+                // forever.
+                try
+                {
+                    using (var cmd = new SQLiteCommand(
+                        "UPDATE sells SET OriginalPrice = Price WHERE OriginalPrice IS NULL", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                    using (var cmd = new SQLiteCommand(
+                        "UPDATE sells SET DiscountPercent = 0 WHERE DiscountPercent IS NULL", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    // Not fatal -- see comment above; Core.Data.Sells' own
+                    // NULL-fallback reads still cover any row this somehow
+                    // missed.
+                }
+
                 // Added 2026-08-28 for receipt revisioning (Mahmoud's
                 // explicit requirement): removing/returning a product from
                 // a bill must no longer rewrite that bill's own row in
@@ -923,6 +973,50 @@ namespace PosSystem.Core.Data
                     {
                         // Nothing more to do if even this fails -- see
                         // comment above.
+                    }
+                }
+
+                // Performance indexes (2026-09-09) -- these columns were
+                // being filtered/joined on directly (bills.IsCurrent,
+                // bills.Billnumber, bills.CustomerId, sells.BillId,
+                // sells.Billnumber, sells.Datex, goods.Category,
+                // customers.ID) with no index backing any of them, meaning
+                // every one of those lookups was a full table scan. Harmless
+                // and invisible with today's data volume, but scans get
+                // linearly slower as bills/sells history grows -- adding
+                // these now keeps Dashboard/Checkout/Inventory/Customers
+                // fast well into the future with zero change to what any
+                // query returns, only how quickly it's found. Ordinary
+                // (non-unique) indexes -- none of these columns are
+                // guaranteed unique. Each wrapped independently so one
+                // failure can never block the others or this method's
+                // caller.
+                string[] perfIndexes =
+                {
+                    "CREATE INDEX IF NOT EXISTS idx_bills_iscurrent ON bills(IsCurrent)",
+                    "CREATE INDEX IF NOT EXISTS idx_bills_billnumber ON bills(Billnumber)",
+                    "CREATE INDEX IF NOT EXISTS idx_bills_customerid ON bills(CustomerId)",
+                    "CREATE INDEX IF NOT EXISTS idx_sells_billid ON sells(BillId)",
+                    "CREATE INDEX IF NOT EXISTS idx_sells_billnumber ON sells(Billnumber)",
+                    "CREATE INDEX IF NOT EXISTS idx_sells_datex ON sells(Datex)",
+                    "CREATE INDEX IF NOT EXISTS idx_goods_category ON goods(Category)",
+                    "CREATE INDEX IF NOT EXISTS idx_customers_id ON customers(ID)",
+                };
+
+                foreach (var indexSql in perfIndexes)
+                {
+                    try
+                    {
+                        using (var cmd = new SQLiteCommand(indexSql, conn))
+                        {
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    catch (SQLiteException)
+                    {
+                        // Not fatal -- see comment above. Worst case, that
+                        // one lookup stays a full table scan; every other
+                        // index still gets created.
                     }
                 }
             }

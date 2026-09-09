@@ -74,6 +74,8 @@
     <system:String x:Key="BillsBrowserViewCurrentButton">عرض النسخة الحالية</system:String>
     <system:String x:Key="BillsDetailBackButton">→ العودة إلى الفواتير</system:String>
     <system:String x:Key="BillsDetailItemsTitle">المنتجات</system:String>
+    <system:String x:Key="BillsDetailUnitPriceLabel">سعر الوحدة</system:String>
+    <system:String x:Key="BillsDetailLineTotalLabel">الإجمالي</system:String>
     <system:String x:Key="BillsDetailRemoveLineButton">إرجاع</system:String>
     <system:String x:Key="BillsDetailReturnWholeBillButton">إرجاع الفاتورة بالكامل</system:String>
     <system:String x:Key="BillsAdminLockedTitle">مطلوب صلاحية المالك أو المدير</system:String>

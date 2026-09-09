@@ -34,9 +34,18 @@ namespace PosSystem.Core.Data
         // inserting the replacement row right alongside these lines), so
         // there's no legitimate "don't know it" case the way CustomerId on
         // InsertBills has for a walk-in sale.
-        public void InsertSells(string TableName, string Name, string Category, double Quantity, double Cost, double Price, string Type, string Time, string Datex, string Barcode ,int Billnumber, double Earned ,string Returned , string Details, int BillId)
+        // OriginalPrice/DiscountPercent (2026-09-09, added for the Bills
+        // detail view's product-discount display -- see
+        // DatabaseBootstrapper's matching schema comment) default to Price/0
+        // so every EXISTING caller that hasn't been updated to pass them
+        // explicitly still compiles and still inserts a sensible row ("no
+        // known discount") rather than being forced to touch every call
+        // site at once.
+        public void InsertSells(string TableName, string Name, string Category, double Quantity, double Cost, double Price, string Type, string Time, string Datex, string Barcode ,int Billnumber, double Earned ,string Returned , string Details, int BillId, double OriginalPrice = 0, double DiscountPercent = 0)
         {
-            string insertString = "insert into " + TableName + "(Name ,Category ,Quantity ,Cost ,Price ,Type  , Time ,  Datex ,Barcode ,Billnumber , Earned ,Returned , Details, BillId) VALUES (@name , @category , @quantity , @cost , @price ,@type ,@time , @datex ,@barcode , @billnumber ,@earned ,@returned , @details, @billid)";
+            if (OriginalPrice <= 0) OriginalPrice = Price;
+
+            string insertString = "insert into " + TableName + "(Name ,Category ,Quantity ,Cost ,Price ,Type  , Time ,  Datex ,Barcode ,Billnumber , Earned ,Returned , Details, BillId, OriginalPrice, DiscountPercent) VALUES (@name , @category , @quantity , @cost , @price ,@type ,@time , @datex ,@barcode , @billnumber ,@earned ,@returned , @details, @billid, @originalprice, @discountpercent)";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();
@@ -56,6 +65,8 @@ namespace PosSystem.Core.Data
                     cmd.Parameters.AddWithValue("@returned", Returned);
                     cmd.Parameters.AddWithValue("@details", Details);
                     cmd.Parameters.AddWithValue("@billid", BillId);
+                    cmd.Parameters.AddWithValue("@originalprice", OriginalPrice);
+                    cmd.Parameters.AddWithValue("@discountpercent", DiscountPercent);
                     cmd.ExecuteNonQuery();
                     cmd.Dispose();
                 }
@@ -130,6 +141,8 @@ namespace PosSystem.Core.Data
                         goods_List.Returned = DbNullSafe.ToStringSafe(reader["Returned"]);
                         goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
                         goods_List.BillId = DbNullSafe.ToInt32(reader["BillId"]);
+                        goods_List.OriginalPrice = ReadOriginalPrice(reader, goods_List.Price);
+                        goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
                         goods.Add(goods_List);
                       
                     }
@@ -199,6 +212,8 @@ namespace PosSystem.Core.Data
                         goods_List.Returned = DbNullSafe.ToStringSafe(reader["Returned"]);
                         goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
                         goods_List.BillId = DbNullSafe.ToInt32(reader["BillId"]);
+                        goods_List.OriginalPrice = ReadOriginalPrice(reader, goods_List.Price);
+                        goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
                         sells.Add(goods_List);
                     }
                     return sells;
@@ -245,11 +260,26 @@ namespace PosSystem.Core.Data
                         goods_List.Returned = DbNullSafe.ToStringSafe(reader["Returned"]);
                         goods_List.Details = DbNullSafe.ToStringSafe(reader["Details"]);
                         goods_List.BillId = DbNullSafe.ToInt32(reader["BillId"]);
+                        goods_List.OriginalPrice = ReadOriginalPrice(reader, goods_List.Price);
+                        goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
                         sells.Add(goods_List);
                     }
                     return sells;
                 }
             }
+        }
+
+        // Added 2026-09-09 -- OriginalPrice can legitimately be NULL for a
+        // row saved before this feature existed (see
+        // DatabaseBootstrapper's backfill, which should already cover this
+        // in practice, but every read here stays defensive anyway, same
+        // spirit as DbNullSafe itself). Falls back to the row's own Price --
+        // "assume no discount" is the only honest default when no sticker
+        // price was ever recorded.
+        private static double ReadOriginalPrice(IDataReader reader, double fallbackPrice)
+        {
+            object raw = reader["OriginalPrice"];
+            return raw == null || raw == DBNull.Value ? fallbackPrice : Convert.ToDouble(raw);
         }
 
         public bool DeleteSellById(string TableName, int Id)

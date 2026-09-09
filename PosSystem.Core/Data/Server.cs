@@ -83,7 +83,20 @@ namespace PosSystem.Core.Data
         // vast majority of these lock conflicts outright; BusyTimeout is
         // the safety net for whatever WAL doesn't cover (e.g. two writers
         // landing at literally the same instant).
-        public string connectionString = String.Format("Data Source = {0};BusyTimeout=5000", fullpath);
+        // Pooling=True added 2026-09-09 (performance work) -- alongside
+        // BusyTimeout above, this doesn't change WHAT any query does, only
+        // how much per-call overhead opening a connection costs. A single
+        // action like processing a return opens ~15-20 short-lived
+        // connections back to back (see BusyTimeout's comment above for
+        // the full list) -- without pooling, System.Data.SQLite fully
+        // tears down and re-establishes the underlying native SQLite
+        // handle on every single one of those; with pooling on, it reuses
+        // an already-open handle from a small internal pool instead,
+        // cutting that repeated setup cost out of every action that chains
+        // several calls together. Purely a connection-string performance
+        // setting -- no query, no return value, and no visible behavior
+        // anywhere in the app changes because of this.
+        public string connectionString = String.Format("Data Source = {0};BusyTimeout=5000;Pooling=True", fullpath);
 
         static Server()
         {

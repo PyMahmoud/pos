@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using PosSystem.App.Localization;
 
@@ -237,6 +238,22 @@ namespace PosSystem.App.ViewModels
         // CustomerDetailViewModel.CloseRequested.
         public event Action CloseRequested;
 
+        // Busy guard (2026-09-09, performance work) -- SaveReturnsAsync now
+        // runs its database work in the background instead of freezing the
+        // screen while it happens (see that method's own doc comment for
+        // the full reasoning). Before this change, the UI being completely
+        // frozen during a save had one accidental side benefit: it was
+        // physically impossible to click anything else (navigate to a
+        // different bill, stage another return, click Save twice) while a
+        // save was in flight. Now that the screen stays responsive, that
+        // same guarantee has to be provided on purpose instead of for
+        // free -- every command below that could conflict with an
+        // in-flight save is gated on this flag, so the app still behaves,
+        // from the user's perspective, as if nothing else can be touched
+        // until the save finishes -- it just no longer LOOKS frozen while
+        // that's true.
+        private bool _isSavingReturns;
+
         public BillsBrowserViewModel()
         {
             AdminUnlockCommand = new RelayCommand(_ => AdminUnlock());
@@ -244,26 +261,35 @@ namespace PosSystem.App.ViewModels
             ViewBillCommand = new RelayCommand(p =>
             {
                 if (p is Core.Models.Bills bill) OpenBill(bill);
-            });
-            BackToListCommand = new RelayCommand(_ => SelectedBill = null);
+            }, _ => !_isSavingReturns);
+            BackToListCommand = new RelayCommand(_ => SelectedBill = null, _ => !_isSavingReturns);
             ReturnLineCommand = new RelayCommand(p =>
             {
                 if (p is Core.Models.Sells line) StageLineForReturn(line);
-            });
+            }, _ => !_isSavingReturns);
             DecrementLineQuantityCommand = new RelayCommand(p =>
             {
                 if (p is Core.Models.Sells line) StageLineUnitReturn(line);
-            });
+            }, _ => !_isSavingReturns);
             UndoLineReturnCommand = new RelayCommand(p =>
             {
                 if (p is Core.Models.Sells line) UndoLineReturn(line);
-            });
+            }, _ => !_isSavingReturns);
             ReturnWholeBillCommand = new RelayCommand(_ =>
             {
                 if (SelectedBill != null) StageWholeBillReturn();
-            });
-            SaveReturnsCommand = new RelayCommand(_ => SaveReturns(), _ => HasPendingReturns);
-            DiscardReturnsCommand = new RelayCommand(_ => DiscardPendingReturns(), _ => HasPendingReturns);
+            }, _ => !_isSavingReturns);
+            // async-void execute delegate (2026-09-09) -- RelayCommand's
+            // Action<object> parameter happily accepts an async lambda
+            // (this is standard, well-supported C#; ICommand.Execute has
+            // always returned void, so there is no Task for the command
+            // infrastructure to await either way) -- SaveReturnsAsync
+            // itself has its own try/catch around all the real work (same
+            // as the old synchronous SaveReturns did), so an async void
+            // here doesn't lose error handling the way async void
+            // sometimes can.
+            SaveReturnsCommand = new RelayCommand(async _ => await SaveReturnsAsync(), _ => HasPendingReturns && !_isSavingReturns);
+            DiscardReturnsCommand = new RelayCommand(_ => DiscardPendingReturns(), _ => HasPendingReturns && !_isSavingReturns);
             // A superseded (historical) bill is read-only for returns, but
             // still needs a way OUT to the receipt's actual current version
             // — otherwise someone who opened #210 (now superseded by
@@ -274,8 +300,8 @@ namespace PosSystem.App.ViewModels
                 if (SelectedBill == null) return;
                 var current = _allBills.FirstOrDefault(b => b.Billnumber == SelectedBill.Billnumber && b.IsCurrent);
                 if (current != null) OpenBill(current);
-            });
-            CloseCommand = new RelayCommand(_ => CloseRequested?.Invoke());
+            }, _ => !_isSavingReturns);
+            CloseCommand = new RelayCommand(_ => CloseRequested?.Invoke(), _ => !_isSavingReturns);
 
             LoadBills();
         }
@@ -354,22 +380,31 @@ namespace PosSystem.App.ViewModels
 
         /// <summary>
         /// Reduces the linked customer's Paid/Remain by the given deltas
-        /// (old bill value minus new bill value, for each field) and
-        /// notifies Checkout/Customers to refresh. No-op if the bill isn't
-        /// linked to a customer.
+        /// (old bill value minus new bill value, for each field). No-op if
+        /// the bill isn't linked to a customer, or that customer no longer
+        /// exists. Returns whether an adjustment was actually made, so the
+        /// caller knows whether to raise CustomerDataEvents.
+        /// RaiseCustomersChanged() -- moved out of this method (2026-09-09,
+        /// performance work) since this method's own database calls now
+        /// run on a background thread as part of SaveReturnsAsync (see that
+        /// method's doc comment), and that notification event has other
+        /// screens' ObservableCollections listening on it with no thread-
+        /// safety of its own -- it must only ever be raised from the UI
+        /// thread, which is the caller's job now, after the background work
+        /// this method is part of has finished.
         /// </summary>
-        private void AdjustLinkedCustomer(int? customerId, double deltaPaid, double deltaRemain)
+        private bool AdjustLinkedCustomer(int? customerId, double deltaPaid, double deltaRemain)
         {
-            if (!customerId.HasValue) return;
+            if (!customerId.HasValue) return false;
 
             var customer = _customersData.ReadCustomers("customers").FirstOrDefault(c => c.Id == customerId.Value);
-            if (customer == null) return; // customer deleted since — nothing left to adjust
+            if (customer == null) return false; // customer deleted since — nothing left to adjust
 
             _customersData.UpdateCustomers(
                 "customers", customer.Id, customer.Ownername, customer.Ownerid, customer.Ownernumber,
                 customer.Paid - deltaPaid, customer.Remain - deltaRemain);
 
-            CustomerDataEvents.RaiseCustomersChanged();
+            return true;
         }
 
         /// <summary>
@@ -434,7 +469,7 @@ namespace PosSystem.App.ViewModels
         /// inventory restoration themselves first (they know exactly which
         /// units are being returned), then call this, then fire events.
         /// </summary>
-        private void CreateReturnRevision(Core.Models.Bills sourceBill, List<Core.Models.Sells> remainingLines, double oldSubtotal)
+        private bool CreateReturnRevision(Core.Models.Bills sourceBill, List<Core.Models.Sells> remainingLines, double oldSubtotal)
         {
             double newSubtotal = remainingLines.Sum(l => l.Price * l.Quantity);
             double taxRatio = oldSubtotal > 0 ? sourceBill.Tax / oldSubtotal : 0;
@@ -470,14 +505,21 @@ namespace PosSystem.App.ViewModels
 
             foreach (var line in remainingLines)
             {
+                // OriginalPrice/DiscountPercent (2026-09-09) -- carried
+                // forward unchanged from the line being re-inserted (it was
+                // already read from the database with these populated, see
+                // Core.Data.Sells' read methods), same as every other
+                // per-unit fact about this line (Cost, Type, Barcode) that a
+                // return doesn't change.
                 _sellsData.InsertSells(
                     "sells", line.Name, line.Category, line.Quantity, line.Cost, line.Price,
                     line.Type, line.Time, line.Datex, line.Barcode, sourceBill.Billnumber,
-                    line.Earned, line.Returned, line.Details, newBillId);
+                    line.Earned, line.Returned, line.Details, newBillId,
+                    line.OriginalPrice, line.DiscountPercent);
             }
 
             _billsData.SetBillCurrent("bills", sourceBill.Id, false);
-            AdjustLinkedCustomer(sourceBill.CustomerId, sourceBill.Paid - newPaid, sourceBill.Remain - newRemain);
+            return AdjustLinkedCustomer(sourceBill.CustomerId, sourceBill.Paid - newPaid, sourceBill.Remain - newRemain);
         }
 
         /// <summary>
@@ -570,8 +612,39 @@ namespace PosSystem.App.ViewModels
         /// Re-reads currentLines fresh from the database rather than
         /// trusting BillLines' bound objects directly, same defensive
         /// reasoning the original per-action methods already followed.
+        ///
+        /// ASYNC REWRITE (2026-09-09, performance work): this used to run
+        /// entirely on the UI thread, which is exactly why saving a return
+        /// with several lines noticeably froze the screen — a chain of
+        /// 15-20 back-to-back database calls (read the bill's lines, look
+        /// up and update each returned product's stock, insert the new
+        /// revision's bill row, insert each of its line rows, mark the old
+        /// bill superseded, adjust the customer's balance) all ran one
+        /// after another with nothing else able to run until the last one
+        /// finished. Every one of those calls is now done inside
+        /// Task.Run(...) on a background thread instead, and everything
+        /// that touches an on-screen element (StatusMessage, the Bills and
+        /// BillLines lists, the data-changed events other screens listen
+        /// for) happens only AFTER that background work has fully finished
+        /// and control has returned to the UI thread — the same order of
+        /// operations and the same final result as before, just without
+        /// blocking the screen while it's in progress.
+        ///
+        /// This split matters: currentLines/remainingLines here are fresh
+        /// objects read directly from the database inside the background
+        /// block, never the same objects as BillLines (the list actually
+        /// bound to the screen) — so mutating them off the UI thread is
+        /// safe, nothing visible is being touched from the wrong thread.
+        /// CustomerDataEvents.RaiseCustomersChanged() in particular used to
+        /// fire from inside this same chain (via AdjustLinkedCustomer) —
+        /// that event has no thread-safety of its own and other screens'
+        /// lists listen for it, so AdjustLinkedCustomer/CreateReturnRevision
+        /// were changed (see their own doc comments) to report back
+        /// whether a customer needs updating instead of raising it
+        /// themselves, so it can be raised here, safely, after the
+        /// background work is done.
         /// </summary>
-        private void SaveReturns()
+        private async Task SaveReturnsAsync()
         {
             if (!RequireAdminUnlocked()) return;
             var bill = SelectedBill;
@@ -581,60 +654,68 @@ namespace PosSystem.App.ViewModels
                 .ToDictionary(l => l.Id, l => l.PendingReturnQuantity);
             if (stagedIds.Count == 0) return;
 
+            _isSavingReturns = true;
+            CommandManager.InvalidateRequerySuggested();
+
             try
             {
-                var currentLines = _sellsData.ReadSellsByBillId("sells", bill.Id);
-                double oldSubtotal = currentLines.Sum(l => l.Price * l.Quantity);
-
-                var remainingLines = new List<Core.Models.Sells>();
                 int returnedLineCount = 0;
-                foreach (var line in currentLines)
+                bool customerAdjusted = false;
+
+                // Everything inside this block is the exact same logic the
+                // old synchronous SaveReturns ran, in the exact same order
+                // — just executed on a background thread instead of the UI
+                // thread, and touching only local variables / the database,
+                // never anything bound to the screen.
+                await Task.Run(() =>
                 {
-                    if (!stagedIds.TryGetValue(line.Id, out double pendingQuantity) || pendingQuantity <= 0)
+                    var currentLines = _sellsData.ReadSellsByBillId("sells", bill.Id);
+                    double oldSubtotal = currentLines.Sum(l => l.Price * l.Quantity);
+
+                    var remainingLines = new List<Core.Models.Sells>();
+                    foreach (var line in currentLines)
                     {
+                        if (!stagedIds.TryGetValue(line.Id, out double pendingQuantity) || pendingQuantity <= 0)
+                        {
+                            remainingLines.Add(line);
+                            continue;
+                        }
+
+                        RestoreInventoryFor(line, pendingQuantity);
+                        returnedLineCount++;
+
+                        double newQuantity = line.Quantity - pendingQuantity;
+                        if (newQuantity <= 0) continue; // fully returned - drop the line entirely
+
+                        line.Quantity = newQuantity;
+                        line.Earned = (line.Price - line.Cost) * newQuantity;
+                        line.Returned = "Yes";
                         remainingLines.Add(line);
-                        continue;
                     }
 
-                    RestoreInventoryFor(line, pendingQuantity);
-                    returnedLineCount++;
+                    customerAdjusted = CreateReturnRevision(bill, remainingLines, oldSubtotal);
+                });
 
-                    double newQuantity = line.Quantity - pendingQuantity;
-                    if (newQuantity <= 0) continue; // fully returned - drop the line entirely
-
-                    line.Quantity = newQuantity;
-                    line.Earned = (line.Price - line.Cost) * newQuantity;
-                    // Returned flag (2026-09-05 fix) -- this line previously
-                    // carried its ORIGINAL Returned value ("No", set at sale
-                    // time and never touched again) straight into the new
-                    // revision even though a real partial return just
-                    // happened to it -- Sells.Returned/the Excel export's
-                    // Returned column could never show "Yes" for ANY return,
-                    // partial or whole, since a wholly-returned line is
-                    // dropped above with no replacement row at all to mark.
-                    // This at least makes the partial case (which DOES
-                    // persist into the new current revision, unlike a full
-                    // return) actually reflect what happened to it.
-                    line.Returned = "Yes";
-                    remainingLines.Add(line);
-                }
-
-                CreateReturnRevision(bill, remainingLines, oldSubtotal);
-
+                // Back on the UI thread from here on (an await in a WPF app
+                // resumes on the original UI thread by default) — safe to
+                // touch StatusMessage, raise the shared events, and update
+                // the on-screen lists.
                 InventoryDataEvents.RaiseGoodsChanged();
-                // Reuses the "sales data changed, re-derive KPIs" signal —
-                // same event a completed Checkout sale raises. Dashboard
-                // only cares that the underlying bills/sells data changed,
-                // not specifically that a NEW sale happened.
                 OrderEvents.RaiseOrderCompleted();
+                if (customerAdjusted) CustomerDataEvents.RaiseCustomersChanged();
 
                 StatusMessage = string.Format(LocalizationManager.GetString("BillsSaveReturnsSuccess"), returnedLineCount, bill.DisplayNumber);
 
-                ReloadAfterReturn(bill.Billnumber);
+                await ReloadAfterReturnAsync(bill.Billnumber);
             }
             catch (Exception ex)
             {
                 StatusMessage = LocalizationManager.GetString("BillsSaveReturnsError") + " (" + ex.Message + ")";
+            }
+            finally
+            {
+                _isSavingReturns = false;
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 
@@ -644,13 +725,48 @@ namespace PosSystem.App.ViewModels
         /// opens the receipt's fresh current revision — the one a person
         /// who just processed a return actually wants to keep looking at,
         /// not the now-historical row they were viewing a moment ago.
+        ///
+        /// Made async (2026-09-09, performance work) for the same reason
+        /// SaveReturnsAsync was — re-reading the whole bills table plus the
+        /// new revision's line items is two more database round-trips
+        /// right after the several SaveReturnsAsync already did; running
+        /// them on a background thread too keeps the screen responsive the
+        /// whole way through, not just for the first part of the save.
+        /// Only the final list/selection updates (which must happen on the
+        /// UI thread, since Bills/BillLines are bound directly to the
+        /// screen) run after the background read completes.
         /// </summary>
-        private void ReloadAfterReturn(int billnumber)
+        private async Task ReloadAfterReturnAsync(int billnumber)
         {
-            LoadBills();
+            List<Core.Models.Bills> freshBills = null;
+            await Task.Run(() =>
+            {
+                freshBills = _billsData.ReadBills("bills")
+                    .OrderByDescending(b => b.Billnumber)
+                    .ThenByDescending(b => b.Id)
+                    .ToList();
+            });
+
+            _allBills = freshBills;
+            ApplyFilter();
+
             var current = _allBills.FirstOrDefault(b => b.Billnumber == billnumber && b.IsCurrent);
-            if (current != null) OpenBill(current);
-            else SelectedBill = null; // shouldn't happen — CreateReturnRevision always inserts a new current row
+            if (current == null)
+            {
+                SelectedBill = null; // shouldn't happen — CreateReturnRevision always inserts a new current row
+                return;
+            }
+
+            SelectedBill = current;
+
+            List<Core.Models.Sells> freshLines = null;
+            await Task.Run(() =>
+            {
+                freshLines = _sellsData.ReadSellsByBillId("sells", current.Id).ToList();
+            });
+
+            BillLines.Clear();
+            foreach (var line in freshLines) BillLines.Add(line);
         }
     }
 }

@@ -42,6 +42,18 @@ namespace PosSystem.Core.Models
         // nothing needs to explicitly "discard" it when navigating away from
         // an unsaved bill -- the staged objects are simply dropped.
         private double pendingReturnQuantity;
+
+        // Added 2026-09-09 (product-level discount visibility on the Bills
+        // detail view) -- see DatabaseBootstrapper's matching sells.
+        // OriginalPrice/DiscountPercent comment for the full reasoning.
+        // price above is already the discounted per-unit figure that was
+        // actually charged; these two are purely for DISPLAY (the same
+        // strikethrough-original/badge treatment CartLine already uses),
+        // never used in any total/earned/tax math anywhere in this app --
+        // that math has only ever needed Price, and still only needs Price.
+        private double originalPrice;
+        private double discountPercent;
+
         public event PropertyChangedEventHandler PropertyChanged;
         public void NotifyPropertyChanged(string property)
         {
@@ -83,7 +95,10 @@ namespace PosSystem.Core.Models
         public double Quantity
         {
             get { return quantity; }
-            set { quantity = value; NotifyPropertyChanged("Quantity"); }
+            set { quantity = value; NotifyPropertyChanged("Quantity");
+                NotifyPropertyChanged("LineTotal");
+                NotifyPropertyChanged("RemainingLineTotal");
+            }
         }
 
         public double Cost
@@ -96,6 +111,8 @@ namespace PosSystem.Core.Models
             get { return price; }
             set { price = value; NotifyPropertyChanged("Price");
                 NotifyPropertyChanged("PriceBrush");
+                NotifyPropertyChanged("LineTotal");
+                NotifyPropertyChanged("RemainingLineTotal");
             }
         }
         public string PriceBrush
@@ -142,6 +159,7 @@ namespace PosSystem.Core.Models
                 NotifyPropertyChanged("PendingReturnQuantity");
                 NotifyPropertyChanged("RemainingQuantity");
                 NotifyPropertyChanged("HasPendingReturn");
+                NotifyPropertyChanged("RemainingLineTotal");
             }
         }
 
@@ -151,6 +169,26 @@ namespace PosSystem.Core.Models
         // actually happens (Quantity here stays exactly what was sold).
         public double RemainingQuantity => quantity - pendingReturnQuantity;
         public bool HasPendingReturn => pendingReturnQuantity > 0;
+
+        // Added 2026-09-09 (bug fix -- Mahmoud's report that the Bills
+        // detail view only ever showed a line's PER-UNIT Price, so a line
+        // of 16 units gave no way to see what those 16 units actually cost
+        // together). LineTotal is the full sold quantity's extended price;
+        // RemainingLineTotal is what the Bills detail view actually binds
+        // to, so the number on screen updates live as a return is staged,
+        // matching the RemainingQuantity it already shows next to it.
+        public double LineTotal => System.Math.Round(price * quantity, 2);
+        public double RemainingLineTotal => System.Math.Round(price * RemainingQuantity, 2);
+
+        // Added 2026-09-09 -- see the private-field comment above for the
+        // full reasoning. OriginalPrice/DiscountPercent are set once by
+        // Core.Data.Sells' read methods (or InsertSells' caller) and never
+        // mutated afterward, same as Category/Barcode/Type below -- no
+        // NotifyPropertyChanged needed.
+        public double OriginalPrice { get => originalPrice; set => originalPrice = value; }
+        public double DiscountPercent { get => discountPercent; set => discountPercent = value; }
+        public bool HasDiscount => discountPercent > 0;
+        public double DiscountAmountPerUnit => System.Math.Round(originalPrice - price, 2);
     }
        
 }

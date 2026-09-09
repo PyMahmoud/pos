@@ -723,6 +723,37 @@
                                 <Border Background="{DynamicResource SurfaceContainerBrush}"
                                         CornerRadius="14" Padding="18" Margin="0,0,0,20">
                                     <StackPanel>
+                                        <!-- Subtotal (added 2026-09-09) - derived from
+                                             SelectedBill.Subtotal (Billcost + Discount - Tax,
+                                             see Bills.cs). Without this row the Total below had
+                                             nothing to visibly reconcile against. -->
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{DynamicResource CheckoutSubtotal}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedBill.Subtotal, StringFormat={}{0:0.00}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                        </Grid>
+                                        <!-- Discount (bug fix, 2026-09-09) - SelectedBill.
+                                             Discount/DiscountPercent were always computed and
+                                             stored (see CreateReturnRevision) but never actually
+                                             shown here, which is exactly why this card's Total
+                                             could look wrong against the line items below: nothing
+                                             was ever miscalculated, the discount that explains the
+                                             gap just wasn't visible. Hidden when this bill has no
+                                             discount, same PositiveNumberToVisibilityConverter
+                                             pattern Checkout's own cart already uses for its
+                                             Discount/Tax rows. -->
+                                        <Grid Margin="0,0,0,6"
+                                              Visibility="{Binding SelectedBill.Discount, Converter={StaticResource PositiveNumberToVisibilityConverter}}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}"><Run Text="{DynamicResource CheckoutDiscountAmountLabel}" /><Run Text=" (" /><Run Text="{Binding SelectedBill.DiscountPercent, StringFormat={}{0:0.##}}" /><Run Text="%)" /></TextBlock>
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedBill.Discount, StringFormat={}-{0:0.00}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource TertiaryBrush}" />
+                                        </Grid>
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
@@ -739,12 +770,22 @@
                                             <TextBlock Grid.Column="0" Text="{DynamicResource CheckoutTotal}" Style="{StaticResource TitleMedium}" Foreground="{DynamicResource OnSurfaceBrush}" />
                                             <TextBlock Grid.Column="1" Text="{Binding SelectedBill.Billcost, StringFormat={}{0:0.00}}" Style="{StaticResource TitleMedium}" Foreground="{DynamicResource PrimaryBrush}" />
                                         </Grid>
+                                        <!-- Paid/Remaining (bug fix, 2026-09-09) - these two rows
+                                             used to reuse CustomersBalancePaidUp ("Paid up") and
+                                             CustomersPaymentAmountLabel ("Payment amount") as their
+                                             labels, the exact same mislabeling already identified
+                                             and fixed on the Excel export's Bills sheet (see
+                                             ExportColPaid/ExportColRemaining's own comment in
+                                             Strings.English.xaml) but never applied here -
+                                             "Payment amount" bound to SelectedBill.Remain in
+                                             particular read as actively misleading. Same two
+                                             dedicated keys reused here instead. -->
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{DynamicResource CustomersBalancePaidUp}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                            <TextBlock Grid.Column="0" Text="{DynamicResource ExportColPaid}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
                                             <TextBlock Grid.Column="1" Text="{Binding SelectedBill.Paid, StringFormat={}{0:0.00}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
                                         </Grid>
                                         <Grid>
@@ -752,7 +793,7 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{DynamicResource CustomersPaymentAmountLabel}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                            <TextBlock Grid.Column="0" Text="{DynamicResource ExportColRemaining}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
                                             <TextBlock Grid.Column="1" Text="{Binding SelectedBill.Remain, StringFormat={}{0:0.00}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource TertiaryBrush}" />
                                         </Grid>
                                     </StackPanel>
@@ -804,14 +845,42 @@
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
                                                         <ColumnDefinition Width="116" />
-                                                        <ColumnDefinition Width="90" />
+                                                        <ColumnDefinition Width="130" />
+                                                        <ColumnDefinition Width="100" />
                                                         <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Grid.Column="0" Text="{Binding Name}"
-                                                               Style="{StaticResource BodyLarge}"
-                                                               Foreground="{DynamicResource OnSurfaceBrush}"
-                                                               TextWrapping="Wrap"
-                                                               VerticalAlignment="Center" />
+                                                    <!-- Name + product discount badge (2026-09-09) - flags that
+                                                         THIS specific product had its own Inventory discount
+                                                         applied at sale time, independent of whatever
+                                                         bill-level discount shows in the totals card above.
+                                                         Same badge language as Inventory's product card and
+                                                         Checkout's own cart line. Hidden entirely when this
+                                                         line has no discount - a bill with no discounted
+                                                         products looks exactly like it did before this
+                                                         feature existed. -->
+                                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}"
+                                                                   Style="{StaticResource BodyLarge}"
+                                                                   Foreground="{DynamicResource OnSurfaceBrush}"
+                                                                   TextWrapping="Wrap" />
+                                                        <Border CornerRadius="6" Padding="6,2"
+                                                                HorizontalAlignment="Left"
+                                                                Margin="0,4,0,0"
+                                                                Background="{DynamicResource TertiaryContainerBrush}"
+                                                                Visibility="{Binding HasDiscount, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{DynamicResource InventoryDiscountBadge}"
+                                                                           Style="{StaticResource LabelSmall}"
+                                                                           Foreground="{DynamicResource OnTertiaryContainerBrush}"
+                                                                           FontWeight="SemiBold"
+                                                                           Margin="0,0,4,0" />
+                                                                <TextBlock Text="{Binding DiscountPercent, StringFormat={}-{0:0.##}%}"
+                                                                           Style="{StaticResource LabelSmall}"
+                                                                           Foreground="{DynamicResource OnTertiaryContainerBrush}"
+                                                                           FontWeight="SemiBold" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </StackPanel>
 
                                                     <!-- Line-level return actions (2026-08-28,
                                                          receipt revisioning; reworked 2026-09-04 into
@@ -869,11 +938,51 @@
                                                         </StackPanel>
                                                     </StackPanel>
 
-                                                    <TextBlock Grid.Column="2" Text="{Binding Price, StringFormat={}{0:0.00}}"
-                                                               Style="{StaticResource BodyLarge}"
-                                                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
-                                                               VerticalAlignment="Center" />
-                                                    <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                                    <!-- Unit price (labeled, 2026-09-09 bug fix) -
+                                                         was previously shown with no indication it's
+                                                         PER UNIT, so a line of e.g. 16 pieces gave no
+                                                         way to see what those 16 pieces cost together
+                                                         - see the new RemainingLineTotal column below. -->
+                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{DynamicResource BillsDetailUnitPriceLabel}"
+                                                                   Style="{StaticResource LabelSmall}"
+                                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                                        <!-- Discounted price (2026-09-09) - strikethrough
+                                                             OriginalPrice above the actual discounted Price,
+                                                             same pairing as the badge above and as Inventory/
+                                                             Cart's own discount display. Only shown alongside
+                                                             the badge (HasDiscount) - a non-discounted line
+                                                             falls through to the plain price below unchanged. -->
+                                                        <StackPanel Visibility="{Binding HasDiscount, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                            <TextBlock Text="{Binding OriginalPrice, StringFormat={}{0:0.00}}"
+                                                                       Style="{StaticResource LabelSmall}"
+                                                                       Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                                       TextDecorations="Strikethrough" />
+                                                            <TextBlock Text="{Binding Price, StringFormat={}{0:0.00}}"
+                                                                       Style="{StaticResource BodyLarge}"
+                                                                       Foreground="{DynamicResource TertiaryBrush}" />
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding Price, StringFormat={}{0:0.00}}"
+                                                                   Style="{StaticResource BodyLarge}"
+                                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                                   Visibility="{Binding HasDiscount, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                                    </StackPanel>
+                                                    <!-- Extended line total (added 2026-09-09, bug fix)
+                                                         - Price x quantity, so multi-unit lines are
+                                                         actually readable. Bound to RemainingLineTotal
+                                                         (not the raw LineTotal) so it updates live
+                                                         alongside RemainingQuantity above as a return
+                                                         gets staged, rather than showing a total that
+                                                         no longer matches what's about to be saved. -->
+                                                    <StackPanel Grid.Column="3" VerticalAlignment="Center">
+                                                        <TextBlock Text="{DynamicResource BillsDetailLineTotalLabel}"
+                                                                   Style="{StaticResource LabelSmall}"
+                                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}" />
+                                                        <TextBlock Text="{Binding RemainingLineTotal, StringFormat={}{0:0.00}}"
+                                                                   Style="{StaticResource TitleMedium}"
+                                                                   Foreground="{DynamicResource PrimaryBrush}" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="4" Orientation="Horizontal">
                                                         <Button Content="{DynamicResource BillsUndoLineReturnButton}"
                                                                 Command="{Binding DataContext.UndoLineReturnCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                                 CommandParameter="{Binding}"
