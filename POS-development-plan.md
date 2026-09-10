@@ -508,3 +508,24 @@ already mirrors layout via `AppFlowDirection`.
 
 ## Suggested order of attack from today
 **1 → 2 → 3 → 4 → 5**, in that order, without skipping ahead — Checkout and Customers/Debt are the two screens the client actually needs, so everything before them is foundation and everything after them (Dashboard, Inventory, reporting) can wait until those two are solid and in the client's hands.
+
+---
+
+## Reference-repo comparison (2026-09-10) — see Reference-Repo-Features-Plan.md
+
+Compared this project against `mohamedelareeg/POS` (the same author's
+larger .NET 8/EF Core sibling of the `WPF-POS` base this app forked from)
+looking for features/patterns worth porting. Full findings, priority
+ordering, and a detailed per-feature implementation plan for the five
+High Value items — multi-method payments (Bank Transfer/Cheque),
+per-product low-stock override, pricing guardrail fields, a
+numeric-input WPF behavior, and a safe restore-on-next-launch flow — live
+in `Reference-Repo-Features-Plan.md` at the repo root, not duplicated
+here. Nothing from that file is implemented yet as of this entry.
+
+Worth noting since it corrects the original comparison: DB backup was
+initially flagged as a missing feature to port, but `SettingsViewModel`'s
+Data & Backup section already has it — only restore was ever
+deliberately left out, for a real safety reason documented in that file's
+Correction 1. Read that section before assuming anything from a "what's
+missing" list is actually missing.
