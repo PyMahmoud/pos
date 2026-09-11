@@ -155,6 +155,25 @@
                         </StackPanel>
                     </Grid>
 
+                    <!-- Per-product low-stock override (2026-09-10,
+                         Reference-Repo-Features-Plan.md item #2) -- optional,
+                         unlike every field above it: leaving this blank
+                         saves MinStock as null, which means "use the shop's
+                         Settings threshold" (InventoryRow.
+                         EffectiveLowStockThreshold), not zero. -->
+                    <TextBlock Text="{DynamicResource InventoryMinStockLabel}"
+                               Style="{StaticResource LabelSmall}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               Margin="0,0,0,4" />
+                    <TextBox Text="{Binding NewProductMinStock, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource ThemedTextBoxStyle}"
+                             Margin="0,0,0,4" />
+                    <TextBlock Text="{DynamicResource InventoryMinStockHint}"
+                               Style="{StaticResource LabelSmall}"
+                               Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,16" />
+
                     <Button Content="{DynamicResource InventoryAddProductButton}"
                             Command="{Binding AddProductCommand}"
                             Background="{DynamicResource PrimaryBrush}"
@@ -779,6 +798,24 @@
                                                          Style="{StaticResource ThemedTextBoxStyle}" />
                                             </StackPanel>
                                         </Grid>
+
+                                        <!-- Per-product low-stock override
+                                             (2026-09-10, item #2) -- same
+                                             blank-means-use-shop-default
+                                             convention as Add Product's own
+                                             MinStock field. -->
+                                        <TextBlock Text="{DynamicResource InventoryMinStockLabel}"
+                                                   Style="{StaticResource LabelSmall}"
+                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                   Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding EditMinStockInput, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource ThemedTextBoxStyle}"
+                                                 Margin="0,0,0,4" />
+                                        <TextBlock Text="{DynamicResource InventoryMinStockHint}"
+                                                   Style="{StaticResource LabelSmall}"
+                                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,12" />
 
                                         <Grid>
                                             <Grid.ColumnDefinitions>

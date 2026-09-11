@@ -251,12 +251,16 @@
     <system:String x:Key="InventoryProductQuantityLabel">الكمية الابتدائية</system:String>
     <system:String x:Key="InventoryProductCostLabel">التكلفة</system:String>
     <system:String x:Key="InventoryProductPriceLabel">السعر</system:String>
+    <!-- تجاوز حد المخزون المنخفض لكل منتج (2026-09-10، البند 2) -->
+    <system:String x:Key="InventoryMinStockLabel">تجاوز حد المخزون المنخفض (اختياري)</system:String>
+    <system:String x:Key="InventoryMinStockHint">اتركه فارغًا لاستخدام حد المتجر الافتراضي (الإعدادات ← التفضيلات). أدخل رقمًا هنا لتعليم هذا المنتج كمخزون منخفض عند كمية مختلفة.</system:String>
     <system:String x:Key="InventoryAddProductButton">إضافة المنتج</system:String>
     <system:String x:Key="InventoryAddMissingName">أدخل اسم المنتج.</system:String>
     <system:String x:Key="InventoryAddMissingCategory">اختر فئة.</system:String>
     <system:String x:Key="InventoryAddInvalidQuantity">أدخل كمية ابتدائية صحيحة (0 أو أكثر).</system:String>
     <system:String x:Key="InventoryAddInvalidCost">أدخل تكلفة صحيحة (0 أو أكثر).</system:String>
     <system:String x:Key="InventoryAddInvalidPrice">أدخل سعرًا صحيحًا أكبر من 0.</system:String>
+    <system:String x:Key="InventoryAddInvalidMinStock">أدخل قيمة صحيحة لتجاوز حد المخزون المنخفض (0 أو أكثر)، أو اتركه فارغًا.</system:String>
     <system:String x:Key="InventoryAddDuplicateBarcode">هذا الباركود مستخدم بالفعل لمنتج آخر.</system:String>
     <system:String x:Key="InventoryAddSuccess">تمت إضافة {0}.</system:String>
     <system:String x:Key="InventoryAddError">حدث خطأ. حاول مرة أخرى.</system:String>
@@ -277,6 +281,7 @@
     <system:String x:Key="InventoryEditMissingCategory">اختر فئة.</system:String>
     <system:String x:Key="InventoryEditInvalidCost">أدخل تكلفة صحيحة (0 أو أكثر).</system:String>
     <system:String x:Key="InventoryEditInvalidPrice">أدخل سعرًا صحيحًا أكبر من 0.</system:String>
+    <system:String x:Key="InventoryEditInvalidMinStock">أدخل قيمة صحيحة لتجاوز حد المخزون المنخفض (0 أو أكثر)، أو اتركه فارغًا.</system:String>
     <system:String x:Key="InventoryEditDuplicateBarcode">هذا الباركود مستخدم بالفعل لمنتج آخر.</system:String>
     <system:String x:Key="InventoryEditSuccess">تم تحديث {0}.</system:String>
     <system:String x:Key="InventoryEditError">حدث خطأ. حاول مرة أخرى.</system:String>

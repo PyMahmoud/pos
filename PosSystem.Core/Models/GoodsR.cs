@@ -126,6 +126,18 @@ namespace PosSystem.Core.Models
         public bool HasDiscount => DiscountPercent > 0;
         public double DiscountedPrice => Math.Round(Price * (1 - DiscountPercent / 100.0), 2);
         public double DiscountAmount => Math.Round(Price * DiscountPercent / 100.0, 2);
+
+        // Added 2026-09-10, same reasoning as Core.Models.Goods.MinStock --
+        // not wired into either constructor for the same reason
+        // DiscountPercent above isn't (see that property's own comment);
+        // InventoryViewModel.LoadGoods sets this directly after
+        // construction, same pattern.
+        private double? minStock;
+        public double? MinStock
+        {
+            get => minStock;
+            set { minStock = value; NotifyPropertyChanged("MinStock"); }
+        }
        
 
         public event PropertyChangedEventHandler PropertyChanged;

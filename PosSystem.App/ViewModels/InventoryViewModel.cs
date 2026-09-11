@@ -256,6 +256,7 @@ namespace PosSystem.App.ViewModels
             public double Price;
             public string Barcode;
             public double DiscountPercent;
+            public double? MinStock;
         }
 
         private List<GoodsBaselineSnapshot> _baselineRows = new List<GoodsBaselineSnapshot>();
@@ -381,7 +382,8 @@ namespace PosSystem.App.ViewModels
                 Cost = r.Cost,
                 Price = r.Price,
                 Barcode = r.Barcode,
-                DiscountPercent = r.DiscountPercent
+                DiscountPercent = r.DiscountPercent,
+                MinStock = r.MinStock
             }).ToList();
             _baselineCategoryNames = new HashSet<string>(AllCategoryNames, StringComparer.OrdinalIgnoreCase);
         }
@@ -409,7 +411,7 @@ namespace PosSystem.App.ViewModels
                     string today = DateTime.Now.ToString("dd/MM/yyyy");
                     row.Id = _goodsData.InsertGoodsReturningId(
                         "goods", row.Name, row.Category, row.Quantity, row.Cost, row.Price,
-                        "", row.Barcode, 0, today, today, row.DiscountPercent);
+                        "", row.Barcode, 0, today, today, row.DiscountPercent, row.MinStock);
                 }
 
                 var currentIds = new HashSet<int>(_allRows.Where(r => r.Id > 0).Select(r => r.Id));
@@ -425,9 +427,10 @@ namespace PosSystem.App.ViewModels
 
                     bool fieldsChanged = baseline.Name != row.Name || baseline.Category != row.Category ||
                                           baseline.Cost != row.Cost || baseline.Price != row.Price ||
-                                          baseline.Barcode != row.Barcode || baseline.DiscountPercent != row.DiscountPercent;
+                                          baseline.Barcode != row.Barcode || baseline.DiscountPercent != row.DiscountPercent ||
+                                          baseline.MinStock != row.MinStock;
                     if (fieldsChanged)
-                        _goodsData.UpdateGoodsById("goods", row.Id, row.Name, row.Category, row.Cost, row.Price, row.Barcode, row.DiscountPercent);
+                        _goodsData.UpdateGoodsById("goods", row.Id, row.Name, row.Category, row.Cost, row.Price, row.Barcode, row.DiscountPercent, row.MinStock);
 
                     if (baseline.Quantity != row.Quantity)
                         _goodsData.UpdateGoodCountById("goods", row.Id, row.Quantity);
@@ -655,6 +658,18 @@ namespace PosSystem.App.ViewModels
         {
             get => _newProductPrice;
             set => SetProperty(ref _newProductPrice, value);
+        }
+
+        // Added 2026-09-10 for per-product low-stock threshold override
+        // (Reference-Repo-Features-Plan.md item #2) -- optional, unlike
+        // Quantity/Cost/Price above; blank means "use the shop-wide
+        // Settings threshold" (saved as null MinStock), same convention
+        // InventoryRow.EditMinStockInput uses for the per-row edit form.
+        private string _newProductMinStock = "";
+        public string NewProductMinStock
+        {
+            get => _newProductMinStock;
+            set => SetProperty(ref _newProductMinStock, value);
         }
 
         // Category management (added 2026-08-25) -- see class doc comment.
@@ -887,6 +902,7 @@ namespace PosSystem.App.ViewModels
                 var goodsR = new Core.Models.GoodsR(
                     m.Id, m.Name, m.Category, m.Quantity, m.Cost, m.Price, m.Type, m.Barcode, m.Earned, m.Datex, m.Datee);
                 goodsR.DiscountPercent = m.DiscountPercent;
+                goodsR.MinStock = m.MinStock;
                 return new InventoryRow(goodsR);
             }).ToList();
 
@@ -1131,6 +1147,20 @@ namespace PosSystem.App.ViewModels
                 return;
             }
 
+            // Optional -- blank is valid and means "use the shop default"
+            // (saved as null), unlike Quantity/Cost/Price above which are
+            // always required numbers.
+            double? minStock = null;
+            if (!string.IsNullOrWhiteSpace(NewProductMinStock))
+            {
+                if (!double.TryParse(NewProductMinStock, out double parsedMinStock) || parsedMinStock < 0)
+                {
+                    StatusMessage = LocalizationManager.GetString("InventoryAddInvalidMinStock");
+                    return;
+                }
+                minStock = parsedMinStock;
+            }
+
             // Barcode optional; when present, must be unique. Checked
             // against the LOCAL, in-memory state (_allRows) as of
             // 2026-09-03, not the database -- see this class's staging-
@@ -1147,8 +1177,10 @@ namespace PosSystem.App.ViewModels
             }
 
             string today = DateTime.Now.ToString("dd/MM/yyyy");
-            var newRow = new InventoryRow(new Core.Models.GoodsR(
-                NextTempId(), name, category, quantity, cost, price, "", barcode, 0, today, today));
+            var newGoodsR = new Core.Models.GoodsR(
+                NextTempId(), name, category, quantity, cost, price, "", barcode, 0, today, today);
+            newGoodsR.MinStock = minStock;
+            var newRow = new InventoryRow(newGoodsR);
             newRow.PropertyChanged += Row_PropertyChanged;
 
             PushChange(
@@ -1162,6 +1194,7 @@ namespace PosSystem.App.ViewModels
             NewProductQuantity = "";
             NewProductCost = "";
             NewProductPrice = "";
+            NewProductMinStock = "";
 
             StatusMessage = string.Format(LocalizationManager.GetString("InventoryAddSuccess"), name)
                 + " " + LocalizationManager.GetString("InventoryPendingSaveNote");
@@ -1288,6 +1321,7 @@ namespace PosSystem.App.ViewModels
             row.EditCategoryInput = row.Category;
             row.EditCost = row.Cost.ToString(CultureInfo.InvariantCulture);
             row.EditPrice = row.Price.ToString(CultureInfo.InvariantCulture);
+            row.EditMinStockInput = row.MinStock.HasValue ? row.MinStock.Value.ToString(CultureInfo.InvariantCulture) : "";
             row.IsEditing = true;
         }
 
@@ -1323,6 +1357,20 @@ namespace PosSystem.App.ViewModels
                 return;
             }
 
+            // Optional, same convention as AddProduct's own MinStock check
+            // above -- blank means "use the shop default" (null), not an
+            // error.
+            double? minStock = null;
+            if (!string.IsNullOrWhiteSpace(row.EditMinStockInput))
+            {
+                if (!double.TryParse(row.EditMinStockInput, out double parsedMinStock) || parsedMinStock < 0)
+                {
+                    StatusMessage = LocalizationManager.GetString("InventoryEditInvalidMinStock");
+                    return;
+                }
+                minStock = parsedMinStock;
+            }
+
             // Checked against the LOCAL _allRows, not the database, as of
             // 2026-09-03 -- see this class's staging-model doc comment.
             if (!string.IsNullOrEmpty(barcode) && _allRows.Any(r => r != row && string.Equals(r.Barcode, barcode, StringComparison.Ordinal)))
@@ -1333,6 +1381,7 @@ namespace PosSystem.App.ViewModels
 
             string oldName = row.Name, oldCategory = row.Category, oldBarcode = row.Barcode;
             double oldCost = row.Cost, oldPrice = row.Price;
+            double? oldMinStock = row.MinStock;
 
             PushChange(
                 apply: () =>
@@ -1342,6 +1391,7 @@ namespace PosSystem.App.ViewModels
                     row.Cost = cost;
                     row.Price = price;
                     row.Barcode = barcode;
+                    row.MinStock = minStock;
                     row.IsEditing = false;
                 },
                 revert: () =>
@@ -1351,6 +1401,7 @@ namespace PosSystem.App.ViewModels
                     row.Cost = oldCost;
                     row.Price = oldPrice;
                     row.Barcode = oldBarcode;
+                    row.MinStock = oldMinStock;
                 });
 
             StatusMessage = string.Format(LocalizationManager.GetString("InventoryEditSuccess"), name)

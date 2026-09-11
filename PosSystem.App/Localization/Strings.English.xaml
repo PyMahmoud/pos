@@ -324,6 +324,13 @@
     <system:String x:Key="InventoryProductQuantityLabel">Starting quantity</system:String>
     <system:String x:Key="InventoryProductCostLabel">Cost</system:String>
     <system:String x:Key="InventoryProductPriceLabel">Price</system:String>
+    <!-- Per-product low-stock threshold override (2026-09-10,
+         Reference-Repo-Features-Plan.md item #2) -- optional; Settings has
+         a shop-wide Low Stock Threshold already (see
+         SettingsLowStockThresholdLabel), this is a per-product exception on
+         top of it, not a replacement. -->
+    <system:String x:Key="InventoryMinStockLabel">Low stock override (optional)</system:String>
+    <system:String x:Key="InventoryMinStockHint">Leave blank to use the shop's default threshold (Settings &#8594; Preferences). Set a number here to flag THIS product as low stock at a different quantity.</system:String>
     <system:String x:Key="InventoryAddProductButton">Add product</system:String>
     <system:String x:Key="InventoryAddMissingName">Enter a product name.</system:String>
     <!-- Updated 2026-08-25, see InventoryProductCategoryHint above; "or
@@ -333,6 +340,7 @@
     <system:String x:Key="InventoryAddInvalidQuantity">Enter a valid starting quantity (0 or more).</system:String>
     <system:String x:Key="InventoryAddInvalidCost">Enter a valid cost (0 or more).</system:String>
     <system:String x:Key="InventoryAddInvalidPrice">Enter a valid price greater than 0.</system:String>
+    <system:String x:Key="InventoryAddInvalidMinStock">Enter a valid low-stock override (0 or more), or leave it blank.</system:String>
     <system:String x:Key="InventoryAddDuplicateBarcode">That barcode is already used by another product.</system:String>
     <system:String x:Key="InventoryAddSuccess">{0} added.</system:String>
     <system:String x:Key="InventoryAddError">Something went wrong. Please try again.</system:String>
@@ -360,6 +368,7 @@
     <system:String x:Key="InventoryEditMissingCategory">Choose a category.</system:String>
     <system:String x:Key="InventoryEditInvalidCost">Enter a valid cost (0 or more).</system:String>
     <system:String x:Key="InventoryEditInvalidPrice">Enter a valid price greater than 0.</system:String>
+    <system:String x:Key="InventoryEditInvalidMinStock">Enter a valid low-stock override (0 or more), or leave it blank.</system:String>
     <system:String x:Key="InventoryEditDuplicateBarcode">That barcode is already used by another product.</system:String>
     <system:String x:Key="InventoryEditSuccess">{0} updated.</system:String>
     <system:String x:Key="InventoryEditError">Something went wrong. Please try again.</system:String>

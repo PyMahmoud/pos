@@ -110,6 +110,13 @@ namespace PosSystem.Core.Models
         public string Datex { get => datex; set => datex = value; }
         public string Datee { get => datee; set => datee = value; }
         public double DiscountPercent { get => discountPercent; set => discountPercent = value; }
+
+        // Added 2026-09-10 for per-product low-stock threshold override
+        // (Reference-Repo-Features-Plan.md item #2) -- null means "use
+        // AppSettings.LowStockThreshold", the shop-wide default; a real
+        // value overrides it for this one product. See
+        // DatabaseBootstrapper's matching column comment.
+        public double? MinStock { get; set; }
    
 
         public event PropertyChangedEventHandler PropertyChanged;

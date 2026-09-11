@@ -28,6 +28,48 @@ namespace PosSystem.App.ViewModels
         // captured at construction time.
         public static double LowStockThreshold => PosSystem.App.AppSettings.LowStockThreshold;
 
+        // Per-product override (added 2026-09-10, Reference-Repo-Features-
+        // Plan.md item #2) -- null means "use the shop-wide
+        // LowStockThreshold above"; a real value overrides it for just
+        // this product. Setting this also re-syncs EditMinStockInput (see
+        // that property's own comment), same mirror-the-real-value pattern
+        // DiscountPercent's setter already uses for DiscountEditInput.
+        private double? _minStock;
+        public double? MinStock
+        {
+            get => _minStock;
+            set
+            {
+                if (_minStock == value) return;
+                _minStock = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(EffectiveLowStockThreshold));
+                OnPropertyChanged(nameof(IsLowStock));
+                OnPropertyChanged(nameof(IsInStock));
+                _editMinStockInput = value.HasValue ? value.Value.ToString(CultureInfo.InvariantCulture) : "";
+                OnPropertyChanged(nameof(EditMinStockInput));
+            }
+        }
+
+        // What IsLowStock/IsInStock actually compare Quantity against --
+        // this product's own MinStock if it has one, else the shop-wide
+        // default. The one place that distinction actually matters; every
+        // other reader of "is this product low" just wants the bool below.
+        public double EffectiveLowStockThreshold => MinStock ?? LowStockThreshold;
+
+        // Edit buffer for the per-card Edit form's MinStock TextBox --
+        // same buffer-not-live-binding reasoning as EditCost/EditPrice
+        // below (a partial/invalid typed value never touches the real
+        // MinStock until explicitly saved). "" means "use the shop
+        // default" (i.e. save as null), not 0 -- StartEdit/SaveEdit in
+        // InventoryViewModel are what actually enforce that distinction.
+        private string _editMinStockInput = "";
+        public string EditMinStockInput
+        {
+            get => _editMinStockInput;
+            set { if (_editMinStockInput == value) return; _editMinStockInput = value; OnPropertyChanged(); }
+        }
+
         // Settable as of 2026-09-03 (Inventory's staged-edits feature) --
         // a newly-Added-but-not-yet-Saved row is given a temporary,
         // negative placeholder ID (see InventoryViewModel.NextTempId) since
@@ -168,8 +210,8 @@ namespace PosSystem.App.ViewModels
         }
 
         public bool IsOutOfStock => Quantity <= 0;
-        public bool IsLowStock => Quantity > 0 && Quantity <= LowStockThreshold;
-        public bool IsInStock => Quantity > LowStockThreshold;
+        public bool IsLowStock => Quantity > 0 && Quantity <= EffectiveLowStockThreshold;
+        public bool IsInStock => Quantity > EffectiveLowStockThreshold;
 
         private string _adjustInput = "";
         public string AdjustInput
@@ -271,6 +313,8 @@ namespace PosSystem.App.ViewModels
             _quantity = model.Quantity;
             _discountPercent = model.DiscountPercent;
             _discountEditInput = model.DiscountPercent.ToString(CultureInfo.InvariantCulture);
+            _minStock = model.MinStock;
+            _editMinStockInput = model.MinStock.HasValue ? model.MinStock.Value.ToString(CultureInfo.InvariantCulture) : "";
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

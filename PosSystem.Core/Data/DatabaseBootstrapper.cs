@@ -992,6 +992,20 @@ namespace PosSystem.Core.Data
                 // split pie, Excel export) keeps working unchanged.
                 EnsureColumn(conn, "bills", "PaymentReference", "TEXT");
 
+                // Added 2026-09-10 for per-product low-stock threshold
+                // override (Reference-Repo-Features-Plan.md item #2) --
+                // AppSettings.LowStockThreshold is a single shop-wide
+                // number driving InventoryRow.IsLowStock/IsInStock; this
+                // adds an optional per-product override on top of it, not
+                // a replacement -- most products keep using the global
+                // default. NULL ("use the shop default") for every
+                // existing product and every new one unless the cashier
+                // explicitly sets an override -- no backfill needed, read
+                // via DbNullSafe.ToNullableDouble (NOT ToDouble -- see that
+                // method's own comment on why collapsing null to 0 here
+                // would silently mean the opposite of "use the default").
+                EnsureColumn(conn, "goods", "MinStock", "REAL");
+
                 // Performance indexes (2026-09-09) -- these columns were
                 // being filtered/joined on directly (bills.IsCurrent,
                 // bills.Billnumber, bills.CustomerId, sells.BillId,

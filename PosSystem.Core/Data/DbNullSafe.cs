@@ -28,6 +28,19 @@ namespace PosSystem.Core.Data
         public static int? ToNullableInt32(object value) =>
             value == null || value == DBNull.Value ? (int?)null : Convert.ToInt32(value);
 
+        // Added 2026-09-10 for goods.MinStock (per-product low-stock
+        // threshold override, Reference-Repo-Features-Plan.md item #2) --
+        // NULL here has real meaning ("use the shop-wide Settings
+        // threshold"), unlike every other numeric column in this file
+        // where NULL-as-0 is a safe stand-in for "nothing recorded yet".
+        // Collapsing that to 0 the way ToDouble does would make every
+        // product with no override look like its threshold is zero (i.e.
+        // "never flag this as low stock") instead of "use the default" --
+        // the opposite of the intended behavior -- so this preserves the
+        // null distinctly.
+        public static double? ToNullableDouble(object value) =>
+            value == null || value == DBNull.Value ? (double?)null : Convert.ToDouble(value);
+
         // Added 2026-08-28 for bills.IsCurrent (receipt revisioning, see
         // BillsBrowserViewModel's class doc comment) -- stored as SQLite
         // INTEGER 0/1, same as every other boolean-ish column in this app's
