@@ -59,6 +59,13 @@
     <system:String x:Key="CheckoutTotal">Total</system:String>
     <system:String x:Key="CheckoutCash">Cash</system:String>
     <system:String x:Key="CheckoutCard">Card</system:String>
+    <!-- Multi-method payments (2026-09-10, Reference-Repo-Features-Plan.md
+         item #1) -- two more immediately-settled tender types alongside
+         Cash/Card, each with an optional free-text reference field (see
+         CheckoutViewModel.PaymentReferenceInput/IsPaymentReferenceVisible). -->
+    <system:String x:Key="CheckoutBankTransfer">Bank Transfer</system:String>
+    <system:String x:Key="CheckoutCheque">Cheque</system:String>
+    <system:String x:Key="CheckoutPaymentReferenceLabel">Reference (optional)</system:String>
     <system:String x:Key="CheckoutCompleteSale">Complete Sale</system:String>
     <system:String x:Key="CheckoutSaleSuccess">Sale completed — Bill #{0}</system:String>
     <system:String x:Key="CheckoutSaleError">Something went wrong saving the sale. Please try again.</system:String>

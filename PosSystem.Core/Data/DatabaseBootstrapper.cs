@@ -976,6 +976,22 @@ namespace PosSystem.Core.Data
                     }
                 }
 
+                // Added 2026-09-10 for multi-method payments (Bank
+                // Transfer / Cheque, on top of the existing Cash/Card/Pay
+                // Later) -- see CheckoutViewModel.PaymentMethod and
+                // Reference-Repo-Features-Plan.md item #1. Free-text, not a
+                // normalized table: a bank name + last 4 of account, or a
+                // cheque number + drawee bank, typed by the cashier. NULL/
+                // empty for every existing bill and for Cash/Card/Pay Later
+                // sales (nothing to record) -- no backfill needed, same as
+                // every other nullable EnsureColumn addition in this file.
+                // The existing bills.Details tag ("Cash"/"Card"/"Credit")
+                // gains two new possible values ("BankTransfer"/"Cheque")
+                // alongside this column rather than being replaced by it --
+                // every existing reader of Details (Dashboard's payment-
+                // split pie, Excel export) keeps working unchanged.
+                EnsureColumn(conn, "bills", "PaymentReference", "TEXT");
+
                 // Performance indexes (2026-09-09) -- these columns were
                 // being filtered/joined on directly (bills.IsCurrent,
                 // bills.Billnumber, bills.CustomerId, sells.BillId,

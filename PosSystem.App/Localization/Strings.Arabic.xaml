@@ -53,6 +53,13 @@
     <system:String x:Key="CheckoutTotal">الإجمالي</system:String>
     <system:String x:Key="CheckoutCash">نقدًا</system:String>
     <system:String x:Key="CheckoutCard">بطاقة</system:String>
+    <!-- Multi-method payments (2026-09-10, Reference-Repo-Features-Plan.md
+         item #1) -- two more immediately-settled tender types alongside
+         Cash/Card, each with an optional free-text reference field (see
+         CheckoutViewModel.PaymentReferenceInput/IsPaymentReferenceVisible). -->
+    <system:String x:Key="CheckoutBankTransfer">تحويل بنكي</system:String>
+    <system:String x:Key="CheckoutCheque">شيك</system:String>
+    <system:String x:Key="CheckoutPaymentReferenceLabel">المرجع (اختياري)</system:String>
     <system:String x:Key="CheckoutCompleteSale">إتمام البيع</system:String>
     <system:String x:Key="CheckoutSaleSuccess">تمت عملية البيع — فاتورة رقم {0}</system:String>
     <system:String x:Key="CheckoutSaleError">حدث خطأ أثناء حفظ عملية البيع. حاول مرة أخرى.</system:String>

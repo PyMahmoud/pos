@@ -85,6 +85,38 @@
     </Style>
 
     <!--
+        Bank Transfer / Cheque toggles — multi-method payments (2026-09-10,
+        Reference-Repo-Features-Plan.md item #1). Same SecondaryBrush-free
+        shape as CashToggleButtonStyle/CardToggleButtonStyle above (plain
+        immediate-settlement tender types, so PrimaryBrush like Cash/Card —
+        not TertiaryBrush like PayLater below, which is reserved for "this
+        sale is going on a tab").
+    -->
+    <Style x:Key="BankTransferToggleButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsBankTransferSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ChequeToggleButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}" />
+        <Setter Property="Template" Value="{StaticResource SelectableButtonTemplate}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsChequeSelected}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
         Pay Later toggle — Phase 5. Uses TertiaryBrush rather than
         PrimaryBrush like Cash/Card's selected state: Colors.Light.xaml
         documents Tertiary as the accent for "discount badges, low-stock

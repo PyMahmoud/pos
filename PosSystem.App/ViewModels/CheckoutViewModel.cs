@@ -18,7 +18,15 @@ namespace PosSystem.App.ViewModels
         // Walk-in) is selected — see CanPayLater / the guard at the top of
         // CompleteSale(). Leaves the bill partially/fully unpaid and adds
         // the difference to the linked customer's Remain.
-        PayLater
+        PayLater,
+        // Multi-method payments (2026-09-10, Reference-Repo-Features-Plan.md
+        // item #1). Both settle the bill in full immediately, same as
+        // Cash/Card — no gateway, just a logged payment type — the only
+        // difference is an optional free-text PaymentReference (bank name
+        // + last 4, or cheque number + drawee bank) the cashier can jot
+        // down against the sale. See CheckoutViewModel.PaymentReferenceInput.
+        BankTransfer,
+        Cheque
     }
 
     /// <summary>
@@ -168,6 +176,9 @@ namespace PosSystem.App.ViewModels
                     OnPropertyChanged(nameof(IsCashSelected));
                     OnPropertyChanged(nameof(IsCardSelected));
                     OnPropertyChanged(nameof(IsPayLaterSelected));
+                    OnPropertyChanged(nameof(IsBankTransferSelected));
+                    OnPropertyChanged(nameof(IsChequeSelected));
+                    OnPropertyChanged(nameof(IsPaymentReferenceVisible));
                 }
             }
         }
@@ -175,6 +186,20 @@ namespace PosSystem.App.ViewModels
         public bool IsCashSelected => SelectedPaymentMethod == PaymentMethod.Cash;
         public bool IsCardSelected => SelectedPaymentMethod == PaymentMethod.Card;
         public bool IsPayLaterSelected => SelectedPaymentMethod == PaymentMethod.PayLater;
+        public bool IsBankTransferSelected => SelectedPaymentMethod == PaymentMethod.BankTransfer;
+        public bool IsChequeSelected => SelectedPaymentMethod == PaymentMethod.Cheque;
+
+        // Reference field (2026-09-10) — only shown/relevant for Bank
+        // Transfer and Cheque, same reasoning CartLine/Discount's own
+        // conditionally-shown rows already use elsewhere on this screen.
+        public bool IsPaymentReferenceVisible => IsBankTransferSelected || IsChequeSelected;
+
+        private string _paymentReferenceInput = "";
+        public string PaymentReferenceInput
+        {
+            get => _paymentReferenceInput;
+            set => SetProperty(ref _paymentReferenceInput, value);
+        }
 
         public double Subtotal => CartLines.Sum(l => l.LineTotal);
 
@@ -576,9 +601,32 @@ namespace PosSystem.App.ViewModels
                 // now, the whole total goes on the linked customer's tab.
                 double billPaid = isPayLater ? 0 : totalCost;
                 double billRemain = isPayLater ? totalCost : 0;
-                string paymentTag = SelectedPaymentMethod == PaymentMethod.Cash ? "Cash"
-                                   : SelectedPaymentMethod == PaymentMethod.Card ? "Card"
-                                   : "Credit";
+
+                // Multi-method payments (2026-09-10) -- Bank Transfer and
+                // Cheque are two more immediately-settled tender types
+                // alongside Cash/Card (billPaid/billRemain above already
+                // cover that -- only PayLater sets isPayLater), each with
+                // its own Details tag so Dashboard's payment-split pie and
+                // Excel export can tell them apart from plain Cash/Card.
+                string paymentTag;
+                switch (SelectedPaymentMethod)
+                {
+                    case PaymentMethod.Cash: paymentTag = "Cash"; break;
+                    case PaymentMethod.Card: paymentTag = "Card"; break;
+                    case PaymentMethod.BankTransfer: paymentTag = "BankTransfer"; break;
+                    case PaymentMethod.Cheque: paymentTag = "Cheque"; break;
+                    default: paymentTag = "Credit"; break; // PayLater
+                }
+
+                // Empty/whitespace-only input is stored as null, not "" --
+                // same "nothing typed means nothing to show" convention as
+                // every other optional text field on this screen (e.g.
+                // Ownerid/Ownernumber above pass through "" from Walk-in,
+                // but this one has no equivalent always-present source, so
+                // it's null rather than "" when the cashier left it blank).
+                string paymentReference = string.IsNullOrWhiteSpace(PaymentReferenceInput)
+                    ? null
+                    : PaymentReferenceInput.Trim();
 
                 // Tax (Settings-driven as of 2026-08-26, see TaxAmount's
                 // doc comment) is the actual amount collected as tax on
@@ -592,7 +640,7 @@ namespace PosSystem.App.ViewModels
                     "bills", nextId, nextBillNumber, totalCost, time, date,
                     ownername, ownerid, ownernumber,
                     billPaid, billRemain, totalEarned, TaxAmount, DiscountAmount, paymentTag,
-                    linkedCustomer?.Id, DiscountPercent: _discountPercent);
+                    linkedCustomer?.Id, DiscountPercent: _discountPercent, PaymentReference: paymentReference);
 
                 foreach (var line in CartLines)
                 {
@@ -644,6 +692,12 @@ namespace PosSystem.App.ViewModels
                 // any manual override just typed was for this one bill
                 // only, same one-sale-at-a-time scope as CartLines itself.
                 DiscountPercentInput = (linkedCustomer?.DiscountPercent ?? 0).ToString(CultureInfo.InvariantCulture);
+
+                // Reference was for THIS bill only, same one-sale-at-a-time
+                // scope as the discount reset just above and CartLines
+                // itself — the next sale starts with a blank field even if
+                // it also happens to be Bank Transfer/Cheque.
+                PaymentReferenceInput = "";
 
                 CartLines.Clear();
                 LoadGoods();

@@ -423,7 +423,7 @@
                                    Foreground="{DynamicResource PrimaryBrush}" />
                     </Grid>
 
-                    <Grid Margin="0,0,0,12">
+                    <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -449,6 +449,47 @@
                                 Margin="4,0,0,0" Padding="0,10"
                                 Style="{StaticResource PayLaterToggleButtonStyle}" />
                     </Grid>
+
+                    <!-- Bank Transfer / Cheque — multi-method payments
+                         (2026-09-10, Reference-Repo-Features-Plan.md item #1).
+                         A second row rather than squeezing 5 buttons into one
+                         — this cart panel is a fixed 360px wide, and Cash/
+                         Card/Pay Later already fill that row comfortably at
+                         3 equal columns; adding 2 more there would make every
+                         label cramped. -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0"
+                                Content="{DynamicResource CheckoutBankTransfer}"
+                                Command="{Binding SetPaymentMethodCommand}"
+                                CommandParameter="{x:Static vm:PaymentMethod.BankTransfer}"
+                                Margin="0,0,4,0" Padding="0,10"
+                                Style="{StaticResource BankTransferToggleButtonStyle}" />
+                        <Button Grid.Column="1"
+                                Content="{DynamicResource CheckoutCheque}"
+                                Command="{Binding SetPaymentMethodCommand}"
+                                CommandParameter="{x:Static vm:PaymentMethod.Cheque}"
+                                Margin="4,0,0,0" Padding="0,10"
+                                Style="{StaticResource ChequeToggleButtonStyle}" />
+                    </Grid>
+
+                    <!-- Reference field — optional free-text, only shown
+                         when Bank Transfer or Cheque is the selected method
+                         (IsPaymentReferenceVisible). A blank field here just
+                         means PaymentReference is stored as null — nothing
+                         is required to complete the sale. -->
+                    <StackPanel Margin="0,0,0,12"
+                                Visibility="{Binding IsPaymentReferenceVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="{DynamicResource CheckoutPaymentReferenceLabel}"
+                                   Style="{StaticResource LabelSmall}"
+                                   Foreground="{DynamicResource OnSurfaceVariantBrush}"
+                                   Margin="0,0,0,4" />
+                        <TextBox Text="{Binding PaymentReferenceInput, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ThemedTextBoxStyle}" />
+                    </StackPanel>
 
                     <Button Content="{DynamicResource CheckoutCompleteSale}"
                             Command="{Binding CompleteSaleCommand}"

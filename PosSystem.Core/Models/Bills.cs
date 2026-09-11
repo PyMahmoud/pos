@@ -53,6 +53,13 @@ namespace PosSystem.Core.Models
         // rather than re-deriving it from a shrinking subtotal.
         private double discountPercent;
 
+        // Added 2026-09-10 for multi-method payments -- free-text
+        // reference for Bank Transfer/Cheque sales (bank name + last 4,
+        // or cheque number + drawee bank). Null/empty for Cash/Card/Pay
+        // Later sales, or for any bill that predates this feature. See
+        // DatabaseBootstrapper's matching column comment.
+        private string paymentReference;
+
         public int Id { get => id; set => id = value; }
         public int Billnumber { get => billnumber; set => billnumber = value; }
         public double Billcost { get => billcost; set => billcost = value; }
@@ -71,6 +78,7 @@ namespace PosSystem.Core.Models
         public bool IsCurrent { get => isCurrent; set => isCurrent = value; }
         public string RevisionSuffix { get => revisionSuffix; set => revisionSuffix = value; }
         public double DiscountPercent { get => discountPercent; set => discountPercent = value; }
+        public string PaymentReference { get => paymentReference; set => paymentReference = value; }
 
         // "210" for an original receipt, "210-e1"/"210-e2"/... once it's
         // been returned-from one or more times (see BillsBrowserViewModel

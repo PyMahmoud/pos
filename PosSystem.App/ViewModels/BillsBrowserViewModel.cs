@@ -501,7 +501,8 @@ namespace PosSystem.App.ViewModels
                 "bills", newBillId, sourceBill.Billnumber, newBillcost, sourceBill.Time, sourceBill.Datex,
                 sourceBill.Ownername, sourceBill.Ownerid, sourceBill.Ownernumber,
                 newPaid, newRemain, newEarned, newTax, newDiscount, sourceBill.Details,
-                sourceBill.CustomerId, IsCurrent: true, RevisionSuffix: suffix, DiscountPercent: sourceBill.DiscountPercent);
+                sourceBill.CustomerId, IsCurrent: true, RevisionSuffix: suffix, DiscountPercent: sourceBill.DiscountPercent,
+                PaymentReference: sourceBill.PaymentReference);
 
             foreach (var line in remainingLines)
             {

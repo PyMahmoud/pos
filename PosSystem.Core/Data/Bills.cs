@@ -28,9 +28,9 @@ namespace PosSystem.Core.Data
         //	`Image`	BLOB
         //);
         //string billnumber, double billcost, string time, string datex, string ownername, string ownerid, string ownernumber, double paid, double remain, double earned, double tax, double discount
-        public void InsertBills(string TableName,int ID, int Billnumber, double Billcost, string Time, string Datex, string Ownername, string Ownerid, string Ownernumber, double Paid, double Remain, double Earned, double Tax, double Discount, string Details, int? CustomerId = null, bool IsCurrent = true, string RevisionSuffix = null, double DiscountPercent = 0)
+        public void InsertBills(string TableName,int ID, int Billnumber, double Billcost, string Time, string Datex, string Ownername, string Ownerid, string Ownernumber, double Paid, double Remain, double Earned, double Tax, double Discount, string Details, int? CustomerId = null, bool IsCurrent = true, string RevisionSuffix = null, double DiscountPercent = 0, string PaymentReference = null)
         {
-            string insertString = "insert into " + TableName + "(ID ,Billnumber ,Billcost ,Time ,Datex ,Ownername ,Ownerid  , Ownernumber ,  Paid ,Remain ,Earned , Tax ,Discount , Details, CustomerId, IsCurrent, RevisionSuffix, DiscountPercent) VALUES (@id ,@billnumber , @billcost , @time , @datex , @ownername ,@ownerid ,@pwnernumber , @paid ,@remain , @earned ,@tax ,@discount , @details, @customerid, @iscurrent, @revisionsuffix, @discountpercent)";
+            string insertString = "insert into " + TableName + "(ID ,Billnumber ,Billcost ,Time ,Datex ,Ownername ,Ownerid  , Ownernumber ,  Paid ,Remain ,Earned , Tax ,Discount , Details, CustomerId, IsCurrent, RevisionSuffix, DiscountPercent, PaymentReference) VALUES (@id ,@billnumber , @billcost , @time , @datex , @ownername ,@ownerid ,@pwnernumber , @paid ,@remain , @earned ,@tax ,@discount , @details, @customerid, @iscurrent, @revisionsuffix, @discountpercent, @paymentreference)";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();
@@ -54,6 +54,7 @@ namespace PosSystem.Core.Data
                     cmd.Parameters.AddWithValue("@iscurrent", IsCurrent ? 1 : 0);
                     cmd.Parameters.AddWithValue("@revisionsuffix", (object)RevisionSuffix ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@discountpercent", DiscountPercent);
+                    cmd.Parameters.AddWithValue("@paymentreference", (object)PaymentReference ?? DBNull.Value);
                     cmd.ExecuteNonQuery();
                     cmd.Dispose();
                 }
@@ -152,6 +153,7 @@ namespace PosSystem.Core.Data
                         goods_List.RevisionSuffix = DbNullSafe.ToStringSafe(reader["RevisionSuffix"]);
                         if (goods_List.RevisionSuffix == "") goods_List.RevisionSuffix = null;
                         goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
+                        goods_List.PaymentReference = DbNullSafe.ToStringSafe(reader["PaymentReference"]);
                         bills.Add(goods_List);
                       
                     }
@@ -197,6 +199,7 @@ namespace PosSystem.Core.Data
                         goods_List.RevisionSuffix = DbNullSafe.ToStringSafe(reader["RevisionSuffix"]);
                         if (goods_List.RevisionSuffix == "") goods_List.RevisionSuffix = null;
                         goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
+                        goods_List.PaymentReference = DbNullSafe.ToStringSafe(reader["PaymentReference"]);
                         bills.Add(goods_List);
                     }
                     return bills;
@@ -324,6 +327,7 @@ namespace PosSystem.Core.Data
                         goods_List.RevisionSuffix = DbNullSafe.ToStringSafe(reader["RevisionSuffix"]);
                         if (goods_List.RevisionSuffix == "") goods_List.RevisionSuffix = null;
                         goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
+                        goods_List.PaymentReference = DbNullSafe.ToStringSafe(reader["PaymentReference"]);
                         bills.Add(goods_List);
                     }
                     return bills;
