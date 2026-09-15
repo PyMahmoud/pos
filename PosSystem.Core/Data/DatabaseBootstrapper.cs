@@ -11,9 +11,11 @@ namespace PosSystem.Core.Data
     /// of PRAGMA queries) that it doesn't need to be conditional on
     /// first-run.
     ///
-    /// Added for the pharma-distributor stock-check feature:
+    /// Added for the stock-check feature (originally built for a
+    /// pharmaceutical distributor client, now generalized for any line of
+    /// business):
     /// - `stockchecks` table (new): a full history log of what a rep found
-    ///   on-hand at a customer's pharmacy on each visit — quantity,
+    ///   on-hand at a customer's location on each visit — quantity,
     ///   batch/lot, and expiry per the client's stated requirement.
     /// - `bills.CustomerId` (new column): Bills previously only stored a
     ///   denormalized snapshot of the customer's name/ID/phone at sale time
@@ -80,7 +82,7 @@ namespace PosSystem.Core.Data
                         ID INTEGER PRIMARY KEY AUTOINCREMENT,
                         CustomerId INTEGER,
                         GoodBarcode TEXT,
-                        MedicationName TEXT,
+                        ItemName TEXT,
                         Quantity REAL,
                         BatchNumber TEXT,
                         ExpiryDate TEXT,
@@ -90,6 +92,33 @@ namespace PosSystem.Core.Data
                     )", conn))
                 {
                     cmd.ExecuteNonQuery();
+                }
+
+                // Renamed from MedicationName -> ItemName (generalizing the
+                // POS beyond its original pharmacy-distributor origin, see
+                // this class's doc comment) -- CREATE TABLE IF NOT EXISTS
+                // above only applies the new column name to a brand-new
+                // database; any existing rovaShop.db that already created
+                // `stockchecks` under the old name needs this one-time
+                // rename to pick up the new one. ALTER TABLE ... RENAME
+                // COLUMN is supported since SQLite 3.25.0 (well within this
+                // app's bundled SQLite version); wrapped in try/catch same
+                // as every other schema-evolution step in this file -- a
+                // database that never had the old column (brand-new, or one
+                // that already went through this rename on a prior startup)
+                // throws here and is simply left alone.
+                try
+                {
+                    using (var cmd = new SQLiteCommand(
+                        "ALTER TABLE stockchecks RENAME COLUMN MedicationName TO ItemName", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    // Column already renamed, or table is brand-new -- see
+                    // comment above. Not fatal.
                 }
 
                 EnsureColumn(conn, "bills", "CustomerId", "INTEGER");

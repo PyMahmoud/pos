@@ -206,7 +206,7 @@ namespace PosSystem.App.ViewModels
         // Discount (2026-09-01) — percentage entered/pre-filled for THIS
         // bill; see SelectedCustomer's setter above for where it gets
         // pre-filled, and DiscountPercentInput below for how it's edited.
-        // Applied to Subtotal BEFORE Tax (a pharmacy discount reduces the
+        // Applied to Subtotal BEFORE Tax (a discount reduces the
         // taxable amount, not just the final total) — DiscountedSubtotal is
         // what Tax and Total both actually key off from here on.
         private double _discountPercent;

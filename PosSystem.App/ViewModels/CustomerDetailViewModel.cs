@@ -15,20 +15,20 @@ namespace PosSystem.App.ViewModels
     ///
     /// - Sales history: every Bills row linked to this customer via
     ///   bills.CustomerId, joined to its Sells line items — "what
-    ///   medications did I sell this pharmacy, and how much".
+    ///   items did I sell this customer, and how much".
     /// - Stock checks: the append-only on-hand log a rep fills in on every
     ///   visit (Quantity + BatchNumber + ExpiryDate + Notes), newest first.
     ///   This is genuinely new data with no prior analog in the schema —
     ///   see DatabaseBootstrapper for the `stockchecks` table it lives in.
-    ///   Deliberately records what's left AT THE PHARMACY of what was
-    ///   already sold to them (restock-decision signal), not the rep's own
-    ///   stock — that's what the existing Inventory screen covers.
+    ///   Deliberately records what's left AT THE CUSTOMER'S LOCATION of what
+    ///   was already sold to them (restock-decision signal), not the rep's
+    ///   own stock — that's what the existing Inventory screen covers.
     ///
     /// Short-lived by design (unlike every other ViewModel in this app):
     /// CustomersViewModel creates a fresh instance each time "View Details"
     /// is clicked and drops the reference when closed, rather than caching
     /// one per customer forever the way MainViewModel caches screens — a
-    /// pharma rep could have hundreds of pharmacy customers, and keeping
+    /// rep could have hundreds of customers, and keeping
     /// every detail ViewModel (plus its loaded sales history) alive for the
     /// app's lifetime would leak memory for no benefit.
     /// </summary>
@@ -43,9 +43,9 @@ namespace PosSystem.App.ViewModels
 
         public Customers Customer { get; }
 
-        public ObservableCollection<SoldMedicationSummary> SoldMedications { get; } = new ObservableCollection<SoldMedicationSummary>();
+        public ObservableCollection<SoldItemSummary> SoldItems { get; } = new ObservableCollection<SoldItemSummary>();
         public ObservableCollection<StockCheck> StockCheckHistory { get; } = new ObservableCollection<StockCheck>();
-        public ObservableCollection<GoodsR> AvailableMedications { get; } = new ObservableCollection<GoodsR>();
+        public ObservableCollection<GoodsR> AvailableItems { get; } = new ObservableCollection<GoodsR>();
 
         // Balance + payment history (added 2026-08-31). Kept as this
         // ViewModel's OWN observable properties, not read straight off
@@ -186,11 +186,11 @@ namespace PosSystem.App.ViewModels
         // whatever was cached when "View Details" was first clicked.
         public event Action BalanceChanged;
 
-        private GoodsR _selectedMedication;
-        public GoodsR SelectedMedication
+        private GoodsR _selectedItem;
+        public GoodsR SelectedItem
         {
-            get => _selectedMedication;
-            set => SetProperty(ref _selectedMedication, value);
+            get => _selectedItem;
+            set => SetProperty(ref _selectedItem, value);
         }
 
         private string _quantityInput = "";
@@ -257,7 +257,7 @@ namespace PosSystem.App.ViewModels
 
             LoadSalesHistory();
             LoadStockCheckHistory();
-            LoadAvailableMedications();
+            LoadAvailableItems();
             LoadPaymentHistory();
         }
 
@@ -382,7 +382,7 @@ namespace PosSystem.App.ViewModels
             // as DashboardViewModel.RefreshDashboard's matching filter: a
             // returned bill's original row stays in `bills` as history, so
             // reading every bill for this customer unfiltered would count a
-            // returned medication's revenue/quantity twice -- once from the
+            // returned item's revenue/quantity twice -- once from the
             // now-superseded original, once from its replacement. Matched
             // by BillId, not Billnumber, for the same reason Dashboard's
             // filter is -- a superseded bill's lines share their
@@ -408,7 +408,7 @@ namespace PosSystem.App.ViewModels
 
             var grouped = lines
                 .GroupBy(s => s.Name)
-                .Select(g => new SoldMedicationSummary
+                .Select(g => new SoldItemSummary
                 {
                     Name = g.Key,
                     TotalQuantity = g.Sum(s => s.Quantity),
@@ -420,8 +420,8 @@ namespace PosSystem.App.ViewModels
                 })
                 .OrderByDescending(x => x.TotalRevenue);
 
-            SoldMedications.Clear();
-            foreach (var item in grouped) SoldMedications.Add(item);
+            SoldItems.Clear();
+            foreach (var item in grouped) SoldItems.Add(item);
         }
 
         private void LoadStockCheckHistory()
@@ -431,19 +431,19 @@ namespace PosSystem.App.ViewModels
                 StockCheckHistory.Add(check);
         }
 
-        private void LoadAvailableMedications()
+        private void LoadAvailableItems()
         {
-            AvailableMedications.Clear();
+            AvailableItems.Clear();
             foreach (var good in _goodsData.ReadAllGoodsRPic("goods").OrderBy(g => g.Name))
-                AvailableMedications.Add(good);
-            SelectedMedication = AvailableMedications.FirstOrDefault();
+                AvailableItems.Add(good);
+            SelectedItem = AvailableItems.FirstOrDefault();
         }
 
         private void SaveStockCheck()
         {
-            if (SelectedMedication == null)
+            if (SelectedItem == null)
             {
-                StatusMessage = LocalizationManager.GetString("StockCheckMissingMedication");
+                StatusMessage = LocalizationManager.GetString("StockCheckMissingItem");
                 return;
             }
             if (!double.TryParse(QuantityInput, out double quantity) || quantity < 0)
@@ -456,7 +456,7 @@ namespace PosSystem.App.ViewModels
             {
                 DateTime now = DateTime.Now;
                 _stockChecksData.InsertStockCheck(
-                    Customer.Id, SelectedMedication.Barcode, SelectedMedication.Name,
+                    Customer.Id, SelectedItem.Barcode, SelectedItem.Name,
                     quantity, (BatchInput ?? "").Trim(), (ExpiryInput ?? "").Trim(),
                     now.ToString("dd/MM/yyyy"), now.ToString("HH:mm"), (NotesInput ?? "").Trim());
 

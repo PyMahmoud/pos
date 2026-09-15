@@ -178,14 +178,14 @@
     <system:String x:Key="CustomersViewDetailsButton">View Details</system:String>
 
     <system:String x:Key="CustomerDetailBackButton">← Back to Customers</system:String>
-    <system:String x:Key="CustomerDetailSoldTitle">Medications Sold</system:String>
+    <system:String x:Key="CustomerDetailSoldTitle">Items Sold</system:String>
     <system:String x:Key="CustomerDetailSoldNone">No sales linked to this customer yet.</system:String>
-    <system:String x:Key="CustomerDetailSoldNameHeader">Medication</system:String>
+    <system:String x:Key="CustomerDetailSoldNameHeader">Item</system:String>
     <system:String x:Key="CustomerDetailSoldQtyHeader">Qty Sold</system:String>
     <system:String x:Key="CustomerDetailSoldRevenueHeader">Revenue</system:String>
     <system:String x:Key="CustomerDetailAddStockCheckTitle">Record a Stock Check</system:String>
-    <system:String x:Key="CustomerDetailAddStockCheckSubtitle">What's left at this pharmacy of what you've sold them, as of today's visit.</system:String>
-    <system:String x:Key="CustomerDetailMedicationLabel">Medication</system:String>
+    <system:String x:Key="CustomerDetailAddStockCheckSubtitle">What's left at this customer's location of what you've sold them, as of today's visit.</system:String>
+    <system:String x:Key="CustomerDetailItemLabel">Item</system:String>
     <system:String x:Key="CustomerDetailQuantityLabel">Quantity on hand</system:String>
     <system:String x:Key="CustomerDetailBatchLabel">Batch / Lot number</system:String>
     <system:String x:Key="CustomerDetailExpiryLabel">Expiry date</system:String>
@@ -197,7 +197,7 @@
     <system:String x:Key="CustomerDetailStockBatchHeader">Batch</system:String>
     <system:String x:Key="CustomerDetailStockExpiryHeader">Expiry</system:String>
     <system:String x:Key="CustomerDetailStockDateHeader">Checked On</system:String>
-    <system:String x:Key="StockCheckMissingMedication">Select a medication first.</system:String>
+    <system:String x:Key="StockCheckMissingItem">Select an item first.</system:String>
     <system:String x:Key="StockCheckInvalidQuantity">Enter a valid quantity (0 or more).</system:String>
     <system:String x:Key="StockCheckSaveSuccess">Stock check saved.</system:String>
     <system:String x:Key="StockCheckSaveError">Something went wrong saving this. Please try again.</system:String>
@@ -441,7 +441,7 @@
 
     <!-- About (new, 2026-08-26) — static, read-only. -->
     <system:String x:Key="SettingsAboutTitle">About</system:String>
-    <system:String x:Key="SettingsAboutDescription">BMTech POS — point of sale for pharmaceutical distribution.</system:String>
+    <system:String x:Key="SettingsAboutDescription">BMTech POS — point of sale for any line of business.</system:String>
 
     <!-- Admin password (#7, 2026-08-27) — Dashboard unlock screen and
          Settings' set/change-password section. -->
@@ -604,7 +604,7 @@ This area is admin-gated -- returning a product or a whole bill changes real sal
     <system:String x:Key="HelpCustomersTitle">Customers -- Contacts and Debt</system:String>
     <system:String x:Key="HelpCustomersBody">Add a new customer with their name and phone number from the Customers screen. Tap a customer to open their detail page.
 
-A customer's detail page shows their running balance (how much they owe from Pay Later sales) and their full purchase history, including -- for pharmacy stock, where applicable -- which batches and expiry dates were sold to them.
+A customer's detail page shows their running balance (how much they owe from Pay Later sales) and their full purchase history, including -- where batch/expiry tracking applies -- which batches and expiry dates were sold to them.
 
 Record a payment against a customer's balance from their detail page to bring what they owe back down.</system:String>
 

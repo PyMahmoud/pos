@@ -149,7 +149,7 @@
                                     in-place text-entry surface when editable;
                                     if IsEditable is left False (every other
                                     ComboBox in the app today — Checkout's
-                                    customer picker, CustomerDetail's medication
+                                    customer picker, CustomerDetail's item
                                     picker), the trigger below never fires, this
                                     stays Collapsed, and rendering is pixel-for-
                                     pixel identical to before this was added.

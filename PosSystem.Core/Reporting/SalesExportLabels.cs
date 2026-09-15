@@ -36,10 +36,10 @@ namespace PosSystem.Core.Reporting
         public string ColCustomer { get; set; } = "Customer";
         // Added alongside Discount/Items/Payment Status (see class doc
         // comment on this batch) -- Bills.Ownernumber was already read for
-        // every bill but never surfaced in the export; a pharma
-        // distributor visiting pharmacies in person wants the phone number
-        // right next to the customer name, not a reason to flip back to
-        // the Customers screen.
+        // every bill but never surfaced in the export; a rep or driver
+        // visiting customers in person wants the phone number right next
+        // to the customer name, not a reason to flip back to the
+        // Customers screen.
         public string ColPhone { get; set; } = "Phone";
         public string ColPaymentMethod { get; set; } = "Payment Method";
         // Derived from Paid vs Remaining, not a stored column -- see
@@ -48,7 +48,7 @@ namespace PosSystem.Core.Reporting
         public string PaymentStatusPaidLabel { get; set; } = "Paid in Full";
         public string PaymentStatusPartialLabel { get; set; } = "Partial";
         public string PaymentStatusUnpaidLabel { get; set; } = "Unpaid";
-        // One cell per bill, e.g. "Panadol x2, Amoxicillin x1" -- built
+        // One cell per bill, e.g. "Item A x2, Item B x1" -- built
         // from the same Sales Detail rows that already exist on their own
         // sheet, so a quick look at the Bills sheet doesn't require
         // flipping to Sales Detail and filtering by bill number just to see

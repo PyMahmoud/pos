@@ -447,7 +447,7 @@ namespace PosSystem.Core.Data
                         goods_List.Earned = Convert.ToDouble(reader["Earned"]);
                         // DiscountPercent (2026-09-05 fix) -- this method
                         // feeds Checkout's product list (CheckoutViewModel.
-                        // LoadGoods) and CustomerDetailViewModel's medication
+                        // LoadGoods) and CustomerDetailViewModel's item
                         // picker; it never read this column at all, so
                         // Checkout had zero visibility into a product's
                         // Inventory discount and always charged full price

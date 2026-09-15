@@ -131,14 +131,14 @@
     <system:String x:Key="CustomersViewDetailsButton">عرض التفاصيل</system:String>
 
     <system:String x:Key="CustomerDetailBackButton">→ العودة إلى العملاء</system:String>
-    <system:String x:Key="CustomerDetailSoldTitle">الأدوية المباعة</system:String>
+    <system:String x:Key="CustomerDetailSoldTitle">الأصناف المباعة</system:String>
     <system:String x:Key="CustomerDetailSoldNone">لا توجد مبيعات مرتبطة بهذا العميل بعد.</system:String>
-    <system:String x:Key="CustomerDetailSoldNameHeader">الدواء</system:String>
+    <system:String x:Key="CustomerDetailSoldNameHeader">الصنف</system:String>
     <system:String x:Key="CustomerDetailSoldQtyHeader">الكمية المباعة</system:String>
     <system:String x:Key="CustomerDetailSoldRevenueHeader">الإيراد</system:String>
     <system:String x:Key="CustomerDetailAddStockCheckTitle">تسجيل جرد مخزون</system:String>
-    <system:String x:Key="CustomerDetailAddStockCheckSubtitle">الكمية المتبقية لدى هذه الصيدلية مما بعته لها، حسب زيارة اليوم.</system:String>
-    <system:String x:Key="CustomerDetailMedicationLabel">الدواء</system:String>
+    <system:String x:Key="CustomerDetailAddStockCheckSubtitle">الكمية المتبقية لدى هذا العميل مما بعته له، حسب زيارة اليوم.</system:String>
+    <system:String x:Key="CustomerDetailItemLabel">الصنف</system:String>
     <system:String x:Key="CustomerDetailQuantityLabel">الكمية المتوفرة</system:String>
     <system:String x:Key="CustomerDetailBatchLabel">رقم التشغيلة / الباتش</system:String>
     <system:String x:Key="CustomerDetailExpiryLabel">تاريخ الانتهاء</system:String>
@@ -150,7 +150,7 @@
     <system:String x:Key="CustomerDetailStockBatchHeader">التشغيلة</system:String>
     <system:String x:Key="CustomerDetailStockExpiryHeader">الانتهاء</system:String>
     <system:String x:Key="CustomerDetailStockDateHeader">تاريخ الجرد</system:String>
-    <system:String x:Key="StockCheckMissingMedication">اختر دواءً أولاً.</system:String>
+    <system:String x:Key="StockCheckMissingItem">اختر صنفًا أولاً.</system:String>
     <system:String x:Key="StockCheckInvalidQuantity">أدخل كمية صحيحة (0 أو أكثر).</system:String>
     <system:String x:Key="StockCheckSaveSuccess">تم حفظ الجرد.</system:String>
     <system:String x:Key="StockCheckSaveError">حدث خطأ أثناء الحفظ. حاول مرة أخرى.</system:String>
@@ -327,7 +327,7 @@
     <system:String x:Key="SettingsDatabaseNotFound">ملف قاعدة البيانات غير موجود.</system:String>
 
     <system:String x:Key="SettingsAboutTitle">حول التطبيق</system:String>
-    <system:String x:Key="SettingsAboutDescription">BMTech POS — نظام نقاط بيع لتوزيع الأدوية.</system:String>
+    <system:String x:Key="SettingsAboutDescription">BMTech POS — نظام نقاط بيع لأي نوع من الأنشطة التجارية.</system:String>
 
     <system:String x:Key="DashboardLockedTitle">للمالك أو المدير فقط</system:String>
     <system:String x:Key="DashboardLockedSubtitle">تعرض هذه الشاشة إيرادات المتجر. أدخل كلمة مرور المسؤول للمتابعة.</system:String>
@@ -454,7 +454,7 @@
     <system:String x:Key="HelpCustomersTitle">العملاء — جهات الاتصال والديون</system:String>
     <system:String x:Key="HelpCustomersBody">أضف عميلاً جديدًا باسمه ورقم هاتفه من شاشة العملاء. اضغط على عميل لفتح صفحته التفصيلية.
 
-تعرض صفحة تفاصيل العميل رصيده الحالي (المبلغ الذي يدين به من عمليات الدفع لاحقًا) وسجل مشترياته الكامل، بما في ذلك — بالنسبة لمخزون الصيدلية عند الحاجة — أي دفعات وتواريخ انتهاء صلاحية تم بيعها له.
+تعرض صفحة تفاصيل العميل رصيده الحالي (المبلغ الذي يدين به من عمليات الدفع لاحقًا) وسجل مشترياته الكامل، بما في ذلك — عند تفعيل تتبع التشغيلات وتواريخ الانتهاء — أي دفعات وتواريخ انتهاء صلاحية تم بيعها له.
 
 سجّل دفعة على رصيد العميل من صفحته التفصيلية لتقليل ما يدين به.</system:String>
 

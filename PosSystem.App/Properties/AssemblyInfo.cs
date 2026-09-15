@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Windows;
 
 [assembly: AssemblyTitle("BMTech POS")]
-[assembly: AssemblyDescription("Point of sale for pharmaceutical distribution")]
+[assembly: AssemblyDescription("Point of sale for any line of business")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("BMTech")]
 [assembly: AssemblyProduct("BMTech POS")]

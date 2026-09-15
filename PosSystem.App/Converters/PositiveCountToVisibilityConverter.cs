@@ -10,7 +10,7 @@ namespace PosSystem.App.Converters
     /// greater than 0, Collapsed when it's 0. The inverse of
     /// CountToVisibilityConverter (which shows an "empty" message when
     /// Count is 0) — this one is for showing the actual data once there is
-    /// some, e.g. CustomersView's sold-medications/stock-check tables.
+    /// some, e.g. CustomersView's sold-items/stock-check tables.
     /// </summary>
     public class PositiveCountToVisibilityConverter : IValueConverter
     {

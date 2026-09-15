@@ -400,7 +400,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Medications sold -->
+                        <!-- Items sold -->
                         <TextBlock Text="{DynamicResource CustomerDetailSoldTitle}"
                                    Style="{StaticResource TitleMedium}"
                                    Foreground="{DynamicResource OnSurfaceBrush}"
@@ -410,13 +410,13 @@
                                    Style="{StaticResource BodyLarge}"
                                    Foreground="{DynamicResource OnSurfaceVariantBrush}"
                                    Margin="0,0,0,20"
-                                   Visibility="{Binding SoldMedications.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+                                   Visibility="{Binding SoldItems.Count, Converter={StaticResource CountToVisibilityConverter}}" />
 
                         <Border Background="{DynamicResource SurfaceContainerBrush}"
                                 CornerRadius="14"
                                 Padding="18"
                                 Margin="0,0,0,24"
-                                Visibility="{Binding SoldMedications.Count, Converter={StaticResource PositiveCountToVisibilityConverter}}">
+                                Visibility="{Binding SoldItems.Count, Converter={StaticResource PositiveCountToVisibilityConverter}}">
                             <StackPanel>
                                 <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
@@ -428,7 +428,7 @@
                                     <TextBlock Grid.Column="1" Text="{DynamicResource CustomerDetailSoldQtyHeader}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
                                     <TextBlock Grid.Column="2" Text="{DynamicResource CustomerDetailSoldRevenueHeader}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />
                                 </Grid>
-                                <ItemsControl ItemsSource="{Binding SoldMedications}">
+                                <ItemsControl ItemsSource="{Binding SoldItems}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Margin="0,6,0,6">
@@ -471,9 +471,9 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{DynamicResource CustomerDetailMedicationLabel}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" Margin="0,0,0,4" />
-                                        <ComboBox ItemsSource="{Binding AvailableMedications}"
-                                                  SelectedItem="{Binding SelectedMedication}"
+                                        <TextBlock Text="{DynamicResource CustomerDetailItemLabel}" Style="{StaticResource LabelSmall}" Foreground="{DynamicResource OnSurfaceVariantBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding AvailableItems}"
+                                                  SelectedItem="{Binding SelectedItem}"
                                                   DisplayMemberPath="Name"
                                                   Style="{StaticResource ThemedComboBoxStyle}" />
                                     </StackPanel>
@@ -569,7 +569,7 @@
                                                     <ColumnDefinition Width="100" />
                                                     <ColumnDefinition Width="110" />
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="{Binding MedicationName}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceBrush}" TextWrapping="Wrap" />
+                                                <TextBlock Grid.Column="0" Text="{Binding ItemName}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceBrush}" TextWrapping="Wrap" />
                                                 <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat={}{0:0.##}}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceBrush}" />
                                                 <TextBlock Grid.Column="2" Text="{Binding BatchNumber}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" TextWrapping="Wrap" />
                                                 <TextBlock Grid.Column="3" Text="{Binding ExpiryDate}" Style="{StaticResource BodyLarge}" Foreground="{DynamicResource OnSurfaceVariantBrush}" />

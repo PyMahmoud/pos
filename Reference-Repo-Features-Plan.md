@@ -58,7 +58,7 @@ also touched recently (`CheckoutViewModel.cs`, `DatabaseBootstrapper.cs`,
 ## 1. Multi-method payments (Cash / Card / Bank Transfer / Cheque / Pay Later)
 
 **Highest priority — biggest real gap for a distributor collecting from
-pharmacies.**
+customers.**
 
 **Current state (confirmed in code):** `CheckoutViewModel.PaymentMethod`
 is `{ Cash, Card, PayLater }`. On `CompleteSale()`, the selected method

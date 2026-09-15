@@ -14,11 +14,11 @@ namespace PosSystem.Core.Data
     {
         Server server = new Server();
 
-        public void InsertStockCheck(int CustomerId, string GoodBarcode, string MedicationName,
+        public void InsertStockCheck(int CustomerId, string GoodBarcode, string ItemName,
             double Quantity, string BatchNumber, string ExpiryDate, string CheckDate, string CheckTime, string Notes)
         {
             string insertString = "insert into stockchecks " +
-                "(CustomerId, GoodBarcode, MedicationName, Quantity, BatchNumber, ExpiryDate, CheckDate, CheckTime, Notes) " +
+                "(CustomerId, GoodBarcode, ItemName, Quantity, BatchNumber, ExpiryDate, CheckDate, CheckTime, Notes) " +
                 "VALUES (@customerid, @barcode, @name, @quantity, @batch, @expiry, @checkdate, @checktime, @notes)";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
@@ -27,7 +27,7 @@ namespace PosSystem.Core.Data
                 {
                     cmd.Parameters.AddWithValue("@customerid", CustomerId);
                     cmd.Parameters.AddWithValue("@barcode", GoodBarcode ?? "");
-                    cmd.Parameters.AddWithValue("@name", MedicationName ?? "");
+                    cmd.Parameters.AddWithValue("@name", ItemName ?? "");
                     cmd.Parameters.AddWithValue("@quantity", Quantity);
                     cmd.Parameters.AddWithValue("@batch", BatchNumber ?? "");
                     cmd.Parameters.AddWithValue("@expiry", ExpiryDate ?? "");
@@ -64,7 +64,7 @@ namespace PosSystem.Core.Data
                             Id = DbNullSafe.ToInt32(reader["ID"]),
                             CustomerId = DbNullSafe.ToInt32(reader["CustomerId"]),
                             GoodBarcode = DbNullSafe.ToStringSafe(reader["GoodBarcode"]),
-                            MedicationName = DbNullSafe.ToStringSafe(reader["MedicationName"]),
+                            ItemName = DbNullSafe.ToStringSafe(reader["ItemName"]),
                             Quantity = DbNullSafe.ToDouble(reader["Quantity"]),
                             BatchNumber = DbNullSafe.ToStringSafe(reader["BatchNumber"]),
                             ExpiryDate = DbNullSafe.ToStringSafe(reader["ExpiryDate"]),
