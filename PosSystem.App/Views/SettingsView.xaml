@@ -4,6 +4,7 @@
              xmlns:vm="clr-namespace:PosSystem.App.ViewModels"
              xmlns:loc="clr-namespace:PosSystem.App.Localization"
              xmlns:theming="clr-namespace:PosSystem.App.Theming"
+             xmlns:behaviors="clr-namespace:PosSystem.App.Behaviors"
              FlowDirection="{DynamicResource AppFlowDirection}">
 
     <UserControl.DataContext>
@@ -163,6 +164,7 @@
                                        Margin="0,0,0,4" />
                             <TextBox Text="{Binding TaxRatePercentInput, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource ThemedTextBoxStyle}"
+                                     behaviors:DecimalTextBoxBehavior.AllowDecimalPoint="True"
                                      Margin="0,0,0,4" />
                             <TextBlock Text="{DynamicResource SettingsTaxRateHint}"
                                        Style="{StaticResource LabelSmall}"
@@ -176,6 +178,7 @@
                                        Margin="0,0,0,4" />
                             <TextBox Text="{Binding LowStockThresholdInput, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource ThemedTextBoxStyle}"
+                                     behaviors:DecimalTextBoxBehavior.AllowDecimalPoint="True"
                                      Margin="0,0,0,4" />
                             <TextBlock Text="{DynamicResource SettingsLowStockThresholdHint}"
                                        Style="{StaticResource LabelSmall}"
