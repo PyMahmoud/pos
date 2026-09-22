@@ -160,7 +160,7 @@
                     </Grid>
 
                     <!-- Per-product low-stock override (2026-09-10,
-                         Reference-Repo-Features-Plan.md item #2) -- optional,
+                         Reference-Repo-Features-Plan.md item #2) - optional,
                          unlike every field above it: leaving this blank
                          saves MinStock as null, which means "use the shop's
                          Settings threshold" (InventoryRow.
@@ -808,8 +808,8 @@
                                         </Grid>
 
                                         <!-- Per-product low-stock override
-                                             (2026-09-10, item #2) -- same
-                                             blank-means-use-shop-default
+                                        (2026-09-10, item #2) - same
+                                        blank-means-use-shop-default
                                              convention as Add Product's own
                                              MinStock field. -->
                                         <TextBlock Text="{DynamicResource InventoryMinStockLabel}"

@@ -54,7 +54,7 @@
     <system:String x:Key="CheckoutCash">نقدًا</system:String>
     <system:String x:Key="CheckoutCard">بطاقة</system:String>
     <!-- Multi-method payments (2026-09-10, Reference-Repo-Features-Plan.md
-         item #1) -- two more immediately-settled tender types alongside
+         item #1) - two more immediately-settled tender types alongside
          Cash/Card, each with an optional free-text reference field (see
          CheckoutViewModel.PaymentReferenceInput/IsPaymentReferenceVisible). -->
     <system:String x:Key="CheckoutBankTransfer">تحويل بنكي</system:String>

@@ -60,7 +60,7 @@
     <system:String x:Key="CheckoutCash">Cash</system:String>
     <system:String x:Key="CheckoutCard">Card</system:String>
     <!-- Multi-method payments (2026-09-10, Reference-Repo-Features-Plan.md
-         item #1) -- two more immediately-settled tender types alongside
+         item #1) - two more immediately-settled tender types alongside
          Cash/Card, each with an optional free-text reference field (see
          CheckoutViewModel.PaymentReferenceInput/IsPaymentReferenceVisible). -->
     <system:String x:Key="CheckoutBankTransfer">Bank Transfer</system:String>
@@ -325,7 +325,7 @@
     <system:String x:Key="InventoryProductCostLabel">Cost</system:String>
     <system:String x:Key="InventoryProductPriceLabel">Price</system:String>
     <!-- Per-product low-stock threshold override (2026-09-10,
-         Reference-Repo-Features-Plan.md item #2) -- optional; Settings has
+         Reference-Repo-Features-Plan.md item #2) - optional; Settings has
          a shop-wide Low Stock Threshold already (see
          SettingsLowStockThresholdLabel), this is a per-product exception on
          top of it, not a replacement. -->
