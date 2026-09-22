@@ -1035,6 +1035,25 @@ namespace PosSystem.Core.Data
                 // would silently mean the opposite of "use the default").
                 EnsureColumn(conn, "goods", "MinStock", "REAL");
 
+                // Added 2026-09-10 for pricing guardrails
+                // (Reference-Repo-Features-Plan.md item #3) -- optional
+                // per-product floor price. NULL ("no floor enforced") for
+                // every existing product and every new one unless someone
+                // explicitly sets it -- today's behavior (a price can drop
+                // to any level via a discount) is completely unchanged
+                // until this is opted into per product. Enforcement is at
+                // Checkout: CheckoutViewModel.IsPriceFloorBreached blocks
+                // completing a sale whose effective per-unit price (after
+                // BOTH the product's own DiscountPercent, baked into
+                // CartLine.Price, and this bill's DiscountPercentInput) is
+                // below the line's MinSalePrice, unless an admin unlocks
+                // the same inline password box Checkout's Discount section
+                // already uses (IsDiscountUnlocked) -- see that property's
+                // updated doc comment for how a floor breach now forces a
+                // lock even when the shop's general Discount gate
+                // (AppSettings.GateDiscountEnabled) is off.
+                EnsureColumn(conn, "goods", "MinSalePrice", "REAL");
+
                 // Performance indexes (2026-09-09) -- these columns were
                 // being filtered/joined on directly (bills.IsCurrent,
                 // bills.Billnumber, bills.CustomerId, sells.BillId,

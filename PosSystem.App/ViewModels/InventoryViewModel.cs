@@ -257,6 +257,7 @@ namespace PosSystem.App.ViewModels
             public string Barcode;
             public double DiscountPercent;
             public double? MinStock;
+            public double? MinSalePrice;
         }
 
         private List<GoodsBaselineSnapshot> _baselineRows = new List<GoodsBaselineSnapshot>();
@@ -383,7 +384,8 @@ namespace PosSystem.App.ViewModels
                 Price = r.Price,
                 Barcode = r.Barcode,
                 DiscountPercent = r.DiscountPercent,
-                MinStock = r.MinStock
+                MinStock = r.MinStock,
+                MinSalePrice = r.MinSalePrice
             }).ToList();
             _baselineCategoryNames = new HashSet<string>(AllCategoryNames, StringComparer.OrdinalIgnoreCase);
         }
@@ -411,7 +413,7 @@ namespace PosSystem.App.ViewModels
                     string today = DateTime.Now.ToString("dd/MM/yyyy");
                     row.Id = _goodsData.InsertGoodsReturningId(
                         "goods", row.Name, row.Category, row.Quantity, row.Cost, row.Price,
-                        "", row.Barcode, 0, today, today, row.DiscountPercent, row.MinStock);
+                        "", row.Barcode, 0, today, today, row.DiscountPercent, row.MinStock, row.MinSalePrice);
                 }
 
                 var currentIds = new HashSet<int>(_allRows.Where(r => r.Id > 0).Select(r => r.Id));
@@ -428,9 +430,9 @@ namespace PosSystem.App.ViewModels
                     bool fieldsChanged = baseline.Name != row.Name || baseline.Category != row.Category ||
                                           baseline.Cost != row.Cost || baseline.Price != row.Price ||
                                           baseline.Barcode != row.Barcode || baseline.DiscountPercent != row.DiscountPercent ||
-                                          baseline.MinStock != row.MinStock;
+                                          baseline.MinStock != row.MinStock || baseline.MinSalePrice != row.MinSalePrice;
                     if (fieldsChanged)
-                        _goodsData.UpdateGoodsById("goods", row.Id, row.Name, row.Category, row.Cost, row.Price, row.Barcode, row.DiscountPercent, row.MinStock);
+                        _goodsData.UpdateGoodsById("goods", row.Id, row.Name, row.Category, row.Cost, row.Price, row.Barcode, row.DiscountPercent, row.MinStock, row.MinSalePrice);
 
                     if (baseline.Quantity != row.Quantity)
                         _goodsData.UpdateGoodCountById("goods", row.Id, row.Quantity);
@@ -672,6 +674,18 @@ namespace PosSystem.App.ViewModels
             set => SetProperty(ref _newProductMinStock, value);
         }
 
+        // Pricing guardrail (added 2026-09-10, Reference-Repo-Features-
+        // Plan.md item #3) -- optional, same blank-means-no-floor
+        // convention as MinStock above (blank saves as null, not 0 --
+        // 0 would mean "never allow a discount at all", which is a real
+        // and very different setting from "no floor configured").
+        private string _newProductMinSalePrice = "";
+        public string NewProductMinSalePrice
+        {
+            get => _newProductMinSalePrice;
+            set => SetProperty(ref _newProductMinSalePrice, value);
+        }
+
         // Category management (added 2026-08-25) -- see class doc comment.
         private string _newCategoryName = "";
         public string NewCategoryName
@@ -903,6 +917,7 @@ namespace PosSystem.App.ViewModels
                     m.Id, m.Name, m.Category, m.Quantity, m.Cost, m.Price, m.Type, m.Barcode, m.Earned, m.Datex, m.Datee);
                 goodsR.DiscountPercent = m.DiscountPercent;
                 goodsR.MinStock = m.MinStock;
+                goodsR.MinSalePrice = m.MinSalePrice;
                 return new InventoryRow(goodsR);
             }).ToList();
 
@@ -1161,6 +1176,24 @@ namespace PosSystem.App.ViewModels
                 minStock = parsedMinStock;
             }
 
+            // Optional, same convention as MinStock above -- and
+            // deliberately no cross-check against Price here (e.g.
+            // "floor must be <= Price"): Price can change independently
+            // later (a routine edit, a future price increase) without the
+            // floor being touched, so a floor briefly above the current
+            // Price is a valid, if unusual, state to allow rather than an
+            // error to block on.
+            double? minSalePrice = null;
+            if (!string.IsNullOrWhiteSpace(NewProductMinSalePrice))
+            {
+                if (!double.TryParse(NewProductMinSalePrice, out double parsedMinSalePrice) || parsedMinSalePrice < 0)
+                {
+                    StatusMessage = LocalizationManager.GetString("InventoryAddInvalidMinSalePrice");
+                    return;
+                }
+                minSalePrice = parsedMinSalePrice;
+            }
+
             // Barcode optional; when present, must be unique. Checked
             // against the LOCAL, in-memory state (_allRows) as of
             // 2026-09-03, not the database -- see this class's staging-
@@ -1180,6 +1213,7 @@ namespace PosSystem.App.ViewModels
             var newGoodsR = new Core.Models.GoodsR(
                 NextTempId(), name, category, quantity, cost, price, "", barcode, 0, today, today);
             newGoodsR.MinStock = minStock;
+            newGoodsR.MinSalePrice = minSalePrice;
             var newRow = new InventoryRow(newGoodsR);
             newRow.PropertyChanged += Row_PropertyChanged;
 
@@ -1195,6 +1229,7 @@ namespace PosSystem.App.ViewModels
             NewProductCost = "";
             NewProductPrice = "";
             NewProductMinStock = "";
+            NewProductMinSalePrice = "";
 
             StatusMessage = string.Format(LocalizationManager.GetString("InventoryAddSuccess"), name)
                 + " " + LocalizationManager.GetString("InventoryPendingSaveNote");

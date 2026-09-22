@@ -72,9 +72,17 @@ namespace PosSystem.Core.Data
         // snapshot (see that method's own comment), so a brand-new row's
         // DiscountPercent has no later UPDATE that would ever write it;
         // it has to go in on the initial INSERT or it's silently lost.
-        public int InsertGoodsReturningId(string TableName, string Name, string Category, double Quantity, double Cost, double Price, string Type, string Barcode, double Earned, string Datex, string Datee, double DiscountPercent, double? MinStock = null)
+        // Signature widened 2026-09-10 for pricing guardrails
+        // (Reference-Repo-Features-Plan.md item #3) -- MinSalePrice is an
+        // optional per-product floor price, same nullable-REAL/
+        // DbNullSafe.ToNullableDouble shape as MinStock right above it.
+        // NULL = no floor enforced (today's exact behavior for every
+        // existing product). Enforcement itself lives in
+        // CheckoutViewModel (IsPriceFloorBreached) -- this column is just
+        // storage.
+        public int InsertGoodsReturningId(string TableName, string Name, string Category, double Quantity, double Cost, double Price, string Type, string Barcode, double Earned, string Datex, string Datee, double DiscountPercent, double? MinStock = null, double? MinSalePrice = null)
         {
-            string insertString = "insert into " + TableName + "(Name ,Category ,Quantity ,Cost ,Price ,Type ,Barcode , Earned , Datex , Datee , DiscountPercent , MinStock) VALUES (@name , @category , @quantity , @cost , @price ,@type ,@barcode ,@earned ,@datex , @datee , @discountpercent , @minstock)";
+            string insertString = "insert into " + TableName + "(Name ,Category ,Quantity ,Cost ,Price ,Type ,Barcode , Earned , Datex , Datee , DiscountPercent , MinStock , MinSalePrice) VALUES (@name , @category , @quantity , @cost , @price ,@type ,@barcode ,@earned ,@datex , @datee , @discountpercent , @minstock , @minsaleprice)";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();
@@ -92,6 +100,7 @@ namespace PosSystem.Core.Data
                     cmd.Parameters.AddWithValue("@datee", Datee);
                     cmd.Parameters.AddWithValue("@discountpercent", DiscountPercent);
                     cmd.Parameters.AddWithValue("@minstock", (object)MinStock ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@minsaleprice", (object)MinSalePrice ?? DBNull.Value);
 
                     cmd.ExecuteNonQuery();
                     return (int)conn.LastInsertRowId;
@@ -319,6 +328,7 @@ namespace PosSystem.Core.Data
                         // default", not "zero" -- see that method's own
                         // comment.
                         goods_List.MinStock = DbNullSafe.ToNullableDouble(reader["MinStock"]);
+                        goods_List.MinSalePrice = DbNullSafe.ToNullableDouble(reader["MinSalePrice"]);
                         //goods_List.Details = reader["Details"].ToString();
                         //if (!Convert.IsDBNull(reader["Image"]))
                         //{
@@ -406,6 +416,11 @@ namespace PosSystem.Core.Data
                         // the kind of drift that already caused Checkout's
                         // discount bug in the first place.
                         goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
+                        // MinSalePrice (2026-09-10) -- see
+                        // ReadAllGoodsRPic's own comment just below; added
+                        // here too for the same drift-avoidance reason its
+                        // DiscountPercent comment above already explains.
+                        goods_List.MinSalePrice = DbNullSafe.ToNullableDouble(reader["MinSalePrice"]);
                         //goods_List.Details = reader["Details"].ToString();
                         //if (!Convert.IsDBNull(reader["Image"]))
                         //{
@@ -457,6 +472,14 @@ namespace PosSystem.Core.Data
                         // pre-backfill-safety reason Data.Goods.
                         // ReadAllGoodsQuantity already uses it.
                         goods_List.DiscountPercent = DbNullSafe.ToDouble(reader["DiscountPercent"]);
+                        // MinSalePrice (2026-09-10, pricing guardrails --
+                        // Reference-Repo-Features-Plan.md item #3). This
+                        // method is exactly what feeds Checkout's cart lines
+                        // (CheckoutViewModel.LoadGoods -> CartLine), so it's
+                        // the one read path that actually matters for the
+                        // floor check to see real data instead of always
+                        // null.
+                        goods_List.MinSalePrice = DbNullSafe.ToNullableDouble(reader["MinSalePrice"]);
                         //goods_List.Details = reader["Details"].ToString();
                         //if (!Convert.IsDBNull(reader["Image"]))
                         //{
@@ -706,9 +729,9 @@ namespace PosSystem.Core.Data
         // path, so a pending discount change and a pending Name/Category/
         // Cost/Price/Barcode edit on the very same not-yet-saved row can
         // never race or partially commit against each other.
-        public bool UpdateGoodsById(string TableName, int Id, string Name, string Category, double Cost, double Price, string Barcode, double DiscountPercent, double? MinStock = null)
+        public bool UpdateGoodsById(string TableName, int Id, string Name, string Category, double Cost, double Price, string Barcode, double DiscountPercent, double? MinStock = null, double? MinSalePrice = null)
         {
-            string UpdateString = "UPDATE " + TableName + " SET Name = @name, Category = @category, Cost = @cost, Price = @price, Barcode = @barcode, DiscountPercent = @discountpercent, MinStock = @minstock WHERE ID = @id";
+            string UpdateString = "UPDATE " + TableName + " SET Name = @name, Category = @category, Cost = @cost, Price = @price, Barcode = @barcode, DiscountPercent = @discountpercent, MinStock = @minstock, MinSalePrice = @minsaleprice WHERE ID = @id";
             using (SQLiteConnection conn = new SQLiteConnection(server.connectionString))
             {
                 conn.Open();
@@ -721,6 +744,7 @@ namespace PosSystem.Core.Data
                     cmd.Parameters.AddWithValue("@barcode", Barcode);
                     cmd.Parameters.AddWithValue("@discountpercent", DiscountPercent);
                     cmd.Parameters.AddWithValue("@minstock", (object)MinStock ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@minsaleprice", (object)MinSalePrice ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@id", Id);
                     cmd.ExecuteNonQuery();
                     cmd.Dispose();

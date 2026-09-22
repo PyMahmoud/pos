@@ -47,6 +47,16 @@ namespace PosSystem.App.ViewModels
         public bool HasDiscount => DiscountPercent > 0;
         public double DiscountAmountPerUnit => System.Math.Round(OriginalPrice - Price, 2);
 
+        // Added 2026-09-10 for pricing guardrails (Reference-Repo-Features-
+        // Plan.md item #3) -- this product's floor price, copied straight
+        // off the GoodsR this line was built from, same snapshot-at-
+        // construction reasoning as every other field here. Null means no
+        // floor for this product. CheckoutViewModel.IsPriceFloorBreached
+        // reads this against Price (already product-discounted, per this
+        // class's own doc comment above) further reduced by whatever bill-
+        // level DiscountPercentInput is currently entered.
+        public double? MinSalePrice { get; }
+
         private double _quantity;
         public double Quantity
         {
@@ -73,6 +83,7 @@ namespace PosSystem.App.ViewModels
             Barcode = good.Barcode;
             OriginalPrice = good.Price;
             DiscountPercent = good.DiscountPercent;
+            MinSalePrice = good.MinSalePrice;
             Price = System.Math.Round(good.Price * (1 - good.DiscountPercent / 100.0), 2);
             Cost = good.Cost;
             MaxAvailable = good.Quantity;

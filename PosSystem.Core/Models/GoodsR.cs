@@ -138,6 +138,19 @@ namespace PosSystem.Core.Models
             get => minStock;
             set { minStock = value; NotifyPropertyChanged("MinStock"); }
         }
+
+        // Added 2026-09-10 for pricing guardrails (Reference-Repo-Features-
+        // Plan.md item #3), same not-in-either-constructor reasoning as
+        // MinStock/DiscountPercent above -- CartLine reads this straight
+        // off the GoodsR it's constructed from (see CartLine's own doc
+        // comment); InventoryViewModel.LoadGoods sets it after
+        // construction the same way it does MinStock.
+        private double? minSalePrice;
+        public double? MinSalePrice
+        {
+            get => minSalePrice;
+            set { minSalePrice = value; NotifyPropertyChanged("MinSalePrice"); }
+        }
        
 
         public event PropertyChangedEventHandler PropertyChanged;

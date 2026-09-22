@@ -70,6 +70,36 @@ namespace PosSystem.App.ViewModels
             set { if (_editMinStockInput == value) return; _editMinStockInput = value; OnPropertyChanged(); }
         }
 
+        // Pricing guardrail (added 2026-09-10, Reference-Repo-Features-
+        // Plan.md item #3) -- optional floor price for this product. Null
+        // means no floor is enforced. Not read by anything on THIS row
+        // itself (no badge, no computed property here) -- the actual
+        // enforcement lives in CheckoutViewModel.IsPriceFloorBreached
+        // against CartLine.MinSalePrice, since a floor breach depends on
+        // the bill-level discount too, which Inventory has no concept of.
+        // Same buffer-syncs-on-set pattern as MinStock/EditMinStockInput
+        // just above.
+        private double? _minSalePrice;
+        public double? MinSalePrice
+        {
+            get => _minSalePrice;
+            set
+            {
+                if (_minSalePrice == value) return;
+                _minSalePrice = value;
+                OnPropertyChanged();
+                _editMinSalePriceInput = value.HasValue ? value.Value.ToString(CultureInfo.InvariantCulture) : "";
+                OnPropertyChanged(nameof(EditMinSalePriceInput));
+            }
+        }
+
+        private string _editMinSalePriceInput = "";
+        public string EditMinSalePriceInput
+        {
+            get => _editMinSalePriceInput;
+            set { if (_editMinSalePriceInput == value) return; _editMinSalePriceInput = value; OnPropertyChanged(); }
+        }
+
         // Settable as of 2026-09-03 (Inventory's staged-edits feature) --
         // a newly-Added-but-not-yet-Saved row is given a temporary,
         // negative placeholder ID (see InventoryViewModel.NextTempId) since
@@ -315,6 +345,8 @@ namespace PosSystem.App.ViewModels
             _discountEditInput = model.DiscountPercent.ToString(CultureInfo.InvariantCulture);
             _minStock = model.MinStock;
             _editMinStockInput = model.MinStock.HasValue ? model.MinStock.Value.ToString(CultureInfo.InvariantCulture) : "";
+            _minSalePrice = model.MinSalePrice;
+            _editMinSalePriceInput = model.MinSalePrice.HasValue ? model.MinSalePrice.Value.ToString(CultureInfo.InvariantCulture) : "";
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

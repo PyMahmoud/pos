@@ -117,6 +117,13 @@ namespace PosSystem.Core.Models
         // value overrides it for this one product. See
         // DatabaseBootstrapper's matching column comment.
         public double? MinStock { get; set; }
+
+        // Added 2026-09-10 for pricing guardrails (Reference-Repo-Features-
+        // Plan.md item #3) -- null means "no floor enforced", a real value
+        // is the lowest this product may ever effectively sell for
+        // (product discount and bill discount combined). See
+        // DatabaseBootstrapper's matching column comment.
+        public double? MinSalePrice { get; set; }
    
 
         public event PropertyChangedEventHandler PropertyChanged;
